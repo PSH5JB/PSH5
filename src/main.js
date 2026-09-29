@@ -95,12 +95,13 @@ function watchR2(onPress) {
 const ROP_WAIT_MS = 20000;
 
 async function closeUserGuide(chain, log) {
-  log("done — closing User Guide", "info");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  log("done — closing User Guide in 8s", "info");
+  for (let left = 8; left > 0; left--) {
+    log("closing in " + left + "s", "info", true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
   try { window.close(); } catch (e) {}
-  try {
-    await chain.syscall(SYS_EXIT, 0);
-  } catch (e) {}
+  try { history.back(); } catch (e) {}
 }
 
 function jbmark(tag, detail) {
