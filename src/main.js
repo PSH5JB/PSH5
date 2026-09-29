@@ -96,7 +96,7 @@ const ROP_WAIT_MS = 20000;
 
 async function closeUserGuide(chain, log) {
   log("done — waiting for etaHEN, then closing User Guide", "info");
-  for (let left = 13; left > 0; left--) {
+  for (let left = 20; left > 0; left--) {
     log("closing in " + left + "s", "info", true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
