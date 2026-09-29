@@ -102,20 +102,14 @@ async function mapElf(name, p, chain) {
   if (elf.length < 0x1000 || readU32(elf, 0) !== 0x464c457f)
     throw new Error("kexp: " + name + " is not an ELF");
 
-  const size = (elf.length + 0x3fff) & ~0x3fff;
-  const base = await chain.syscall(SYS_MMAP, 0, size, PROT_RW, MAP_PRIVATE_ANON, -1, 0);
-  if (base.low >>> 0 === 0xffffffff || base.low < 0x10000)
-    throw new Error("kexp: " + name + " mmap failed");
-
-  const dwords = elf.length & ~3;
-  for (let offset = 0; offset < dwords; offset += 4)
-    p.write4(base.add32(offset), readU32(elf, offset));
-  for (let offset = dwords; offset < elf.length; offset++)
-    p.write1(base.add32(offset), elf[offset]);
-  if (p.read4(base) >>> 0 !== 0x464c457f)
+  const buf = p.malloc(elf.length, 1);
+  if (!buf.backing || buf.backing.length < elf.length)
+    throw new Error("kexp: " + name + " buffer is too small");
+  buf.backing.set(elf);
+  if (p.read4(buf) >>> 0 !== 0x464c457f)
     throw new Error("kexp: " + name + " copy failed");
 
-  return { base, size: elf.length };
+  return { base: buf, size: elf.length };
 }
 
 async function connectToElfldr(p, chain) {
@@ -133,7 +127,7 @@ async function connectToElfldr(p, chain) {
       if ((connected.low >>> 0) === 0) return fd;
       await chain.syscall(SYS_CLOSE, fd);
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   throw new Error("elfldr is not listening on port 9021");
@@ -154,16 +148,20 @@ async function sendElf(name, payload, p, chain) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
+  const names = ["kstuff.elf", "shadowmountplus.elf", "etaHEN.elf"];
   log("preparing optional payloads");
-  const kstuff = await mapElf("kstuff.elf", p, chain);
-  const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
-  const etaHEN = await mapElf("etaHEN.elf", p, chain);
-  await sendElf("kstuff.elf", kstuff, p, chain);
+  const mapped = [];
+  for (const name of names) {
+    log("loading " + name);
+    mapped.push(await mapElf(name, p, chain));
+  }
+  await sendElf("kstuff.elf", mapped[0], p, chain);
   log("kstuff.elf sent");
+  log("waiting for kstuff");
   await new Promise((resolve) => setTimeout(resolve, 3000));
-  await sendElf("shadowmountplus.elf", shadowmount, p, chain);
+  await sendElf("shadowmountplus.elf", mapped[1], p, chain);
   log("shadowmountplus.elf sent");
-  await sendElf("etaHEN.elf", etaHEN, p, chain);
+  await sendElf("etaHEN.elf", mapped[2], p, chain);
   log("etaHEN.elf sent");
 }
 
