@@ -96,9 +96,26 @@ const ROP_WAIT_MS = 20000;
 
 async function closeUserGuideCard(chain, log) {
   log("done — closing card", "info");
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  try { window.close(); } catch (e) {}
-  try { history.back(); } catch (e) {}
+  // etaHEN needs a few seconds to patch ShellUI before window.close() works.
+  await new Promise((resolve) => setTimeout(resolve, 6000));
+
+  function dismiss() {
+    try { window.close(); } catch (e) {}
+    try { if (window.top) window.top.close(); } catch (e) {}
+    try {
+      const w = window.open("", "_self");
+      if (w && w.close) w.close();
+    } catch (e) {}
+    try { history.back(); } catch (e) {}
+    try { if (window.top && window.top.history) window.top.history.back(); } catch (e) {}
+  }
+
+  dismiss();
+  for (let i = 0; i < 8; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    try { window.close(); } catch (e) {}
+    try { if (window.top) window.top.close(); } catch (e) {}
+  }
 }
 
 function jbmark(tag, detail) {
