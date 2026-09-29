@@ -94,31 +94,30 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-// User Guide is a ShellUI card. history.back() does not dismiss it, and
-// closing the card from Settings lands on Settings. Kill this process so
-// ShellUI relaunches on the Games home tab.
-async function closeUserGuideToGames(chain, log) {
-  log("done — closing User Guide, going to Games", "info");
-  await new Promise((resolve) => setTimeout(resolve, 6000));
+function showDoneBanner() {
+  if (document.getElementById("done-banner")) return;
+  const el = document.createElement("div");
+  el.id = "done-banner";
+  el.textContent = "Done. Press Circle, then open Games.";
+  el.style.cssText =
+    "position:fixed;left:16px;right:16px;bottom:20px;z-index:9;" +
+    "background:#00d48c;color:#071018;font-weight:700;font-size:15px;" +
+    "text-align:center;padding:14px 12px;border-radius:6px;";
+  document.body.appendChild(el);
+}
 
+// User Guide is a ShellUI card. Killing that process makes the PS5 pop
+// "out of memory" / "unable to deserialise data". Circle is the clean close.
+async function closeUserGuideToGames(chain, log) {
+  log("done — press Circle, then open Games", "success");
+  showDoneBanner();
+  await new Promise((resolve) => setTimeout(resolve, 1200));
   try {
     window.close();
   } catch (e) {}
   try {
-    if (typeof history.length === "number" && history.length > 1) {
-      history.go(1 - history.length);
-    } else {
-      history.back();
-    }
+    history.back();
   } catch (e) {}
-
-  try {
-    const pid = await chain.syscall(SYS_GETPID);
-    await chain.syscall(SYS_KILL, pid.low | 0, 15);
-    await chain.syscall(SYS_EXIT, 0);
-  } catch (e) {
-    log("press Circle, then open Games", "info");
-  }
 }
 
 function jbmark(tag, detail) {
