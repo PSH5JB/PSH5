@@ -45,10 +45,25 @@
     /* ── header ──────────────────────────────────────────── */
     .hdr {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 12px;
+    }
+
+    .hdr-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .psh-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
     .logo {
@@ -57,8 +72,16 @@
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: #fff;
+      line-height: 1.1;
     }
     .logo em { color: var(--accent); font-style: normal; }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-top: 3px;
+    }
 
     #fw-label {
       font-size: 11px;
@@ -184,7 +207,13 @@
   <div class="wrap">
 
     <div class="hdr">
-      <div class="logo"><em>PSH</em>5JB</div>
+      <div class="hdr-left">
+        <img src="./logo.jpg" alt="PSH" class="psh-logo">
+        <div>
+          <div class="logo"><em>PSH</em>5JB</div>
+          <div class="logo-sub">PS5 Jailbreak · FW 7.00–13.60</div>
+        </div>
+      </div>
       <div id="fw-label">Detecting firmware…</div>
     </div>
 
