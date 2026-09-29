@@ -35,18 +35,23 @@
     }
 
     /* ── layout ──────────────────────────────────────────── */
-    .outer {
-      display: flex;
-      align-items: flex-start;
-      gap: 20px;
-    }
-
     .wrap {
       width: 100%;
       max-width: 600px;
       display: flex;
       flex-direction: column;
       gap: 18px;
+    }
+
+    .console-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .console-row .console-wrap {
+      flex: 1;
+      min-width: 0;
     }
 
     /* ── header ──────────────────────────────────────────── */
@@ -219,7 +224,6 @@
     .patch-panel {
       width: 180px;
       flex-shrink: 0;
-      align-self: center;
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 10px 12px 12px;
@@ -290,7 +294,6 @@
   </style>
 </head>
 <body>
-  <div class="outer">
   <div class="wrap">
 
     <div class="hdr">
@@ -323,16 +326,22 @@
       </div>
     </div>
 
-    <div class="console-wrap">
-      <div class="console-bar">
-        <span>Output</span>
-        <div class="console-dots"><span></span><span></span><span></span></div>
+    <div class="console-row">
+      <div class="console-wrap">
+        <div class="console-bar">
+          <span>Output</span>
+          <div class="console-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="console-qr">
+          <img src="./logo.jpg" alt="Discord QR">
+          <span>Scan To Join My Discord</span>
+        </div>
+        <div id="console"></div>
       </div>
-      <div class="console-qr">
-        <img src="./logo.jpg" alt="Discord QR">
-        <span>Scan To Join My Discord</span>
+      <div class="patch-panel">
+        <div class="patch-panel-hdr">Patch Notes</div>
+        <div class="patch-panel-body"></div>
       </div>
-      <div id="console"></div>
     </div>
 
     <div class="credits">
@@ -340,13 +349,6 @@
     </div>
 
   </div>
-
-  <div class="patch-panel">
-    <div class="patch-panel-hdr">Patch Notes</div>
-    <div class="patch-panel-body"></div>
-  </div>
-
-  </div><!-- /.outer -->
 
   <script src="./src/firmware.js"></script>
   <script src="./src/main.js"></script>
