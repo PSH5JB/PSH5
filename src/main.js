@@ -94,30 +94,32 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-function showDoneBanner() {
-  if (document.getElementById("done-banner")) return;
-  const el = document.createElement("div");
-  el.id = "done-banner";
-  el.textContent = "Done. Press Circle, then open Games.";
-  el.style.cssText =
-    "position:fixed;left:16px;right:16px;bottom:20px;z-index:9;" +
-    "background:#00d48c;color:#071018;font-weight:700;font-size:15px;" +
-    "text-align:center;padding:14px 12px;border-radius:6px;";
-  document.body.appendChild(el);
+function wipeHistoryState() {
+  try { history.replaceState(null, "", location.href); } catch (e) {}
+  try { history.replaceState(null, ""); } catch (e) {}
 }
 
-// User Guide is a ShellUI card. Killing that process makes the PS5 pop
-// "out of memory" / "unable to deserialise data". Circle is the clean close.
+function closeUserGuideCard() {
+  wipeHistoryState();
+  try {
+    const self = window.open("", "_self");
+    if (self) self.close();
+  } catch (e) {}
+  try { window.close(); } catch (e) {}
+  try {
+    if (typeof history.length === "number" && history.length > 1) {
+      history.go(1 - history.length);
+    } else {
+      history.back();
+    }
+  } catch (e) {}
+}
+
 async function closeUserGuideToGames(chain, log) {
-  log("done — press Circle, then open Games", "success");
-  showDoneBanner();
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-  try {
-    window.close();
-  } catch (e) {}
-  try {
-    history.back();
-  } catch (e) {}
+  log("done — closing card", "success");
+  wipeHistoryState();
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  closeUserGuideCard();
 }
 
 function jbmark(tag, detail) {
@@ -305,6 +307,7 @@ async function main(userlandRW) {
     throw new Error("kernel exploit did not finish");
 
   log("kernel exploit complete", "info");
+  wipeHistoryState();
   if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
   try {
     const { loadOptionalPayloads } = await import("./kexp.js");
