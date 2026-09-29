@@ -139,32 +139,36 @@ async function connectToElfldr(p, chain) {
   throw new Error("elfldr is not listening on port 9021");
 }
 
-async function sendElf(name, payload, p, chain) {
+async function sendElf(name, payload, p, chain, log) {
+  if (p.read4(payload.base) >>> 0 !== 0x464c457f)
+    throw new Error("kexp: " + name + " mmap lost ELF magic before send");
   const fd = await connectToElfldr(p, chain);
+  let offset = 0;
   try {
-    for (let offset = 0; offset < payload.size;) {
+    while (offset < payload.size) {
       const length = Math.min(0x10000, payload.size - offset);
       const written = (await chain.syscall(SYS_WRITE, fd, payload.base.add32(offset), length)).low | 0;
-      if (written <= 0) throw new Error(name + " socket write failed");
+      if (written <= 0) throw new Error(name + " socket write failed at " + offset);
       offset += written;
     }
   } finally {
     await chain.syscall(SYS_CLOSE, fd);
   }
+  if (offset !== payload.size)
+    throw new Error(name + " short write " + offset + "/" + payload.size);
+  if (log) log(name + " sent (" + payload.size + " bytes)");
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
   log("preparing optional payloads");
   const kstuff = await mapElf("kstuff.elf", p, chain);
-  const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
-  const etaHEN = await mapElf("etaHEN.elf", p, chain);
-  await sendElf("kstuff.elf", kstuff, p, chain);
-  log("kstuff.elf sent");
+  await sendElf("kstuff.elf", kstuff, p, chain, log);
+  log("waiting for kstuff");
   await new Promise((resolve) => setTimeout(resolve, 3000));
-  await sendElf("shadowmountplus.elf", shadowmount, p, chain);
-  log("shadowmountplus.elf sent");
-  await sendElf("etaHEN.elf", etaHEN, p, chain);
-  log("etaHEN.elf sent");
+  const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
+  await sendElf("shadowmountplus.elf", shadowmount, p, chain, log);
+  const etaHEN = await mapElf("etaHEN.elf", p, chain);
+  await sendElf("etaHEN.elf", etaHEN, p, chain, log);
 }
 
 function patchShellcode(blob, symbols) {

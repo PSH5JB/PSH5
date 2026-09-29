@@ -99,27 +99,15 @@ function wipeHistoryState() {
   try { history.replaceState(null, ""); } catch (e) {}
 }
 
-function closeUserGuideCard() {
-  wipeHistoryState();
-  try {
-    const self = window.open("", "_self");
-    if (self) self.close();
-  } catch (e) {}
-  try { window.close(); } catch (e) {}
-  try {
-    if (typeof history.length === "number" && history.length > 1) {
-      history.go(1 - history.length);
-    } else {
-      history.back();
-    }
-  } catch (e) {}
-}
-
 async function closeUserGuideToGames(chain, log) {
   log("done — closing card", "success");
   wipeHistoryState();
   await new Promise((resolve) => setTimeout(resolve, 1500));
-  closeUserGuideCard();
+  wipeHistoryState();
+  try { window.close(); } catch (e) {}
+  try {
+    location.replace(new URL("done.html", location.href).href);
+  } catch (e) {}
 }
 
 function jbmark(tag, detail) {
