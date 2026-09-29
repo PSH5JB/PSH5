@@ -32,7 +32,6 @@ window.jb = { mark: writeEvent };
 async function getPrimitive() {
   setStage("webkit", "active");
   writeLog("Starting WebKit exploit");
-  try { history.replaceState(null, ""); } catch (e) {}
   const primitive = installWindowP(await establishPrimitive(writeEvent));
   if (!primitive || typeof primitive.read8 !== "function")
     throw new Error("Memory primitive unavailable");

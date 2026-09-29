@@ -94,19 +94,13 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-function wipeHistoryState() {
-  try { history.replaceState(null, "", location.href); } catch (e) {}
-  try { history.replaceState(null, ""); } catch (e) {}
-}
-
-async function closeUserGuideToGames(chain, log) {
+async function closeUserGuideCard(chain, log) {
   log("done — closing card", "success");
-  wipeHistoryState();
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  wipeHistoryState();
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   try { window.close(); } catch (e) {}
   try {
-    location.replace(new URL("done.html", location.href).href);
+    const pid = await chain.syscall(SYS_GETPID);
+    await chain.syscall(SYS_KILL, pid.low | 0, 9);
   } catch (e) {}
 }
 
@@ -295,13 +289,12 @@ async function main(userlandRW) {
     throw new Error("kernel exploit did not finish");
 
   log("kernel exploit complete", "info");
-  wipeHistoryState();
   if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
   try {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    await closeUserGuideToGames(chain, log);
+    await closeUserGuideCard(chain, log);
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
