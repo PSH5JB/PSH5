@@ -95,13 +95,10 @@ function watchR2(onPress) {
 const ROP_WAIT_MS = 20000;
 
 async function closeUserGuideCard(chain, log) {
-  log("done — closing card", "success");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  log("done — closing card", "info");
+  await new Promise((resolve) => setTimeout(resolve, 1500));
   try { window.close(); } catch (e) {}
-  try {
-    const pid = await chain.syscall(SYS_GETPID);
-    await chain.syscall(SYS_KILL, pid.low | 0, 9);
-  } catch (e) {}
+  try { history.back(); } catch (e) {}
 }
 
 function jbmark(tag, detail) {
