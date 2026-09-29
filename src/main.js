@@ -278,26 +278,18 @@ async function main(userlandRW) {
   if (!result || !result.done)
     throw new Error("kernel exploit did not finish");
 
-  if (result.payloads) {
-    log("kernel exploit complete", "info");
-    log("elfldr is listening on port 9021", "info");
-    if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
-    try {
-      const { loadOptionalPayloads } = await import("./kexp.js");
-      await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
-      if (window.setStage) window.setStage("payloads", "done");
-      log("done — closing card", "info");
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      history.back();
-    } catch (error) {
-      log(error instanceof Error ? error.message : String(error), "error");
-      if (window.setStage) window.setStage("payloads", "error");
-    }
-  } else {
-    log("kernel chain complete: root and sandbox escape are active", "info");
-    if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "done"); }
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+  log("kernel exploit complete", "info");
+  if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
+  try {
+    const { loadPayloads } = await import("./kexp.js");
+    await loadPayloads(p, chain, (message) => log(message, "info"));
+    if (window.setStage) window.setStage("payloads", "done");
+    log("done — closing card", "info");
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     history.back();
+  } catch (error) {
+    log(error instanceof Error ? error.message : String(error), "error");
+    if (window.setStage) window.setStage("payloads", "error");
   }
 }
 
