@@ -153,18 +153,18 @@ async function sendElf(name, payload, p, chain) {
   }
 }
 
-export async function loadPayloads(p, chain, log) {
-  log("preparing payloads");
+export async function loadOptionalPayloads(p, chain, log) {
+  log("preparing optional payloads");
   const kstuff = await mapElf("kstuff.elf", p, chain);
   const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
   const etaHEN = await mapElf("etaHEN.elf", p, chain);
   await sendElf("kstuff.elf", kstuff, p, chain);
-  log("kstuff sent");
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  log("kstuff.elf sent");
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   await sendElf("shadowmountplus.elf", shadowmount, p, chain);
-  log("shadowmountplus sent");
+  log("shadowmountplus.elf sent");
   await sendElf("etaHEN.elf", etaHEN, p, chain);
-  log("etaHEN sent");
+  log("etaHEN.elf sent");
 }
 
 function patchShellcode(blob, symbols) {

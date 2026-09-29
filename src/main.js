@@ -281,8 +281,8 @@ async function main(userlandRW) {
   log("kernel exploit complete", "info");
   if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
   try {
-    const { loadPayloads } = await import("./kexp.js");
-    await loadPayloads(p, chain, (message) => log(message, "info"));
+    const { loadOptionalPayloads } = await import("./kexp.js");
+    await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
     log("done — closing card", "info");
     await new Promise((resolve) => setTimeout(resolve, 1500));
