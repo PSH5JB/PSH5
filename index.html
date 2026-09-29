@@ -157,6 +157,22 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       overflow: hidden;
+      position: relative;
+    }
+
+    .console-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('./logo.jpg') center / 60% no-repeat;
+      opacity: 0.5;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .console-bar, #console {
+      position: relative;
+      z-index: 1;
     }
 
     .console-bar {
