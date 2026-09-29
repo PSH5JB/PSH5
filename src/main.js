@@ -76,23 +76,38 @@ async function findWorkerReturnSlot(p, stack, libKernelBase) {
   throw new Error(`worker wait return fingerprint count ${lastCount}, expected 1`);
 }
 
-function log(message, type = "log") {
-  window.writeLog(message, type);
-}
-
-function watchR2(onPress) {
-  function onKey(event) {
-    if (event.key !== "F8" || event.code !== "Unidentified") return;
-    window.removeEventListener("keydown", onKey, true);
-    event.preventDefault();
-    onPress();
-  }
-
-  log("press R2 to load kstuff, shadowmountplus and etaHEN", "info");
-  window.addEventListener("keydown", onKey, true);
+function log(message, type = "log", replace = false) {
+  window.writeLog(message, type, replace);
 }
 
 const ROP_WAIT_MS = 20000;
+
+async function closeUserGuide(p, chain, log) {
+  log("done — waiting for etaHEN, then closing User Guide", "info");
+  for (let left = 20; left > 0; left--) {
+    log("closing in " + left + "s - You can leave now if you want", "info", true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  const HOME = "pshomeui:navigateToHome?bootCondition=psButton";
+  try {
+    const off = window.SYMBOLS && window.SYMBOLS.libkernel &&
+      window.SYMBOLS.libkernel.sceKernelSendNotificationRequest;
+    if (off && p.libKernelBase) {
+      const req = p.malloc(0xc30, 1);
+      for (let i = 0; i < 0xc30; i++) req.backing[i] = 0;
+      req.backing[0x2c] = 1;
+      const msg = "PSH5JB";
+      for (let i = 0; i < msg.length; i++) req.backing[0x2d + i] = msg.charCodeAt(i);
+      for (let i = 0; i < HOME.length; i++) req.backing[0x42d + i] = HOME.charCodeAt(i);
+      await chain.call(p.libKernelBase.add32(off), 0, req, 0xc30, 0);
+    }
+  } catch (e) {}
+
+  try { window.location.replace(HOME); } catch (e) {}
+  try { window.close(); } catch (e) {}
+  try { history.back(); } catch (e) {}
+}
 
 function jbmark(tag, detail) {
   try {
@@ -278,19 +293,16 @@ async function main(userlandRW) {
   if (!result || !result.done)
     throw new Error("kernel exploit did not finish");
 
-  if (result.payloads) {
-    log("kernel exploit complete", "info");
-    log("elfldr is listening on port 9021", "info");
-    watchR2(async () => {
-      try {
-        const { loadOptionalPayloads } = await import("./kexp.js");
-        await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
-      } catch (error) {
-        log(error instanceof Error ? error.message : String(error), "error");
-      }
-    });
-  } else {
-    log("kernel chain complete: root and sandbox escape are active", "info");
+  log("kernel exploit complete", "info");
+  if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
+  try {
+    const { loadOptionalPayloads } = await import("./kexp.js");
+    await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+    if (window.setStage) window.setStage("payloads", "done");
+    await closeUserGuide(p, chain, log);
+  } catch (error) {
+    log(error instanceof Error ? error.message : String(error), "error");
+    if (window.setStage) window.setStage("payloads", "error");
   }
 }
 
