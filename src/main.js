@@ -281,17 +281,21 @@ async function main(userlandRW) {
   if (result.payloads) {
     log("kernel exploit complete", "info");
     log("elfldr is listening on port 9021", "info");
+    if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
     try {
       const { loadOptionalPayloads } = await import("./kexp.js");
       await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+      if (window.setStage) window.setStage("payloads", "done");
       log("done — closing browser", "info");
       await new Promise((resolve) => setTimeout(resolve, 3000));
       window.close();
     } catch (error) {
       log(error instanceof Error ? error.message : String(error), "error");
+      if (window.setStage) window.setStage("payloads", "error");
     }
   } else {
     log("kernel chain complete: root and sandbox escape are active", "info");
+    if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "done"); }
     await new Promise((resolve) => setTimeout(resolve, 3000));
     window.close();
   }
