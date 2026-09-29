@@ -153,97 +153,6 @@ async function sendElf(name, payload, p, chain) {
   }
 }
 
-const O_RDONLY = 0;
-const O_WRONLY = 1;
-const O_CREAT = 0x200;
-const O_TRUNC = 0x400;
-const HOME_URI = "pshomeui:navigateToHome?bootCondition=psButton";
-
-function cstring(p, str) {
-  const buf = p.malloc(str.length + 1, 1);
-  for (let i = 0; i < str.length; i++) buf.backing[i] = str.charCodeAt(i) & 0xff;
-  buf.backing[str.length] = 0;
-  return buf;
-}
-
-async function connectTcp(p, chain, port, attempts) {
-  const address = p.malloc(16);
-  p.write8(address, new int64(0, 0));
-  p.write8(address.add32(8), new int64(0, 0));
-  const portN = ((port & 0xff) << 8) | ((port >> 8) & 0xff);
-  p.write4(address, 0x00000210 | (portN << 16));
-  p.write4(address.add32(4), 0x0100007f);
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
-    const fd = socket.low | 0;
-    if (fd >= 0) {
-      const connected = await chain.syscall(SYS_CONNECT, fd, address, 16);
-      if ((connected.low >>> 0) === 0) return fd;
-      await chain.syscall(SYS_CLOSE, fd);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  return -1;
-}
-
-async function writeEtaHenOpenHome(p, chain, log) {
-  try {
-    await chain.syscall(SYS_MKDIR, cstring(p, "/data/etaHEN"), 0o755);
-    const path = cstring(p, "/data/etaHEN/config.ini");
-    let text = "";
-    const rdfd = (await chain.syscall(SYS_OPEN, path, O_RDONLY, 0)).low | 0;
-    if (rdfd >= 0) {
-      const buf = p.malloc(0x2000, 1);
-      const n = (await chain.syscall(SYS_READ, rdfd, buf, 0x1fff)).low | 0;
-      await chain.syscall(SYS_CLOSE, rdfd);
-      if (n > 0 && buf.backing) {
-        for (let i = 0; i < n; i++) text += String.fromCharCode(buf.backing[i]);
-      }
-    }
-    if (/StartOption\s*=\s*\d/.test(text))
-      text = text.replace(/StartOption\s*=\s*\d/, "StartOption=1");
-    else
-      text = text.replace(/\s+$/, "") + "\nStartOption=1\n";
-
-    const wfd = (await chain.syscall(SYS_OPEN, path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)).low | 0;
-    if (wfd < 0) {
-      log("User Guide close: could not write etaHEN config");
-      return;
-    }
-    const data = p.malloc(text.length, 1);
-    for (let i = 0; i < text.length; i++) data.backing[i] = text.charCodeAt(i) & 0xff;
-    await chain.syscall(SYS_WRITE, wfd, data, text.length);
-    await chain.syscall(SYS_CLOSE, wfd);
-    log("etaHEN StartOption=Home");
-  } catch (e) {
-    log("User Guide close: config write failed");
-  }
-}
-
-async function askEtaHenGoHome(p, chain, log) {
-  log("asking etaHEN to leave User Guide");
-  const fd = await connectTcp(p, chain, 9028, 48);
-  if (fd < 0) {
-    log("User Guide close: etaHEN IPC not up yet");
-    return;
-  }
-  try {
-    const cmd = p.malloc(0xa10, 1);
-    for (let i = 0; i < 0xa10; i++) cmd.backing[i] = 0;
-    p.write4(cmd, 0xdeadbeef);
-    p.write4(cmd.add32(4), 1);
-    const pid = await chain.syscall(SYS_GETPID);
-    p.write4(cmd.add32(8), pid.low | 0);
-    p.write4(cmd.add32(12), -1337);
-    for (let i = 0; i < HOME_URI.length; i++)
-      cmd.backing[16 + i] = HOME_URI.charCodeAt(i) & 0xff;
-    const written = (await chain.syscall(SYS_WRITE, fd, cmd, 0xa10)).low | 0;
-    if (written > 0) log("User Guide close: Home URI sent");
-  } finally {
-    await chain.syscall(SYS_CLOSE, fd);
-  }
-}
-
 export async function loadOptionalPayloads(p, chain, log) {
   log("preparing optional payloads");
   const kstuff = await mapElf("kstuff.elf", p, chain);
@@ -254,10 +163,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   await new Promise((resolve) => setTimeout(resolve, 3000));
   await sendElf("shadowmountplus.elf", shadowmount, p, chain);
   log("shadowmountplus.elf sent");
-  await writeEtaHenOpenHome(p, chain, log);
   await sendElf("etaHEN.elf", etaHEN, p, chain);
   log("etaHEN.elf sent");
-  await askEtaHenGoHome(p, chain, log);
 }
 
 function patchShellcode(blob, symbols) {

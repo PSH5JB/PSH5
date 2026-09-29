@@ -94,6 +94,15 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
+async function closeUserGuide(chain, log) {
+  log("done — closing User Guide", "info");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  try { window.close(); } catch (e) {}
+  try {
+    await chain.syscall(SYS_EXIT, 0);
+  } catch (e) {}
+}
+
 function jbmark(tag, detail) {
   try {
     if (window.jb && typeof window.jb.mark === "function")
@@ -284,7 +293,7 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    log("done — etaHEN will leave User Guide for Home", "info");
+    await closeUserGuide(chain, log);
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
