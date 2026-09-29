@@ -76,8 +76,8 @@ async function findWorkerReturnSlot(p, stack, libKernelBase) {
   throw new Error(`worker wait return fingerprint count ${lastCount}, expected 1`);
 }
 
-function log(message, type = "log") {
-  window.writeLog(message, type);
+function log(message, type = "log", replace = false) {
+  window.writeLog(message, type, replace);
 }
 
 function watchR2(onPress) {
@@ -94,13 +94,20 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-async function closeUserGuide(log) {
-  log("done — closing user guide", "success");
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+async function closeUserGuide(chain, log) {
+  for (let i = 10; i > 0; i--) {
+    log(`closing user guide in ${i}s…`, "success", true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
   try { window.location.replace("pshomeui:navigateToHome?bootCondition=psButton"); } catch (e) {}
   await new Promise((resolve) => setTimeout(resolve, 500));
   try { window.close(); } catch (e) {}
   try { history.back(); } catch (e) {}
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  try {
+    const pid = await chain.syscall(SYS_GETPID);
+    await chain.syscall(SYS_KILL, pid.low | 0, 9);
+  } catch (e) {}
 }
 
 function jbmark(tag, detail) {
@@ -294,7 +301,7 @@ async function main(userlandRW) {
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
   } finally {
-    await closeUserGuide(log);
+    await closeUserGuide(chain, log);
   }
 }
 
