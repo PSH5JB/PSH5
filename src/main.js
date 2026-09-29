@@ -279,11 +279,14 @@ async function main(userlandRW) {
     throw new Error("kernel exploit did not finish");
 
   log("kernel exploit complete", "info");
+  if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
   try {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+    if (window.setStage) window.setStage("payloads", "done");
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
+    if (window.setStage) window.setStage("payloads", "error");
   }
   log("press O to go back", "info");
 }

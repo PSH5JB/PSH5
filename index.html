@@ -2,17 +2,327 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>PS5-Relapse</title>
+  <title>PSH5JB</title>
   <style>
-    html, body {
-      background: #060606;
-      color: #fff;
+    /* ── tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:      #07090f;
+      --surface: #0c1019;
+      --border:  #182030;
+      --text:    #d6e4ff;
+      --muted:   #8aa0c4;
+      --accent:  #1a80ff;
+      --ok:      #00d48c;
+      --bad:     #ff3b52;
+      color-scheme: dark;
     }
+
+    /* ── reset ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      padding: 28px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ── layout ──────────────────────────────────────────── */
+    .wrap {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── header ──────────────────────────────────────────── */
+    .hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hdr-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .psh-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+
+    .logo-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-top: 3px;
+    }
+
+    #fw-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── stages ──────────────────────────────────────────── */
+    .stages {
+      display: flex;
+      gap: 6px;
+    }
+
+    .stage {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 8px 4px 7px;
+      text-align: center;
+      transition: border-color 0.25s;
+    }
+
+    .stage-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      transition: color 0.25s;
+    }
+
+    .stage-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      margin: 0 auto;
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+
+    /* active */
+    .stage[data-s="active"] { border-color: var(--accent); }
+    .stage[data-s="active"] .stage-label { color: var(--accent); }
+    .stage[data-s="active"] .stage-dot {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    /* done */
+    .stage[data-s="done"] { border-color: var(--ok); }
+    .stage[data-s="done"] .stage-label { color: var(--ok); }
+    .stage[data-s="done"] .stage-dot { background: var(--ok); }
+
+    /* error */
+    .stage[data-s="error"] { border-color: var(--bad); }
+    .stage[data-s="error"] .stage-label { color: var(--bad); }
+    .stage[data-s="error"] .stage-dot { background: var(--bad); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stage-dot { animation: none !important; }
+    }
+
+    /* ── console ─────────────────────────────────────────── */
+    .console-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .console-qr {
+      position: absolute;
+      top: 36px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      z-index: 2;
+    }
+
+    .console-qr img {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .console-qr span {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-align: center;
+      width: 300px;
+      line-height: 1.4;
+    }
+
+    .console-bar, #console {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── discord QR ──────────────────────────────────────── */
+    .discord-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .discord-qr img {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .discord-qr span {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-align: center;
+      width: 300px;
+    }
+
+    .console-bar {
+      background: var(--border);
+      padding: 5px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .console-dots { display: flex; gap: 5px; }
+    .console-dots span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      filter: brightness(1.8);
+    }
+
+    #console {
+      padding: 12px 324px 12px 14px;
+      min-height: 360px;
+      max-height: 480px;
+      overflow-y: auto;
+      line-height: 1.95;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    #console .l-log,
+    #console .l-info,
+    #console .l-success,
+    #console .l-error   { color: #fff; }
+
+    /* ── footer ──────────────────────────────────────────── */
+    .credits {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      line-height: 1.8;
+    }
+    .credits b { color: #9aafcc; font-weight: 700; }
   </style>
 </head>
 <body>
-  <div id="console"></div>
+  <div class="wrap">
+
+    <div class="hdr">
+      <div class="hdr-left">
+        <img src="./psh-logo.png" alt="PSH" class="psh-logo">
+        <div>
+          <div class="logo"><em>PSH</em>5JB</div>
+          <div class="logo-sub">PS5 Jailbreak · FW 7.00–13.60</div>
+        </div>
+      </div>
+      <div id="fw-label">Detecting firmware…</div>
+    </div>
+
+    <div class="stages">
+      <div class="stage" id="stage-init">
+        <span class="stage-label">Init</span>
+        <div class="stage-dot"></div>
+      </div>
+      <div class="stage" id="stage-webkit">
+        <span class="stage-label">WebKit</span>
+        <div class="stage-dot"></div>
+      </div>
+      <div class="stage" id="stage-kernel">
+        <span class="stage-label">Kernel</span>
+        <div class="stage-dot"></div>
+      </div>
+      <div class="stage" id="stage-payloads">
+        <span class="stage-label">Payloads</span>
+        <div class="stage-dot"></div>
+      </div>
+    </div>
+
+    <div class="console-wrap">
+      <div class="console-bar">
+        <span>Output</span>
+        <div class="console-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="console-qr">
+        <img src="./logo.jpg" alt="Discord QR">
+        <span>Scan To Join My Discord</span>
+      </div>
+      <div id="console"></div>
+    </div>
+
+    <div class="credits">
+      PSH5JB <b>//</b> PS5 host · FW 7.00–13.60 · psh5jb.github.io/PSH5
+    </div>
+
+  </div>
+
   <script src="./src/firmware.js"></script>
   <script src="./src/main.js"></script>
   <script src="./src/rop.js"></script>
