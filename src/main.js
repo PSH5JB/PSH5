@@ -94,30 +94,6 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-async function closeUserGuideCard(chain, log) {
-  log("done — closing card", "info");
-  // etaHEN needs a few seconds to patch ShellUI before window.close() works.
-  await new Promise((resolve) => setTimeout(resolve, 6000));
-
-  function dismiss() {
-    try { window.close(); } catch (e) {}
-    try { if (window.top) window.top.close(); } catch (e) {}
-    try {
-      const w = window.open("", "_self");
-      if (w && w.close) w.close();
-    } catch (e) {}
-    try { history.back(); } catch (e) {}
-    try { if (window.top && window.top.history) window.top.history.back(); } catch (e) {}
-  }
-
-  dismiss();
-  for (let i = 0; i < 8; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    try { window.close(); } catch (e) {}
-    try { if (window.top) window.top.close(); } catch (e) {}
-  }
-}
-
 function jbmark(tag, detail) {
   try {
     if (window.jb && typeof window.jb.mark === "function")
@@ -308,11 +284,12 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
+    log("done — closing card", "info");
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    history.back();
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
-  } finally {
-    await closeUserGuideCard(chain, log);
   }
 }
 
