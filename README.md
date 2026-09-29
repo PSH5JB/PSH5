@@ -17,6 +17,8 @@ On the PS5:
 
 The page runs WebKit, then kernel, then loads **kstuff**, **ShadowMountPlus**, and **etaHEN** on its own.
 
+This DNS also blocks PSN (sign-in, store, trophies) and system updates.
+
 ## Browser
 
 On the PS5 browser, go to:

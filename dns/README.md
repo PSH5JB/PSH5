@@ -35,6 +35,6 @@ PS5 Primary DNS = that machine’s IP. The public PSH5JB host already uses `167.
 
 ## What this does
 
-- `manuals.playstation.net` (and the Sony manuals alias) → your server, which serves PSH5JB for every path.
-- PlayStation update hosts → nowhere.
+- `manuals.playstation.net` (and the Sony manuals alias) → your server, which serves PSH5JB for every path, including `/document/<lang>/ps5/`.
+- PSN (sign-in, store, trophies) and PlayStation update hosts → nowhere.
 - Everything else → `1.1.1.1`.
