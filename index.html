@@ -74,8 +74,18 @@
       text-transform: uppercase;
       color: #fff;
       line-height: 1.1;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
     }
     .logo em { color: var(--accent); font-style: normal; }
+    .logo-ver {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: none;
+    }
 
     .logo-sub {
       font-size: 10px;
@@ -225,6 +235,26 @@
       width: 300px;
     }
 
+    .patch-notes {
+      width: 300px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 8px 10px 10px;
+    }
+    .patch-notes-hdr {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .patch-notes-body {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
     .console-bar {
       background: var(--border);
       padding: 5px 12px;
@@ -248,8 +278,8 @@
 
     #console {
       padding: 12px 324px 12px 14px;
-      min-height: 360px;
-      max-height: 480px;
+      min-height: 430px;
+      max-height: 560px;
       overflow-y: auto;
       line-height: 1.95;
       font-size: 12px;
@@ -279,7 +309,7 @@
       <div class="hdr-left">
         <img src="./psh-logo.png" alt="PSH" class="psh-logo">
         <div>
-          <div class="logo"><em>PSH</em>5JB</div>
+          <div class="logo"><em>PSH</em>5JB <span class="logo-ver">v1.00</span></div>
           <div class="logo-sub">PS5 Jailbreak · FW 7.00–13.60</div>
         </div>
       </div>
@@ -313,6 +343,10 @@
       <div class="console-qr">
         <img src="./logo.jpg" alt="Discord QR">
         <span>Scan To Join My Discord</span>
+        <div class="patch-notes">
+          <div class="patch-notes-hdr">Patch Notes</div>
+          <div class="patch-notes-body"></div>
+        </div>
       </div>
       <div id="console"></div>
     </div>
