@@ -18,10 +18,14 @@ Replace `YOUR_IP` in `dnsmasq.conf` with that machine’s IP.
 sudo apt-get update
 sudo apt-get install -y nginx dnsmasq openssl git
 sudo git clone https://github.com/PSH5JB/PSH5.git /var/www/psh5
-sudo openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+sudo openssl req -x509 -nodes -newkey rsa:2048 -sha256 -days 3650 \
   -keyout /etc/ssl/private/psh5jb.key \
   -out /etc/ssl/certs/psh5jb.crt \
-  -subj "/CN=manuals.playstation.net"
+  -subj "/CN=manuals.playstation.net" \
+  -addext "subjectAltName=DNS:manuals.playstation.net,DNS:manuals.sonyentertainmentnetwork.com" \
+  -addext "basicConstraints=CA:FALSE" \
+  -addext "keyUsage=digitalSignature,keyEncipherment" \
+  -addext "extendedKeyUsage=serverAuth"
 
 sudo cp /var/www/psh5/dns/nginx-user-guide.conf /etc/nginx/sites-available/psh5jb
 sudo ln -sf /etc/nginx/sites-available/psh5jb /etc/nginx/sites-enabled/psh5jb
