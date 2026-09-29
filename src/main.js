@@ -286,9 +286,9 @@ async function main(userlandRW) {
       const { loadOptionalPayloads } = await import("./kexp.js");
       await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
       if (window.setStage) window.setStage("payloads", "done");
-      log("done — closing browser", "info");
+      log("done — closing card", "info");
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      window.close();
+      history.back();
     } catch (error) {
       log(error instanceof Error ? error.message : String(error), "error");
       if (window.setStage) window.setStage("payloads", "error");
@@ -297,7 +297,7 @@ async function main(userlandRW) {
     log("kernel chain complete: root and sandbox escape are active", "info");
     if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "done"); }
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    window.close();
+    history.back();
   }
 }
 
