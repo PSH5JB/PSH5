@@ -94,12 +94,29 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-async function closeUserGuide(chain, log) {
+async function closeUserGuide(p, chain, log) {
   log("done — waiting for etaHEN, then closing User Guide", "info");
   for (let left = 20; left > 0; left--) {
     log("closing in " + left + "s - You can leave now if you want", "info", true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+
+  const HOME = "pshomeui:navigateToHome?bootCondition=psButton";
+  try {
+    const off = window.SYMBOLS && window.SYMBOLS.libkernel &&
+      window.SYMBOLS.libkernel.sceKernelSendNotificationRequest;
+    if (off && p.libKernelBase) {
+      const req = p.malloc(0xc30, 1);
+      for (let i = 0; i < 0xc30; i++) req.backing[i] = 0;
+      req.backing[0x2c] = 1;
+      const msg = "PSH5JB";
+      for (let i = 0; i < msg.length; i++) req.backing[0x2d + i] = msg.charCodeAt(i);
+      for (let i = 0; i < HOME.length; i++) req.backing[0x42d + i] = HOME.charCodeAt(i);
+      await chain.call(p.libKernelBase.add32(off), 0, req, 0xc30, 0);
+    }
+  } catch (e) {}
+
+  try { window.location.replace(HOME); } catch (e) {}
   try { window.close(); } catch (e) {}
   try { history.back(); } catch (e) {}
 }
@@ -294,7 +311,7 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    await closeUserGuide(chain, log);
+    await closeUserGuide(p, chain, log);
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
