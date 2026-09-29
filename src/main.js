@@ -94,6 +94,33 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
+// User Guide is a ShellUI card. history.back() does not dismiss it, and
+// closing the card from Settings lands on Settings. Kill this process so
+// ShellUI relaunches on the Games home tab.
+async function closeUserGuideToGames(chain, log) {
+  log("done — closing User Guide, going to Games", "info");
+  await new Promise((resolve) => setTimeout(resolve, 6000));
+
+  try {
+    window.close();
+  } catch (e) {}
+  try {
+    if (typeof history.length === "number" && history.length > 1) {
+      history.go(1 - history.length);
+    } else {
+      history.back();
+    }
+  } catch (e) {}
+
+  try {
+    const pid = await chain.syscall(SYS_GETPID);
+    await chain.syscall(SYS_KILL, pid.low | 0, 15);
+    await chain.syscall(SYS_EXIT, 0);
+  } catch (e) {
+    log("press Circle, then open Games", "info");
+  }
+}
+
 function jbmark(tag, detail) {
   try {
     if (window.jb && typeof window.jb.mark === "function")
@@ -284,9 +311,7 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    log("done — closing card", "info");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    history.back();
+    await closeUserGuideToGames(chain, log);
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
