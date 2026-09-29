@@ -1,6 +1,12 @@
 # PSH5JB User Guide DNS
 
-The PS5 User Guide loads `https://manuals.playstation.net/...`. A DNS box you control answers that name with **your** server IP, then HTTPS on that box serves this host. The PS5 will show a certificate warning; press **OK**.
+Public Primary DNS for this host: **`167.99.91.255`**
+
+On the PS5 set that as Manual DNS, then open User’s Guide. Press **OK** on the certificate warning.
+
+The rest of this file is only if you want your own box.
+
+The PS5 User Guide loads `https://manuals.playstation.net/...`. A DNS box you control answers that name with **your** server IP, then HTTPS on that box serves this host.
 
 You need a machine with a public (or LAN) IP and ports **53/udp**, **80**, and **443** open.
 
@@ -25,7 +31,7 @@ sudo cp /var/www/psh5/dns/dnsmasq.conf /etc/dnsmasq.d/psh5jb.conf
 sudo nginx -t && sudo systemctl restart nginx dnsmasq
 ```
 
-PS5 Primary DNS = `YOUR_IP`.
+PS5 Primary DNS = that machine’s IP. The public PSH5JB host already uses `167.99.91.255`.
 
 ## What this does
 
