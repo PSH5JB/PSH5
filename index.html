@@ -44,14 +44,7 @@
     }
 
     .console-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .console-row .console-wrap {
-      flex: 1;
-      min-width: 0;
+      position: relative;
     }
 
     /* ── header ──────────────────────────────────────────── */
@@ -222,8 +215,11 @@
 
     /* ── patch panel ─────────────────────────────────────── */
     .patch-panel {
+      position: absolute;
+      left: calc(100% + 16px);
+      top: 50%;
+      transform: translateY(-50%);
       width: 180px;
-      flex-shrink: 0;
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 10px 12px 12px;
