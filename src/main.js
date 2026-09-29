@@ -284,9 +284,7 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    log("done — closing card", "info");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    history.back();
+    log("done — etaHEN will leave User Guide for Home", "info");
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");

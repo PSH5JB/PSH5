@@ -153,6 +153,40 @@ async function sendElf(name, payload, p, chain) {
   }
 }
 
+const O_RDONLY = 0;
+const O_WRONLY = 1;
+const O_CREAT = 0x200;
+const O_TRUNC = 0x400;
+
+async function writeEtaHenOpenHome(p, chain, log) {
+  try {
+    await chain.syscall(SYS_MKDIR, p.stringify("/data/etaHEN"), 0o755);
+    const path = p.stringify("/data/etaHEN/config.ini");
+    let text = "";
+    const rdfd = (await chain.syscall(SYS_OPEN, path, O_RDONLY, 0)).low | 0;
+    if (rdfd >= 0) {
+      const buf = p.malloc(0x2000, 1);
+      const n = (await chain.syscall(SYS_READ, rdfd, buf, 0x1fff)).low | 0;
+      await chain.syscall(SYS_CLOSE, rdfd);
+      if (n > 0 && buf.backing) {
+        for (let i = 0; i < n; i++) text += String.fromCharCode(buf.backing[i]);
+      }
+    }
+    if (/StartOption\s*=\s*\d/.test(text))
+      text = text.replace(/StartOption\s*=\s*\d/, "StartOption=1");
+    else
+      text = text.replace(/\s+$/, "") + "\nStartOption=1\n";
+
+    const wfd = (await chain.syscall(SYS_OPEN, path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)).low | 0;
+    if (wfd < 0) return;
+    const data = p.malloc(text.length, 1);
+    for (let i = 0; i < text.length; i++) data.backing[i] = text.charCodeAt(i) & 0xff;
+    await chain.syscall(SYS_WRITE, wfd, data, text.length);
+    await chain.syscall(SYS_CLOSE, wfd);
+    log("etaHEN StartOption=Home");
+  } catch (e) {}
+}
+
 export async function loadOptionalPayloads(p, chain, log) {
   log("preparing optional payloads");
   const kstuff = await mapElf("kstuff.elf", p, chain);
@@ -163,6 +197,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await new Promise((resolve) => setTimeout(resolve, 3000));
   await sendElf("shadowmountplus.elf", shadowmount, p, chain);
   log("shadowmountplus.elf sent");
+  await writeEtaHenOpenHome(p, chain, log);
   await sendElf("etaHEN.elf", etaHEN, p, chain);
   log("etaHEN.elf sent");
 }
