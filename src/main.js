@@ -94,34 +94,6 @@ function watchR2(onPress) {
 
 const ROP_WAIT_MS = 20000;
 
-async function closeUserGuide(p, chain, log) {
-  for (let i = 10; i > 0; i--) {
-    log(`closing user guide in ${i}s…`, "success", true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  const HOME = "pshomeui:navigateToHome?bootCondition=psButton";
-  const off = window.SYMBOLS && window.SYMBOLS.libkernel &&
-    window.SYMBOLS.libkernel.sceKernelSendNotificationRequest;
-  if (off && p.libKernelBase) {
-    try {
-      const req = p.malloc(0xc30, 1);
-      for (let i = 0; i < 0xc30; i++) req.backing[i] = 0;
-      req.backing[0x2c] = 1;
-      const title = "Done";
-      for (let i = 0; i < title.length; i++) req.backing[0x2d + i] = title.charCodeAt(i);
-      for (let i = 0; i < HOME.length; i++) req.backing[0x42d + i] = HOME.charCodeAt(i);
-      await chain.call(p.libKernelBase.add32(off), 0, req, 0xc30, 0);
-    } catch (e) {}
-  }
-  try { window.location.replace(HOME); } catch (e) {}
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  try { window.close(); } catch (e) {}
-  try {
-    const pid = await chain.syscall(SYS_GETPID);
-    await chain.syscall(SYS_KILL, pid.low | 0, 9);
-  } catch (e) {}
-}
-
 function jbmark(tag, detail) {
   try {
     if (window.jb && typeof window.jb.mark === "function")
@@ -312,9 +284,8 @@ async function main(userlandRW) {
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
-  } finally {
-    await closeUserGuide(p, chain, log);
   }
+  log("press O to go back", "info");
 }
 
 const fwScript = document.createElement("script");
