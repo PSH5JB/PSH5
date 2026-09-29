@@ -157,22 +157,31 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       overflow: hidden;
-      position: relative;
     }
 
-    .console-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: url('./logo.jpg') center / 60% no-repeat;
-      opacity: 0.5;
-      pointer-events: none;
-      z-index: 0;
+    /* ── discord QR ──────────────────────────────────────── */
+    .discord-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
     }
 
-    .console-bar, #console {
-      position: relative;
-      z-index: 1;
+    .discord-qr img {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .discord-qr span {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-align: center;
+      width: 110px;
     }
 
     .console-bar {
@@ -260,8 +269,14 @@
       <div id="console"></div>
     </div>
 
-    <div class="credits">
-      Credits <b>//</b> ntfargo · ufm42 · Sonic_Iso · Jordy · Dr. Yenyen · TheFlow · SlidyBat · Flatz · cow · nhk · bollarz · Sleirsgoevy · EchoStretch · EarthOnion
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+      <div class="credits">
+        Credits <b>//</b> ntfargo · ufm42 · Sonic_Iso · Jordy · Dr. Yenyen · TheFlow · SlidyBat · Flatz · cow · nhk · bollarz · Sleirsgoevy · EchoStretch · EarthOnion
+      </div>
+      <div class="discord-qr">
+        <img src="./logo.jpg" alt="Discord QR">
+        <span>Scan To Join My Discord</span>
+      </div>
     </div>
 
   </div>
