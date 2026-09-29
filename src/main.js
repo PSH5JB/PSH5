@@ -294,10 +294,11 @@ async function main(userlandRW) {
     const { loadOptionalPayloads } = await import("./kexp.js");
     await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     if (window.setStage) window.setStage("payloads", "done");
-    await closeUserGuideCard(chain, log);
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
+  } finally {
+    await closeUserGuideCard(chain, log);
   }
 }
 
