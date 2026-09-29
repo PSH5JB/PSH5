@@ -95,8 +95,8 @@ function watchR2(onPress) {
 const ROP_WAIT_MS = 20000;
 
 async function closeUserGuide(chain, log) {
-  log("done — closing User Guide in 8s", "info");
-  for (let left = 8; left > 0; left--) {
+  log("done — waiting for etaHEN, then closing User Guide", "info");
+  for (let left = 13; left > 0; left--) {
     log("closing in " + left + "s", "info", true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
