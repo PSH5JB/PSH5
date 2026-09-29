@@ -271,20 +271,6 @@ async function prepareRop(p) {
   return { p: runtime, chain };
 }
 
-async function closeBrowser(chain) {
-  for (let i = 5; i > 0; i--) {
-    log(`closing in ${i}s…`, "success", true);
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  try { window.close(); } catch (e) {}
-  await new Promise((r) => setTimeout(r, 500));
-  try { await chain.syscall(0x001, 0); } catch (e) {}
-  try {
-    const pid = await chain.syscall(SYS_GETPID);
-    await chain.syscall(SYS_KILL, pid.low | 0, 9);
-  } catch (e) {}
-}
-
 async function main(userlandRW) {
   const { p, chain } = await prepareRop(userlandRW);
   const { runKernelExploit } = await import("./relapse_exploit.js");
@@ -301,9 +287,8 @@ async function main(userlandRW) {
   } catch (error) {
     log(error instanceof Error ? error.message : String(error), "error");
     if (window.setStage) window.setStage("payloads", "error");
-  } finally {
-    await closeBrowser(chain);
   }
+  log("done", "success");
 }
 
 const fwScript = document.createElement("script");
