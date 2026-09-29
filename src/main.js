@@ -76,8 +76,8 @@ async function findWorkerReturnSlot(p, stack, libKernelBase) {
   throw new Error(`worker wait return fingerprint count ${lastCount}, expected 1`);
 }
 
-function log(message, type = "log") {
-  window.writeLog(message, type);
+function log(message, type = "log", replace = false) {
+  window.writeLog(message, type, replace);
 }
 
 function watchR2(onPress) {
@@ -97,7 +97,7 @@ const ROP_WAIT_MS = 20000;
 async function closeUserGuide(chain, log) {
   log("done — waiting for etaHEN, then closing User Guide", "info");
   for (let left = 20; left > 0; left--) {
-    log("closing in " + left + "s", "info", true);
+    log("closing in " + left + "s - You can leave now if you want", "info", true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   try { window.close(); } catch (e) {}
