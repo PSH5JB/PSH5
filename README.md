@@ -1,22 +1,29 @@
-# PS5 Relapse Exploit
-Supported firmware: 7.00 through 13.60.
+# PSH5JB
 
-## Usage
-- In the network settings, set Primary DNS to `45.56.67.85` (Recommended)
-- Run `python serve.py` locally, or open https://ntfargo.github.io/Relapse-Exploit/ on the PS5.
-- The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
-- After elfldr starts on port `9021`, you can press R2 to send `kstuff.elf`, `shadowmountplus.elf`, then `etaHEN.elf`.
+PS5 jailbreak host for firmware **7.00–13.60**.
 
-## Stability notes
-Webkit may need several attempts, reload the page if the browser stalls. The kernel exploit may hang or panic the console, so reboot before trying again if that happens.
+**Website:** https://psh5jb.github.io/PSH5/
 
-## Exploit chain
-Browser stage uses JSC info leaks and a structured clone object pool mismatch to corrupt a typedarray. The kernel stage combines a address leak with an `aio_multi_wait` uaf race to establish kernel r/w.
+## Open it on the PS5
 
-## Credits
-ntfargo, ufm42, Sonic-Iso, Jordy, Dr. Yenyen, TheFlow, SlidyBat,  Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion.
+On the PS5 browser, go to:
 
-## Disclaimer
-This project is intended for **educational and security research purposes only**. It does not endorse piracy, unauthorized access, or misuse of commercial devices. Use it only on devices you own or are authorized to test, and comply with applicable laws and regulations.
+https://psh5jb.github.io/PSH5/
 
-The software is provided as-is, without warranty. You assume the risks of using it, including system instability, data loss, and account bans. The maintainers accept no liability for resulting damage. 
+Leave the page open. It runs WebKit, then kernel, then loads **kstuff**, **ShadowMountPlus**, and **etaHEN** on its own.
+
+## User Guide (auto-connect)
+
+The User Guide only opens this host if the PS5’s DNS sends `manuals.playstation.net` to a server you control. GitHub Pages cannot do that by itself.
+
+1. Stand up the DNS box in [`dns/`](dns/).
+2. On the PS5: **Settings → Network → Set Up Internet Connection** → your Wi-Fi/LAN → **Advanced Settings → DNS Settings → Manual**.
+3. **Primary DNS** = that server’s IP. Leave Secondary blank.
+4. **Settings → User’s Guide, Health and Safety, and Other Information → User’s Guide**.
+5. If a certificate warning appears, press **OK**.
+
+Until that DNS IP is live, use the website link above.
+
+## If it stalls
+
+Reload the page if the browser freezes. If the kernel stage hangs, reboot the PS5 and try again.
