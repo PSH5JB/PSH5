@@ -84,15 +84,37 @@ function cstring(p, text) {
   return buf;
 }
 
-function readDirentName(p, entry, namlen) {
+function readCString(p, addr, max) {
   let name = "";
-  const n = namlen > 0 ? namlen : 255;
+  const n = max > 0 ? max : 255;
   for (let i = 0; i < n; i++) {
-    const c = p.read1(entry.add32(8 + i)) & 0xff;
+    const c = p.read1(addr.add32(i)) & 0xff;
     if (c === 0) break;
+    if (c < 0x20 || c > 0x7e) return "";
     name += String.fromCharCode(c);
   }
   return name;
+}
+
+function parseDirents(p, buf, n) {
+  const walk = (reclenAt, typeAt, nameAt, minRec) => {
+    const entries = [];
+    for (let pos = 0; pos < n; ) {
+      const reclen = p.read2(buf.add32(pos + reclenAt)) & 0xffff;
+      if (reclen < minRec || reclen > n - pos) return null;
+      const type = p.read1(buf.add32(pos + typeAt)) & 0xff;
+      const name = readCString(p, buf.add32(pos + nameAt), reclen - nameAt);
+      if (name && name !== "." && name !== "..")
+        entries.push({ name, type });
+      pos += reclen;
+    }
+    return entries;
+  };
+  const freebsd11 = walk(4, 6, 8, 8);
+  if (freebsd11 && freebsd11.length) return freebsd11;
+  const ino64 = walk(16, 18, 24, 24);
+  if (ino64) return ino64;
+  return freebsd11 || [];
 }
 
 export async function notify(p, chain, message) {
@@ -115,26 +137,25 @@ async function listDir(p, chain, dirPath) {
   const fd = sysRv(await chain.syscall(SYS_OPEN, cstring(p, dirPath), 0, 0));
   if (fd < 0) return [];
   const buf = p.malloc(0x1000, 1);
+  const basep = p.malloc(8, 1);
   const entries = [];
   try {
     for (;;) {
-      const n = sysRv(await chain.syscall(SYS_GETDENTS, fd, buf, 0x1000));
+      p.write8(basep, new int64(0, 0));
+      const n = sysRv(await chain.syscall(SYS_GETDENTS, fd, buf, 0x1000, basep));
       if (n <= 0) break;
-      for (let pos = 0; pos < n; ) {
-        const reclen = p.read2(buf.add32(pos + 4)) & 0xffff;
-        if (reclen < 8) break;
-        const type = p.read1(buf.add32(pos + 6)) & 0xff;
-        const namlen = p.read1(buf.add32(pos + 7)) & 0xff;
-        const name = readDirentName(p, buf.add32(pos), namlen);
-        if (name && name !== "." && name !== "..")
-          entries.push({ name, type });
-        pos += reclen;
-      }
+      entries.push.apply(entries, parseDirents(p, buf, n));
     }
   } finally {
     await chain.syscall(SYS_CLOSE, fd);
   }
   return entries;
+}
+
+async function unlinkPath(p, chain, path) {
+  if (chain.syscalls[SYS_CHFLAGS])
+    await chain.syscall(SYS_CHFLAGS, cstring(p, path), 0);
+  return sysRv(await chain.syscall(SYS_UNLINK, cstring(p, path)));
 }
 
 async function rmTree(p, chain, path, depth) {
@@ -146,33 +167,38 @@ async function rmTree(p, chain, path, depth) {
       await rmTree(p, chain, child, depth + 1);
       continue;
     }
-    const un = sysRv(await chain.syscall(SYS_UNLINK, cstring(p, child)));
-    if (un !== 0 && (type === 0 || un === -21))
+    const un = await unlinkPath(p, chain, child);
+    if (un !== 0)
       await rmTree(p, chain, child, depth + 1);
   }
   const rm = sysRv(await chain.syscall(SYS_RMDIR, cstring(p, path)));
   if (rm !== 0)
-    await chain.syscall(SYS_UNLINK, cstring(p, path));
+    await unlinkPath(p, chain, path);
 }
 
 export async function sweepEtaHEN(p, chain, log) {
   const say = typeof log === "function" ? log : () => {};
-  const existed = await pathExists(p, chain, ETAHEN_DIR);
-  const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
-  if (!existed)
-    return { existed: false, removed: false, onionPresent };
+  try {
+    const existed = await pathExists(p, chain, ETAHEN_DIR);
+    const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
+    if (!existed)
+      return { existed: false, removed: false, onionPresent };
 
-  say("removing /data/etaHEN");
-  await rmTree(p, chain, ETAHEN_DIR, 0);
-  const removed = !(await pathExists(p, chain, ETAHEN_DIR));
-  if (removed) {
-    say("etaHEN has been removed");
-    await notify(p, chain, "etaHEN has been removed");
-  } else {
-    say("could not fully remove /data/etaHEN");
-    await notify(p, chain, "could not fully remove /data/etaHEN");
+    say("removing /data/etaHEN");
+    await rmTree(p, chain, ETAHEN_DIR, 0);
+    const removed = !(await pathExists(p, chain, ETAHEN_DIR));
+    if (removed) {
+      say("etaHEN has been removed");
+      await notify(p, chain, "etaHEN has been removed");
+    } else {
+      say("left leftover /data/etaHEN — continuing jailbreak");
+      await notify(p, chain, "left leftover /data/etaHEN");
+    }
+    return { existed: true, removed, onionPresent };
+  } catch (error) {
+    say("etaHEN cleanup skipped — continuing jailbreak");
+    return { existed: false, removed: false, onionPresent: false, error };
   }
-  return { existed: true, removed, onionPresent };
 }
 
 function resolveSymbols(p) {
