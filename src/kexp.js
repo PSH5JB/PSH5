@@ -160,7 +160,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   const etaHEN = await mapElf("etaHEN.elf", p, chain);
   await sendElf("kstuff.elf", kstuff, p, chain);
   log("kstuff.elf sent");
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  await new Promise((resolve) => setTimeout(resolve, 1500));
   await sendElf("shadowmountplus.elf", shadowmount, p, chain);
   log("shadowmountplus.elf sent");
   await sendElf("etaHEN.elf", etaHEN, p, chain);
