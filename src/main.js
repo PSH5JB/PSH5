@@ -88,6 +88,7 @@ function watchR2(onPress) {
     onPress();
   }
 
+  log("press R2 to load kstuff, shadowmountplus and etaHEN", "info");
   window.addEventListener("keydown", onKey, true);
 }
 
@@ -272,19 +273,22 @@ async function prepareRop(p) {
 
 async function main(userlandRW) {
   const { p, chain } = await prepareRop(userlandRW);
-  const { runKernelExploit } = await import("./relapse_exploit.js?v=" + Date.now());
+  const { runKernelExploit } = await import("./relapse_exploit.js");
   const result = await runKernelExploit(p, chain, log);
   if (!result || !result.done)
     throw new Error("kernel exploit did not finish");
 
-  log("kernel exploit complete", "info");
   if (result.payloads) {
-    try {
-      const { loadOptionalPayloads } = await import("./kexp.js?v=" + Date.now());
-      await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
-    } catch (error) {
-      log(error instanceof Error ? error.message : String(error), "error");
-    }
+    log("kernel exploit complete", "info");
+    log("elfldr is listening on port 9021", "info");
+    watchR2(async () => {
+      try {
+        const { loadOptionalPayloads } = await import("./kexp.js");
+        await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+      } catch (error) {
+        log(error instanceof Error ? error.message : String(error), "error");
+      }
+    });
   } else {
     log("kernel chain complete: root and sandbox escape are active", "info");
   }
