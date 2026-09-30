@@ -1,34 +1,22 @@
-# PSH5JB
+# PS5 Relapse Exploit
+Supported firmware: 7.00 through 13.60.
 
-PS5 jailbreak host for firmware **7.00–13.60**.
+## Usage
+- In the network settings, set Primary DNS to `45.56.67.85` (Recommended)
+- Run `python serve.py` locally, or open https://ntfargo.github.io/Relapse-Exploit/ on the PS5.
+- The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
+- After elfldr starts on port `9021`, you can press R2 to send `kstuff.elf`, `shadowmountplus.elf`, then `etaHEN.elf`.
 
-**Website:** https://psh5jb.github.io/PSH5/
+## Stability notes
+Webkit may need several attempts, reload the page if the browser stalls. The kernel exploit may hang or panic the console, so reboot before trying again if that happens.
 
-**User Guide DNS:** `167.99.91.255`
+## Exploit chain
+Browser stage uses JSC info leaks and a structured clone object pool mismatch to corrupt a typedarray. The kernel stage combines a address leak with an `aio_multi_wait` uaf race to establish kernel r/w.
 
-## User Guide (auto-connect)
+## Credits
+ntfargo, ufm42, Sonic-Iso, Jordy, Dr. Yenyen, TheFlow, SlidyBat,  Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion.
 
-On the PS5:
+## Disclaimer
+This project is intended for **educational and security research purposes only**. It does not endorse piracy, unauthorized access, or misuse of commercial devices. Use it only on devices you own or are authorized to test, and comply with applicable laws and regulations.
 
-1. **Settings → Network → Set Up Internet Connection** → your Wi-Fi/LAN → **Advanced Settings → DNS Settings → Manual**.
-2. **Primary DNS** = `167.99.91.255`. Leave Secondary blank.
-3. Finish the connection, then open **Settings → User’s Guide, Health and Safety, and Other Information → User’s Guide**.
-4. If a certificate warning appears, press **OK**.
-
-The page runs WebKit, then kernel, then loads **kstuff**, **ShadowMountPlus**, and **etaHEN** on its own.
-
-This DNS also blocks PSN (sign-in, store, trophies) and system updates.
-
-## Browser
-
-On the PS5 browser, go to:
-
-https://psh5jb.github.io/PSH5/
-
-Leave the page open. Same chain as User Guide.
-
-## If it stalls
-
-Reload the page if the browser freezes. If the kernel stage hangs, reboot the PS5 and try again.
-
-To run your own DNS box instead of the public IP above, see [`dns/`](dns/).
+The software is provided as-is, without warranty. You assume the risks of using it, including system instability, data loss, and account bans. The maintainers accept no liability for resulting damage. 
