@@ -155,16 +155,23 @@ async function sendElf(name, payload, p, chain) {
 
 export async function loadOptionalPayloads(p, chain, log) {
   log("preparing optional payloads");
+  log("mapping kstuff.elf");
   const kstuff = await mapElf("kstuff.elf", p, chain);
+  log("mapping shadowmountplus.elf");
   const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
-  const onionHEN = await mapElf("OnionHEN.elf", p, chain);
+  log("mapping pldmgr_v0.5.2.elf");
+  const pldmgr = await mapElf("pldmgr_v0.5.2.elf", p, chain);
+  log("all mapped, sending kstuff.elf");
   await sendElf("kstuff.elf", kstuff, p, chain);
   log("kstuff.elf sent");
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+  log("sending shadowmountplus.elf");
   await sendElf("shadowmountplus.elf", shadowmount, p, chain);
   log("shadowmountplus.elf sent");
-  await sendElf("OnionHEN.elf", onionHEN, p, chain);
-  log("OnionHEN.elf sent");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  log("sending pldmgr_v0.5.2.elf");
+  await sendElf("pldmgr_v0.5.2.elf", pldmgr, p, chain);
+  log("pldmgr_v0.5.2.elf sent");
 }
 
 function patchShellcode(blob, symbols) {

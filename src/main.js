@@ -76,8 +76,8 @@ async function findWorkerReturnSlot(p, stack, libKernelBase) {
   throw new Error(`worker wait return fingerprint count ${lastCount}, expected 1`);
 }
 
-function log(message, type = "log", replace = false) {
-  window.writeLog(message, type, replace);
+function log(message, type = "log") {
+  window.writeLog(message, type);
 }
 
 function watchR2(onPress) {
@@ -88,7 +88,6 @@ function watchR2(onPress) {
     onPress();
   }
 
-  log("press R2 to load kstuff, shadowmountplus and etaHEN", "info");
   window.addEventListener("keydown", onKey, true);
 }
 
@@ -273,22 +272,22 @@ async function prepareRop(p) {
 
 async function main(userlandRW) {
   const { p, chain } = await prepareRop(userlandRW);
-  const { runKernelExploit } = await import("./relapse_exploit.js");
+  const { runKernelExploit } = await import("./relapse_exploit.js?v=" + Date.now());
   const result = await runKernelExploit(p, chain, log);
   if (!result || !result.done)
     throw new Error("kernel exploit did not finish");
 
   log("kernel exploit complete", "info");
-  if (window.setStage) { window.setStage("kernel", "done"); window.setStage("payloads", "active"); }
-  try {
-    const { loadOptionalPayloads } = await import("./kexp.js");
-    await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
-    if (window.setStage) window.setStage("payloads", "done");
-  } catch (error) {
-    log(error instanceof Error ? error.message : String(error), "error");
-    if (window.setStage) window.setStage("payloads", "error");
+  if (result.payloads) {
+    try {
+      const { loadOptionalPayloads } = await import("./kexp.js?v=" + Date.now());
+      await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+    } catch (error) {
+      log(error instanceof Error ? error.message : String(error), "error");
+    }
+  } else {
+    log("kernel chain complete: root and sandbox escape are active", "info");
   }
-  log("done", "success");
 }
 
 const fwScript = document.createElement("script");
