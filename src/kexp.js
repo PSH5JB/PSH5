@@ -281,15 +281,24 @@ async function sendElf(name, payload, p, chain) {
   }
 }
 
+async function sendOne(name, p, chain, log) {
+  log("mapping " + name);
+  const mapped = await mapElf(name, p, chain);
+  log("sending " + name + " to elfldr :9021");
+  await sendElf(name, mapped, p, chain);
+  log(name + " sent");
+}
+
 export async function loadOptionalPayloads(p, chain, log) {
   // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
   log("preparing OnionHEN");
-  log("mapping OnionHEN.elf");
-  const onionHEN = await mapElf("OnionHEN.elf", p, chain);
-  log("sending OnionHEN.elf to elfldr :9021");
-  await sendElf("OnionHEN.elf", onionHEN, p, chain);
+  await sendOne("OnionHEN.elf", p, chain, log);
   log("OnionHEN.elf sent — wait for util, kstuff, then Toolbox");
+  await new Promise((resolve) => setTimeout(resolve, 8000));
+  log("preparing Payload Manager");
+  await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
+  log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
   log("done - press the PS button to go home");
   await notify(p, chain, "done - press the PS button to go home");
 }

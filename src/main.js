@@ -88,7 +88,7 @@ function watchR2(onPress) {
     onPress();
   }
 
-  log("press R2 to load OnionHEN", "info");
+  log("press R2 to load OnionHEN and Payload Manager", "info");
   window.addEventListener("keydown", onKey, true);
 }
 
