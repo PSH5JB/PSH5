@@ -3,6 +3,11 @@ import { int64 } from "./utils/int64.js";
 const O_NONBLOCK = 0x4;
 const PROT_RW = 0x3, PROT_RWX = 0x7;
 const MAP_SHARED = 0x1, MAP_PRIVATE_ANON = 0x1002;
+const DT_DIR = 4;
+const NOTIFY_SIZE = 0xc30;
+const NOTIFY_MESSAGE = 0x2d;
+const ETAHEN_DIR = "/data/etaHEN";
+const ONIONHEN_DIR = "/data/OnionHEN";
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -67,6 +72,107 @@ function matches(bytes, offset, expected) {
 
 function hex(value) {
   return "0x" + (value instanceof int64 ? value.toString(16) : (Number(value) >>> 0).toString(16));
+}
+
+function sysRv(value) {
+  return value.low | 0;
+}
+
+function cstring(p, text) {
+  const buf = p.malloc(text.length + 1, 1);
+  p.writestr(buf, text);
+  return buf;
+}
+
+function readDirentName(p, entry, namlen) {
+  let name = "";
+  const n = namlen > 0 ? namlen : 255;
+  for (let i = 0; i < n; i++) {
+    const c = p.read1(entry.add32(8 + i)) & 0xff;
+    if (c === 0) break;
+    name += String.fromCharCode(c);
+  }
+  return name;
+}
+
+export async function notify(p, chain, message) {
+  const offset = window.SYMBOLS && window.SYMBOLS.libkernel
+    && window.SYMBOLS.libkernel.sceKernelSendNotificationRequest;
+  if (typeof offset !== "number" || !p.libKernelBase) return;
+  try {
+    const req = p.malloc(NOTIFY_SIZE, 1);
+    for (let i = 0; i < NOTIFY_SIZE; i += 4) p.write4(req.add32(i), 0);
+    p.writestr(req.add32(NOTIFY_MESSAGE), message);
+    await chain.call(p.libKernelBase.add32(offset), 0, req, NOTIFY_SIZE, 0);
+  } catch (_) {}
+}
+
+async function pathExists(p, chain, path) {
+  return sysRv(await chain.syscall(SYS_ACCESS, cstring(p, path), 0)) === 0;
+}
+
+async function listDir(p, chain, dirPath) {
+  const fd = sysRv(await chain.syscall(SYS_OPEN, cstring(p, dirPath), 0, 0));
+  if (fd < 0) return [];
+  const buf = p.malloc(0x1000, 1);
+  const entries = [];
+  try {
+    for (;;) {
+      const n = sysRv(await chain.syscall(SYS_GETDENTS, fd, buf, 0x1000));
+      if (n <= 0) break;
+      for (let pos = 0; pos < n; ) {
+        const reclen = p.read2(buf.add32(pos + 4)) & 0xffff;
+        if (reclen < 8) break;
+        const type = p.read1(buf.add32(pos + 6)) & 0xff;
+        const namlen = p.read1(buf.add32(pos + 7)) & 0xff;
+        const name = readDirentName(p, buf.add32(pos), namlen);
+        if (name && name !== "." && name !== "..")
+          entries.push({ name, type });
+        pos += reclen;
+      }
+    }
+  } finally {
+    await chain.syscall(SYS_CLOSE, fd);
+  }
+  return entries;
+}
+
+async function rmTree(p, chain, path, depth) {
+  if (depth > 32) return;
+  const entries = await listDir(p, chain, path);
+  for (const { name, type } of entries) {
+    const child = path.endsWith("/") ? path + name : path + "/" + name;
+    if (type === DT_DIR) {
+      await rmTree(p, chain, child, depth + 1);
+      continue;
+    }
+    const un = sysRv(await chain.syscall(SYS_UNLINK, cstring(p, child)));
+    if (un !== 0 && (type === 0 || un === -21))
+      await rmTree(p, chain, child, depth + 1);
+  }
+  const rm = sysRv(await chain.syscall(SYS_RMDIR, cstring(p, path)));
+  if (rm !== 0)
+    await chain.syscall(SYS_UNLINK, cstring(p, path));
+}
+
+export async function sweepEtaHEN(p, chain, log) {
+  const say = typeof log === "function" ? log : () => {};
+  const existed = await pathExists(p, chain, ETAHEN_DIR);
+  const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
+  if (!existed)
+    return { existed: false, removed: false, onionPresent };
+
+  say("removing /data/etaHEN");
+  await rmTree(p, chain, ETAHEN_DIR, 0);
+  const removed = !(await pathExists(p, chain, ETAHEN_DIR));
+  if (removed) {
+    say("etaHEN has been removed");
+    await notify(p, chain, "etaHEN has been removed");
+  } else {
+    say("could not fully remove /data/etaHEN");
+    await notify(p, chain, "could not fully remove /data/etaHEN");
+  }
+  return { existed: true, removed, onionPresent };
 }
 
 function resolveSymbols(p) {
@@ -154,17 +260,16 @@ async function sendElf(name, payload, p, chain) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
-  log("preparing optional payloads");
-  const kstuff = await mapElf("kstuff.elf", p, chain);
-  const shadowmount = await mapElf("shadowmountplus.elf", p, chain);
-  const etaHEN = await mapElf("etaHEN.elf", p, chain);
-  await sendElf("kstuff.elf", kstuff, p, chain);
-  log("kstuff.elf sent");
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-  await sendElf("shadowmountplus.elf", shadowmount, p, chain);
-  log("shadowmountplus.elf sent");
-  await sendElf("etaHEN.elf", etaHEN, p, chain);
-  log("etaHEN.elf sent");
+  // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
+  // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
+  log("preparing OnionHEN");
+  log("mapping OnionHEN.elf");
+  const onionHEN = await mapElf("OnionHEN.elf", p, chain);
+  log("sending OnionHEN.elf to elfldr :9021");
+  await sendElf("OnionHEN.elf", onionHEN, p, chain);
+  log("OnionHEN.elf sent — wait for util, kstuff, then Toolbox");
+  log("done - press the PS button to go home");
+  await notify(p, chain, "done - press the PS button to go home");
 }
 
 function patchShellcode(blob, symbols) {

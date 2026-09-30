@@ -88,7 +88,7 @@ function watchR2(onPress) {
     onPress();
   }
 
-  log("press R2 to load kstuff, shadowmountplus and etaHEN", "info");
+  log("press R2 to load OnionHEN", "info");
   window.addEventListener("keydown", onKey, true);
 }
 
@@ -277,6 +277,10 @@ async function main(userlandRW) {
   const result = await runKernelExploit(p, chain, log);
   if (!result || !result.done)
     throw new Error("kernel exploit did not finish");
+
+  if (result.restart) {
+    return;
+  }
 
   if (result.payloads) {
     log("kernel exploit complete", "info");
