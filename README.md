@@ -6,6 +6,7 @@ Supported firmware: 7.00 through 13.60.
 - Run `python serve.py` locally, or open https://ntfargo.github.io/Relapse-Exploit/ on the PS5.
 - The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
 - After elfldr starts on port `9021`, the host auto-sends `payloads/OnionHEN.elf`, waits for the HEN stack, then sends `payloads/pldmgr_v0.5.2.elf` (do not send kstuff/etaHEN first). Payload Manager is then at `http://<PS5>:8084`.
+- OnionHEN auto-starts a built-in FTP server on TCP `1337`.
 
 ## Stability notes
 Webkit may need several attempts, reload the page if the browser stalls. The kernel exploit may hang or panic the console, so reboot before trying again if that happens.
