@@ -184,13 +184,9 @@ export async function sweepEtaHEN(p, chain, log) {
     if (!existed)
       return { existed: false, removed: false, onionPresent };
 
-    say("removing /data/etaHEN");
     await rmTree(p, chain, ETAHEN_DIR, 0);
     const removed = !(await pathExists(p, chain, ETAHEN_DIR));
-    if (removed) {
-      say("etaHEN has been removed");
-      await notify(p, chain, "etaHEN has been removed");
-    } else {
+    if (!removed) {
       say("left leftover /data/etaHEN — continuing jailbreak");
       await notify(p, chain, "left leftover /data/etaHEN");
     }
