@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>PSH5JB</title>
   <style>
     /* ── tokens ─────────────────────────────────────────── */
@@ -105,6 +104,39 @@
       color: var(--muted);
       letter-spacing: 0.1em;
     }
+    #fw-label.fw-ok { color: var(--ok); }
+    #fw-label.fw-bad { color: var(--bad); }
+
+    #fw-picker {
+      display: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 12px;
+    }
+    #fw-picker-title {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    #fw-picker-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .fw-btn {
+      background: #101828;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .fw-btn-on, .fw-btn:hover { border-color: var(--accent); color: #fff; }
 
     /* ── stages ──────────────────────────────────────────── */
     .stages {
@@ -208,43 +240,30 @@
       line-height: 1.4;
     }
 
+    .console-qr .patch-notes {
+      width: 220px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .console-qr .patch-notes strong {
+      display: block;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
     .console-bar, #console {
       position: relative;
       z-index: 1;
-    }
-
-    /* ── patch panel ─────────────────────────────────────── */
-    .patch-panel {
-      position: absolute;
-      left: calc(100% + 16px);
-      top: 0;
-      bottom: 0;
-      width: 180px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .patch-panel-hdr {
-      background: var(--border);
-      padding: 5px 12px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .patch-panel-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px 12px 12px;
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.7;
     }
 
     .console-bar {
@@ -270,8 +289,8 @@
 
     #console {
       padding: 12px 244px 12px 14px;
-      min-height: 430px;
-      max-height: 560px;
+      min-height: 520px;
+      max-height: 640px;
       overflow-y: auto;
       line-height: 1.95;
       font-size: 12px;
@@ -308,6 +327,11 @@
       <div id="fw-label">Detecting firmware…</div>
     </div>
 
+    <div id="fw-picker">
+      <div id="fw-picker-title">Internet Browser — pick your firmware</div>
+      <div id="fw-picker-list"></div>
+    </div>
+
     <div class="stages">
       <div class="stage" id="stage-init">
         <span class="stage-label">Init</span>
@@ -336,12 +360,12 @@
         <div class="console-qr">
           <img src="./logo.jpg" alt="Discord QR">
           <span>Scan To Join My Discord</span>
+          <div class="patch-notes">
+            <strong>Patch Notes</strong>
+            30/09/2026<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.
+          </div>
         </div>
         <div id="console"></div>
-      </div>
-      <div class="patch-panel">
-        <div class="patch-panel-hdr">Patch Notes</div>
-        <div class="patch-panel-body">30/09/2026<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.</div>
       </div>
     </div>
 
@@ -350,7 +374,6 @@
     </div>
 
   </div>
-
   <script src="./src/firmware.js"></script>
   <script src="./src/main.js"></script>
   <script src="./src/rop.js"></script>

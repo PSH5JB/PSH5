@@ -13,8 +13,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
+    def do_GET(self):
+        path = (self.path or "").split("?", 1)[0]
+        if path == "/cache.appcache" or path == "/offline.appcache":
+            self.send_error(404, "obsolete")
+            return
+        return super().do_GET()
+
+    def guess_type(self, path):
+        if str(path).endswith(".appcache"):
+            return "text/cache-manifest"
+        return super().guess_type(path)
+
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store")
+        path = (self.path or "").split("?", 1)[0]
+        self.send_header("Access-Control-Allow-Origin", "*")
+        if path.endswith(".appcache"):
+            self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 
 def local_ip():

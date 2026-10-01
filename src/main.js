@@ -285,7 +285,7 @@ async function main(userlandRW) {
   if (result.payloads) {
     log("kernel exploit complete", "info");
     try {
-      const { loadOptionalPayloads } = await import("./kexp.js?v=" + Date.now());
+      const { loadOptionalPayloads } = await import("./kexp.js");
       await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
     } catch (error) {
       log(error instanceof Error ? error.message : String(error), "error");
@@ -294,8 +294,3 @@ async function main(userlandRW) {
     log("kernel chain complete: root and sandbox escape are active", "info");
   }
 }
-
-const fwScript = document.createElement("script");
-document.body.appendChild(fwScript);
-
-fwScript.setAttribute("src", `offsets/${window.fw_str}.js?v=` + Date.now());

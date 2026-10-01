@@ -1,6 +1,8 @@
 import { int64 } from "./utils/int64.js";
 
 const O_NONBLOCK = 0x4;
+const O_WRONLY_CREAT_TRUNC = 0x601;
+const MODE_0777 = 0x1ff;
 const PROT_RW = 0x3, PROT_RWX = 0x7;
 const MAP_SHARED = 0x1, MAP_PRIVATE_ANON = 0x1002;
 const DT_DIR = 4;
@@ -8,6 +10,14 @@ const NOTIFY_SIZE = 0xc30;
 const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
+const AUTOLOADER_DIR = "/data/ps5_autoloader";
+const AUTOLOADER_APP = "/user/app/WKAL00001";
+const AUTOLOADER_PARAM = "/user/app/WKAL00001/sce_sys/param.json";
+const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
+const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
+const AUTOLOAD_TXT = "OnionHEN.elf\n!8000\npldmgr_v0.5.2.elf\n";
+const SAVED_TOAST = "Saved in WebKit Autoloader - reboot, then open that app";
+const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -220,6 +230,17 @@ function resolveSymbols(p) {
 }
 
 async function fetchBinary(name) {
+  if (window.payloadStore && typeof window.payloadStore.get === "function") {
+    const cached = await window.payloadStore.get(name);
+    if (cached && cached.length) return cached;
+  }
+  if (typeof window.loadBinary === "function") {
+    const data = await window.loadBinary("payloads/" + name);
+    if (window.payloadStore && typeof window.payloadStore.put === "function") {
+      try { await window.payloadStore.put(name, data); } catch (_) {}
+    }
+    return data;
+  }
   const response = await fetch("payloads/" + name);
   if (!response.ok) throw new Error("kexp: " + name + " returned HTTP " + response.status);
   return new Uint8Array(await response.arrayBuffer());
@@ -236,8 +257,11 @@ async function mapElf(name, p, chain) {
     throw new Error("kexp: " + name + " mmap failed");
 
   const dwords = elf.length & ~3;
-  for (let offset = 0; offset < dwords; offset += 4)
+  for (let offset = 0; offset < dwords; offset += 4) {
     p.write4(base.add32(offset), readU32(elf, offset));
+    if (offset && (offset & 0x3ffff) === 0)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+  }
   for (let offset = dwords; offset < elf.length; offset++)
     p.write1(base.add32(offset), elf[offset]);
   if (p.read4(base) >>> 0 !== 0x464c457f)
@@ -271,7 +295,7 @@ async function sendElf(name, payload, p, chain) {
   const fd = await connectToElfldr(p, chain);
   try {
     for (let offset = 0; offset < payload.size;) {
-      const length = Math.min(0x10000, payload.size - offset);
+      const length = Math.min(0x40000, payload.size - offset);
       const written = (await chain.syscall(SYS_WRITE, fd, payload.base.add32(offset), length)).low | 0;
       if (written <= 0) throw new Error(name + " socket write failed");
       offset += written;
@@ -287,20 +311,105 @@ async function sendOne(name, p, chain, log) {
   log("sending " + name + " to elfldr :9021");
   await sendElf(name, mapped, p, chain);
   log(name + " sent");
+  return mapped;
+}
+
+async function ensureDir(p, chain, path) {
+  if (await pathExists(p, chain, path)) return true;
+  const rv = sysRv(await chain.syscall(SYS_MKDIR, cstring(p, path), MODE_0777));
+  if (rv === 0 || (await pathExists(p, chain, path))) return true;
+  return false;
+}
+
+async function writeBuf(p, chain, path, buf, length) {
+  const fd = sysRv(await chain.syscall(
+    SYS_OPEN, cstring(p, path), O_WRONLY_CREAT_TRUNC, MODE_0777));
+  if (fd < 0) throw new Error("open " + path + " failed (" + fd + ")");
+  try {
+    for (let offset = 0; offset < length; ) {
+      const chunk = Math.min(0x40000, length - offset);
+      const written = sysRv(await chain.syscall(SYS_WRITE, fd, buf.add32(offset), chunk));
+      if (written <= 0) throw new Error("write " + path + " failed (" + written + ")");
+      offset += written;
+    }
+  } finally {
+    await chain.syscall(SYS_CLOSE, fd);
+  }
+}
+
+async function writeTextFile(p, chain, path, text) {
+  await writeBuf(p, chain, path, cstring(p, text), text.length);
+}
+
+async function autoloaderOnHomescreen(p, chain) {
+  return (await pathExists(p, chain, AUTOLOADER_PARAM)) ||
+    (await pathExists(p, chain, AUTOLOADER_APP));
+}
+
+async function saveAutoloadFiles(p, chain, log, mapped) {
+  const say = typeof log === "function" ? log : () => {};
+  if (!(await ensureDir(p, chain, AUTOLOADER_DIR))) {
+    say("could not create /data/ps5_autoloader");
+    return false;
+  }
+  if (mapped.onion) {
+    say("saving OnionHEN.elf into WebKit Autoloader");
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
+  }
+  if (mapped.pld) {
+    say("saving pldmgr_v0.5.2.elf into WebKit Autoloader");
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/pldmgr_v0.5.2.elf", mapped.pld.base, mapped.pld.size);
+  }
+  await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", AUTOLOAD_TXT);
+  say("saved jailbreak payloads to /data/ps5_autoloader");
+  return true;
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
   // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
   log("preparing OnionHEN");
-  await sendOne("OnionHEN.elf", p, chain, log);
+  const onion = await sendOne("OnionHEN.elf", p, chain, log);
   log("OnionHEN.elf sent — wait for util, kstuff, then Toolbox");
-  await new Promise((resolve) => setTimeout(resolve, 8000));
+
+  const waitUntil = Date.now() + 8000;
+  try {
+    await saveAutoloadFiles(p, chain, log, { onion });
+  } catch (error) {
+    log("save to WebKit Autoloader skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+  const left = waitUntil - Date.now();
+  if (left > 0) await new Promise((resolve) => setTimeout(resolve, left));
+
   log("preparing Payload Manager");
-  await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
+  const pld = await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
   log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
-  log("done - press the PS button to go home");
-  await notify(p, chain, "done - press the PS button to go home");
+  try {
+    await saveAutoloadFiles(p, chain, log, { pld });
+  } catch (error) {
+    log("save Payload Manager skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  if (await autoloaderOnHomescreen(p, chain)) {
+    log(SAVED_TOAST);
+    await notify(p, chain, SAVED_TOAST);
+    return;
+  }
+
+  try {
+    log("sending WebKit Autoloader installer with PSH5JB UI");
+    await sendOne(AUTOLOADER_ELF, p, chain, log);
+    await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
+    log(INSTALL_TOAST);
+    await notify(p, chain, INSTALL_TOAST);
+  } catch (error) {
+    log("Autoloader installer skipped: " +
+      (error && error.message ? error.message : String(error)));
+    log("done - press the PS button to go home");
+    await notify(p, chain, "done - press the PS button to go home");
+  }
 }
 
 function patchShellcode(blob, symbols) {

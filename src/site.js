@@ -23,6 +23,11 @@ function writeEvent(name, detail, type) {
 
 window.writeLog = writeLog;
 window.jb = { mark: writeEvent };
+if (window._logQueue && window._logQueue.length) {
+  const queued = window._logQueue.slice();
+  window._logQueue = [];
+  for (let i = 0; i < queued.length; i++) writeLog(queued[i][0], queued[i][1]);
+}
 
 async function getPrimitive() {
   writeLog("Starting WebKit exploit");
@@ -49,9 +54,15 @@ function getWebKitBase() {
 }
 
 async function run() {
+  writeLog("host " + location.href, "info");
+  if (window.firmware && window.firmware.needsPick) {
+    writeLog("pick your firmware above to start", "info");
+    return;
+  }
   const rejection = window.firmware.rejection();
   if (rejection)
     throw new Error(rejection);
+  if (window.offsetsReady) await window.offsetsReady;
   writeLog("Credits: ntfargo, ufm42, Sonic_Iso, Jordy, Dr. Yenyen, TheFlow, SlidyBat, Flatz, cow, nhk, bollarz, Sleirsgoevy, EchoStretch, EarthOnion", "info");
   writeLog(`Agent: ${navigator.userAgent}`, "info");
   writeLog(`Firmware: ${window.fw_str}`, "info");
