@@ -449,20 +449,10 @@ export async function loadOptionalPayloads(p, chain, log) {
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
 
   try {
-    log("preparing ShadowMountPlus");
-    const shadow = await sendOne(SHADOWMOUNT_ELF, p, chain, log);
-    log(SHADOWMOUNT_ELF + " sent");
-    let shadowSaveErr = null;
-    await waitSeconds(log, "waiting for ShadowMountPlus", PAYLOAD_WAIT_S, async function () {
-      try {
-        await saveAutoloadFiles(p, chain, function () {}, { shadow });
-      } catch (error) {
-        shadowSaveErr = error;
-      }
-    });
-    if (shadowSaveErr)
-      log("save ShadowMountPlus skipped: " +
-        (shadowSaveErr.message ? shadowSaveErr.message : String(shadowSaveErr)));
+    log("saving " + SHADOWMOUNT_ELF + " for Autoloader");
+    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, function () {}, { shadow });
+    log(SHADOWMOUNT_ELF + " saved - loads after reboot");
   } catch (error) {
     log("ShadowMountPlus skipped: " +
       (error && error.message ? error.message : String(error)));
