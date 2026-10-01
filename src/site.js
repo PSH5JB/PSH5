@@ -54,7 +54,6 @@ function getWebKitBase() {
 }
 
 async function run() {
-  writeLog("host " + location.href, "info");
   const rejection = window.firmware.rejection();
   if (rejection)
     throw new Error(rejection);
