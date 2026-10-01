@@ -11,12 +11,9 @@ const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
-const AUTOLOADER_APP = "/user/app/WKAL00001";
-const AUTOLOADER_PARAM = "/user/app/WKAL00001/sce_sys/param.json";
 const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const AUTOLOAD_TXT = "OnionHEN.elf\n!8000\npldmgr_v0.5.2.elf\n";
-const SAVED_TOAST = "Saved in WebKit Autoloader - reboot, then open that app";
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const PAYLOAD_WAIT_S = 8;
 
@@ -342,11 +339,6 @@ async function writeTextFile(p, chain, path, text) {
   await writeBuf(p, chain, path, cstring(p, text), text.length);
 }
 
-async function autoloaderOnHomescreen(p, chain) {
-  return (await pathExists(p, chain, AUTOLOADER_PARAM)) ||
-    (await pathExists(p, chain, AUTOLOADER_APP));
-}
-
 function emitLog(log, message, replace) {
   if (typeof log !== "function") return;
   log(message, "info", !!replace);
@@ -425,12 +417,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (pldSaveErr)
     log("save Payload Manager skipped: " +
       (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
-
-  if (await autoloaderOnHomescreen(p, chain)) {
-    log(SAVED_TOAST);
-    await notify(p, chain, SAVED_TOAST);
-    return;
-  }
 
   try {
     log("sending WebKit Autoloader installer with PSH5JB UI");
