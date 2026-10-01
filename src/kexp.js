@@ -13,9 +13,11 @@ const ONIONHEN_DIR = "/data/OnionHEN";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
-const AUTOLOAD_TXT = "OnionHEN.elf\n!8000\npldmgr_v0.5.2.elf\n";
+const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", "pldmgr_v0.5.2.elf"];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const PAYLOAD_WAIT_S = 8;
+const PAYLOAD_GAP_S = 2;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -309,6 +311,7 @@ async function sendOne(name, p, chain, log) {
   log("sending " + name + " to elfldr :9021");
   await sendElf(name, mapped, p, chain);
   log(name + " sent");
+  await waitSeconds(log, "next payload in", PAYLOAD_GAP_S);
   return mapped;
 }
 
@@ -376,11 +379,23 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("saving OnionHEN.elf into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
   }
+  if (mapped.signin) {
+    say("saving " + FAKE_SIGNIN_ELF + " into WebKit Autoloader");
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
+  }
   if (mapped.pld) {
     say("saving pldmgr_v0.5.2.elf into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/pldmgr_v0.5.2.elf", mapped.pld.base, mapped.pld.size);
   }
-  await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", AUTOLOAD_TXT);
+  const lines = [];
+  for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
+    const name = AUTOLOAD_NAMES[i];
+    if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) continue;
+    if (lines.length) lines.push("!10000");
+    lines.push(name);
+  }
+  await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt",
+    lines.length ? lines.join("\n") + "\n" : "");
   say("saved jailbreak payloads to /data/ps5_autoloader");
   return true;
 }
@@ -388,6 +403,26 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
 export async function loadOptionalPayloads(p, chain, log) {
   // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
+  try {
+    log("preparing Fake PS5 Sign In");
+    const signin = await sendOne(FAKE_SIGNIN_ELF, p, chain, log);
+    log(FAKE_SIGNIN_ELF + " sent");
+    let signinSaveErr = null;
+    await waitSeconds(log, "waiting for Fake PS5 Sign In", PAYLOAD_WAIT_S, async function () {
+      try {
+        await saveAutoloadFiles(p, chain, function () {}, { signin });
+      } catch (error) {
+        signinSaveErr = error;
+      }
+    });
+    if (signinSaveErr)
+      log("save Fake PS5 Sign In skipped: " +
+        (signinSaveErr.message ? signinSaveErr.message : String(signinSaveErr)));
+  } catch (error) {
+    log("Fake PS5 Sign In skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
   log("preparing OnionHEN");
   const onion = await sendOne("OnionHEN.elf", p, chain, log);
   log("OnionHEN.elf sent");
@@ -403,31 +438,42 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("save to WebKit Autoloader skipped: " +
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
 
-  log("preparing Payload Manager");
-  const pld = await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
-  log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
-  let pldSaveErr = null;
-  await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { pld });
-    } catch (error) {
-      pldSaveErr = error;
-    }
-  });
-  if (pldSaveErr)
-    log("save Payload Manager skipped: " +
-      (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
-
+  let installerSent = false;
   try {
-    log("sending WebKit Autoloader installer with PSH5JB UI");
+    log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
     await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
     await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
+    installerSent = true;
+  } catch (error) {
+    log("WebKit Autoloader installer failed: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  try {
+    log("preparing Payload Manager");
+    const pld = await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
+    log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
+    let pldSaveErr = null;
+    await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
+      try {
+        await saveAutoloadFiles(p, chain, function () {}, { pld });
+      } catch (error) {
+        pldSaveErr = error;
+      }
+    });
+    if (pldSaveErr)
+      log("save Payload Manager skipped: " +
+        (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
+  } catch (error) {
+    log("Payload Manager skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);
-  } catch (error) {
-    log("Autoloader installer skipped: " +
-      (error && error.message ? error.message : String(error)));
+  } else {
     log("done - press the PS button to go home");
     await notify(p, chain, "done - press the PS button to go home");
   }
