@@ -14,10 +14,11 @@ const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", "pldmgr_v0.5.2.elf"];
+const SHADOWMOUNT_ELF = "shadowmountplus.elf";
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
-const PAYLOAD_WAIT_S = 8;
-const PAYLOAD_GAP_S = 2;
+const ONION_WAIT_S = 5;
+const PAYLOAD_WAIT_S = 5;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -311,7 +312,6 @@ async function sendOne(name, p, chain, log) {
   log("sending " + name + " to elfldr :9021");
   await sendElf(name, mapped, p, chain);
   log(name + " sent");
-  await waitSeconds(log, "next payload in", PAYLOAD_GAP_S);
   return mapped;
 }
 
@@ -383,16 +383,31 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("saving " + FAKE_SIGNIN_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
   }
+  if (mapped.shadow) {
+    say("saving " + SHADOWMOUNT_ELF + " into WebKit Autoloader");
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
+  }
   if (mapped.pld) {
     say("saving pldmgr_v0.5.2.elf into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/pldmgr_v0.5.2.elf", mapped.pld.base, mapped.pld.size);
   }
-  const lines = [];
+  const afterMs = {};
+  afterMs[FAKE_SIGNIN_ELF] = 0;
+  afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
+  afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs["pldmgr_v0.5.2.elf"] = PAYLOAD_WAIT_S * 1000;
+  const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
-    if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) continue;
-    if (lines.length) lines.push("!10000");
-    lines.push(name);
+    if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + name)) present.push(name);
+  }
+  const lines = [];
+  for (let i = 0; i < present.length; i++) {
+    if (i) {
+      const wait = afterMs[present[i - 1]] || 0;
+      if (wait > 0) lines.push("!" + wait);
+    }
+    lines.push(present[i]);
   }
   await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt",
     lines.length ? lines.join("\n") + "\n" : "");
@@ -407,17 +422,12 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("preparing Fake PS5 Sign In");
     const signin = await sendOne(FAKE_SIGNIN_ELF, p, chain, log);
     log(FAKE_SIGNIN_ELF + " sent");
-    let signinSaveErr = null;
-    await waitSeconds(log, "waiting for Fake PS5 Sign In", PAYLOAD_WAIT_S, async function () {
-      try {
-        await saveAutoloadFiles(p, chain, function () {}, { signin });
-      } catch (error) {
-        signinSaveErr = error;
-      }
-    });
-    if (signinSaveErr)
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { signin });
+    } catch (error) {
       log("save Fake PS5 Sign In skipped: " +
-        (signinSaveErr.message ? signinSaveErr.message : String(signinSaveErr)));
+        (error.message ? error.message : String(error)));
+    }
   } catch (error) {
     log("Fake PS5 Sign In skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -427,7 +437,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   const onion = await sendOne("OnionHEN.elf", p, chain, log);
   log("OnionHEN.elf sent");
   let onionSaveErr = null;
-  await waitSeconds(log, "waiting for OnionHEN", PAYLOAD_WAIT_S, async function () {
+  await waitSeconds(log, "waiting for OnionHEN", ONION_WAIT_S, async function () {
     try {
       await saveAutoloadFiles(p, chain, function () {}, { onion });
     } catch (error) {
@@ -437,6 +447,26 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (onionSaveErr)
     log("save to WebKit Autoloader skipped: " +
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
+
+  try {
+    log("preparing ShadowMountPlus");
+    const shadow = await sendOne(SHADOWMOUNT_ELF, p, chain, log);
+    log(SHADOWMOUNT_ELF + " sent");
+    let shadowSaveErr = null;
+    await waitSeconds(log, "waiting for ShadowMountPlus", PAYLOAD_WAIT_S, async function () {
+      try {
+        await saveAutoloadFiles(p, chain, function () {}, { shadow });
+      } catch (error) {
+        shadowSaveErr = error;
+      }
+    });
+    if (shadowSaveErr)
+      log("save ShadowMountPlus skipped: " +
+        (shadowSaveErr.message ? shadowSaveErr.message : String(shadowSaveErr)));
+  } catch (error) {
+    log("ShadowMountPlus skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
 
   let installerSent = false;
   try {
