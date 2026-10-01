@@ -107,37 +107,6 @@
     #fw-label.fw-ok { color: var(--ok); }
     #fw-label.fw-bad { color: var(--bad); }
 
-    #fw-picker {
-      display: none;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      border-radius: 6px;
-      padding: 12px;
-    }
-    #fw-picker-title {
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-    #fw-picker-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .fw-btn {
-      background: #101828;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 8px 10px;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .fw-btn-on, .fw-btn:hover { border-color: var(--accent); color: #fff; }
-
     /* ── stages ──────────────────────────────────────────── */
     .stages {
       display: flex;
@@ -320,16 +289,11 @@
       <div class="hdr-left">
         <img src="./psh-logo.png" alt="PSH" class="psh-logo">
         <div>
-          <div class="logo"><em>PSH</em>5JB <span class="logo-ver">v1.00</span></div>
+          <div class="logo"><em>PSH</em>5JB <span class="logo-ver">v1.10</span></div>
           <div class="logo-sub">PS5 Jailbreak · FW 7.00–13.60</div>
         </div>
       </div>
       <div id="fw-label">Detecting firmware…</div>
-    </div>
-
-    <div id="fw-picker">
-      <div id="fw-picker-title">Internet Browser — pick your firmware</div>
-      <div id="fw-picker-list"></div>
     </div>
 
     <div class="stages">
@@ -362,7 +326,7 @@
           <span>Scan To Join My Discord</span>
           <div class="patch-notes">
             <strong>Patch Notes</strong>
-            30/09/2026<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.
+            30/09/2026<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.<br><br>- Changed to WebKit Autoloader.
           </div>
         </div>
         <div id="console"></div>

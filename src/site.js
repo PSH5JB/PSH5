@@ -55,10 +55,6 @@ function getWebKitBase() {
 
 async function run() {
   writeLog("host " + location.href, "info");
-  if (window.firmware && window.firmware.needsPick) {
-    writeLog("pick your firmware above to start", "info");
-    return;
-  }
   const rejection = window.firmware.rejection();
   if (rejection)
     throw new Error(rejection);

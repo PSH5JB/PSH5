@@ -18,6 +18,7 @@ const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const AUTOLOAD_TXT = "OnionHEN.elf\n!8000\npldmgr_v0.5.2.elf\n";
 const SAVED_TOAST = "Saved in WebKit Autoloader - reboot, then open that app";
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
+const PAYLOAD_WAIT_S = 8;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -346,6 +347,33 @@ async function autoloaderOnHomescreen(p, chain) {
     (await pathExists(p, chain, AUTOLOADER_APP));
 }
 
+function emitLog(log, message, replace) {
+  if (typeof log !== "function") return;
+  log(message, "info", !!replace);
+}
+
+async function waitSeconds(log, label, seconds, work) {
+  const end = Date.now() + seconds * 1000;
+  let last = -1;
+  let started = false;
+  const tick = function () {
+    const left = Math.max(1, Math.ceil((end - Date.now()) / 1000));
+    if (Date.now() >= end) return;
+    if (left === last) return;
+    last = left;
+    emitLog(log, label + " — " + left + "s", started);
+    started = true;
+  };
+  tick();
+  const running = work ? Promise.resolve().then(work) : Promise.resolve();
+  while (Date.now() < end) {
+    tick();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  await running;
+  emitLog(log, label + " ready", started);
+}
+
 async function saveAutoloadFiles(p, chain, log, mapped) {
   const say = typeof log === "function" ? log : () => {};
   if (!(await ensureDir(p, chain, AUTOLOADER_DIR))) {
@@ -370,27 +398,33 @@ export async function loadOptionalPayloads(p, chain, log) {
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
   log("preparing OnionHEN");
   const onion = await sendOne("OnionHEN.elf", p, chain, log);
-  log("OnionHEN.elf sent — wait for util, kstuff, then Toolbox");
-
-  const waitUntil = Date.now() + 8000;
-  try {
-    await saveAutoloadFiles(p, chain, log, { onion });
-  } catch (error) {
+  log("OnionHEN.elf sent");
+  let onionSaveErr = null;
+  await waitSeconds(log, "waiting for OnionHEN", PAYLOAD_WAIT_S, async function () {
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { onion });
+    } catch (error) {
+      onionSaveErr = error;
+    }
+  });
+  if (onionSaveErr)
     log("save to WebKit Autoloader skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-  const left = waitUntil - Date.now();
-  if (left > 0) await new Promise((resolve) => setTimeout(resolve, left));
+      (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
 
   log("preparing Payload Manager");
   const pld = await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
   log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
-  try {
-    await saveAutoloadFiles(p, chain, log, { pld });
-  } catch (error) {
+  let pldSaveErr = null;
+  await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { pld });
+    } catch (error) {
+      pldSaveErr = error;
+    }
+  });
+  if (pldSaveErr)
     log("save Payload Manager skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
+      (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
 
   if (await autoloaderOnHomescreen(p, chain)) {
     log(SAVED_TOAST);
@@ -402,6 +436,7 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("sending WebKit Autoloader installer with PSH5JB UI");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
     await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
+    await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);
   } catch (error) {

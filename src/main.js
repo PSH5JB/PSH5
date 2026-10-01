@@ -76,8 +76,8 @@ async function findWorkerReturnSlot(p, stack, libKernelBase) {
   throw new Error(`worker wait return fingerprint count ${lastCount}, expected 1`);
 }
 
-function log(message, type = "log") {
-  window.writeLog(message, type);
+function log(message, type = "log", replace = false) {
+  window.writeLog(message, type, replace);
 }
 
 function watchR2(onPress) {
@@ -286,7 +286,8 @@ async function main(userlandRW) {
     log("kernel exploit complete", "info");
     try {
       const { loadOptionalPayloads } = await import("./kexp.js");
-      await loadOptionalPayloads(p, chain, (message) => log(message, "info"));
+      await loadOptionalPayloads(p, chain, (message, type, replace) =>
+        log(message, type || "info", replace));
     } catch (error) {
       log(error instanceof Error ? error.message : String(error), "error");
     }

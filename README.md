@@ -5,7 +5,6 @@ Supported firmware: 7.00 through 13.60.
 - In the network settings, set Primary DNS to `45.56.67.85` (Recommended)
 - Run `python serve.py` locally, or open https://ntfargo.github.io/Relapse-Exploit/ on the PS5.
 - The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
-- If the page cannot read the firmware (PKG Internet Browser), pick it on the page. The jailbreak starts after that.
 - After elfldr starts on port `9021`, the host auto-sends `payloads/OnionHEN.elf`, waits for the HEN stack, then sends `payloads/pldmgr_v0.5.2.elf` (do not send kstuff/etaHEN first). Payload Manager is then at `http://<PS5>:8084`.
 - OnionHEN auto-starts a built-in FTP server on TCP `1337`.
 - After Payload Manager, the host sends `payloads/webkit-autoloader-installer_v0.5.2.elf` unless WebKit Autoloader is already on the homescreen. Leave `http://127.0.0.1:18181/` open until install finishes, then reboot and open **WebKit Autoloader**. The Internet Browser PKG is kept.

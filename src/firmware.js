@@ -10,15 +10,6 @@ const supportedFirmware = [
   "7.61", "7.60", "7.40", "7.20", "7.01", "7.00",
 ];
 
-function note(message, type) {
-  if (typeof window.writeLog === "function") {
-    window.writeLog(message, type || "info");
-    return;
-  }
-  window._logQueue = window._logQueue || [];
-  window._logQueue.push([message, type || "info"]);
-}
-
 function normalizeFw(raw) {
   const match = /^(\d+)\.(\d+)$/.exec(raw || "");
   if (!match) return raw || "";
@@ -44,51 +35,13 @@ function detectFirmware(ua) {
   return "";
 }
 
-function queryFirmware() {
-  const hit = /[?&]fw=(\d+\.\d+)/i.exec(location.search || "");
-  return hit ? normalizeFw(hit[1]) : "";
-}
-
-function storedFirmware() {
-  try { return normalizeFw(localStorage.getItem("psh5-fw") || ""); } catch (_) { return ""; }
-}
-
-function rememberFirmware(fw) {
-  try { localStorage.setItem("psh5-fw", fw); } catch (_) {}
-}
-
-function applyFirmware(fw) {
-  rememberFirmware(fw);
-  const base = location.href.split("?")[0].split("#")[0];
-  if (location.search || location.hash) {
-    location.replace(base);
-    return;
-  }
-  location.reload();
-}
-
 const firmwareUserAgent = navigator.userAgent || "";
-const firmwareVersion = (function () {
-  const fromQuery = queryFirmware();
-  if (fromQuery && supportedFirmware.includes(fromQuery)) {
-    rememberFirmware(fromQuery);
-    return fromQuery;
-  }
-  const fromUa = detectFirmware(firmwareUserAgent);
-  if (fromUa) {
-    rememberFirmware(fromUa);
-    return fromUa;
-  }
-  const fromStore = storedFirmware();
-  if (fromStore && supportedFirmware.includes(fromStore)) return fromStore;
-  return "";
-})();
+const firmwareVersion = detectFirmware(firmwareUserAgent);
 
 window.fw_str = firmwareVersion;
 window.firmware = {
-  needsPick: !firmwareVersion,
   rejection() {
-    if (!firmwareVersion) return null;
+    if (!firmwareVersion) return "could not detect firmware";
     if (!supportedFirmware.includes(firmwareVersion)) {
       return "FW " + firmwareVersion + " is not supported";
     }
@@ -106,43 +59,16 @@ function paintFwLabel() {
     el.classList.remove("fw-bad");
     return;
   }
-  el.textContent = firmwareVersion ? (rejection || "Detecting firmware…") : "Pick firmware";
-  el.classList.toggle("fw-bad", !firmwareVersion || !!rejection);
+  el.textContent = rejection || "Could not detect firmware";
+  el.classList.add("fw-bad");
   el.classList.remove("fw-ok");
-}
-
-function showFwPicker() {
-  const box = document.getElementById("fw-picker");
-  const list = document.getElementById("fw-picker-list");
-  if (!box || !list) return;
-  list.innerHTML = "";
-  for (let i = 0; i < supportedFirmware.length; i++) {
-    const fw = supportedFirmware[i];
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "fw-btn" + (fw === firmwareVersion ? " fw-btn-on" : "");
-    btn.textContent = fw;
-    btn.onclick = function () { applyFirmware(fw); };
-    list.appendChild(btn);
-  }
-  box.style.display = "block";
-  note("pick your firmware, then the jailbreak starts", "info");
 }
 
 paintFwLabel();
 
-(function bindFwPicker() {
-  const label = document.getElementById("fw-label");
-  if (label) {
-    label.style.cursor = "pointer";
-    label.onclick = function () { showFwPicker(); };
-  }
-  if (!firmwareVersion) showFwPicker();
-})();
-
 window.offsetsReady = new Promise(function (resolve, reject) {
   if (!firmwareVersion) {
-    resolve();
+    reject(new Error("could not detect firmware"));
     return;
   }
   const script = document.createElement("script");
