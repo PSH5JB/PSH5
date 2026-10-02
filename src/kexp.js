@@ -15,7 +15,9 @@ const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
+const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
+const PLDMGR_ALIASES = ["pldmgr_v0.5.2.elf", "pldmgr_v0.5.2-1.elf"];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -388,14 +390,17 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
   }
   if (mapped.pld) {
-    say("saving pldmgr_v0.5.2.elf into WebKit Autoloader");
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/pldmgr_v0.5.2.elf", mapped.pld.base, mapped.pld.size);
+    say("saving " + PLDMGR_ELF + " into WebKit Autoloader");
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
+    for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
+      await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
+    }
   }
   const afterMs = {};
   afterMs[FAKE_SIGNIN_ELF] = 0;
   afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
   afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs["pldmgr_v0.5.2.elf"] = PAYLOAD_WAIT_S * 1000;
+  afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -458,22 +463,10 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  let installerSent = false;
-  try {
-    log("injecting WebKit Autoloader installer");
-    await sendOne(AUTOLOADER_ELF, p, chain, log);
-    await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
-    await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
-    installerSent = true;
-  } catch (error) {
-    log("WebKit Autoloader installer failed: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
   try {
     log("preparing Payload Manager");
-    const pld = await sendOne("pldmgr_v0.5.2.elf", p, chain, log);
-    log("pldmgr_v0.5.2.elf sent — dashboard at http://PS5:8084");
+    const pld = await sendOne(PLDMGR_ELF, p, chain, log);
+    log(PLDMGR_ELF + " sent - dashboard at http://PS5:8084");
     let pldSaveErr = null;
     await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
       try {
@@ -487,6 +480,18 @@ export async function loadOptionalPayloads(p, chain, log) {
         (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
   } catch (error) {
     log("Payload Manager skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  let installerSent = false;
+  try {
+    log("injecting WebKit Autoloader installer");
+    await sendOne(AUTOLOADER_ELF, p, chain, log);
+    await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
+    await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
+    installerSent = true;
+  } catch (error) {
+    log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
 
