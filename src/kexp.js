@@ -173,9 +173,13 @@ async function unlinkPath(p, chain, path) {
 
 async function rmTree(p, chain, path, depth) {
   if (depth > 32) return;
+  if (chain.syscalls[SYS_CHFLAGS])
+    await chain.syscall(SYS_CHFLAGS, cstring(p, path), 0);
   const entries = await listDir(p, chain, path);
   for (const { name, type } of entries) {
     const child = path.endsWith("/") ? path + name : path + "/" + name;
+    if (chain.syscalls[SYS_CHFLAGS])
+      await chain.syscall(SYS_CHFLAGS, cstring(p, child), 0);
     if (type === DT_DIR) {
       await rmTree(p, chain, child, depth + 1);
       continue;
@@ -194,14 +198,19 @@ export async function sweepEtaHEN(p, chain, log) {
   try {
     const existed = await pathExists(p, chain, ETAHEN_DIR);
     const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
-    if (!existed)
+    if (!existed) {
+      say("etaHEN not found — no cleanup needed");
       return { existed: false, removed: false, onionPresent };
+    }
 
+    say("removing etaHEN files...");
     await rmTree(p, chain, ETAHEN_DIR, 0);
     const removed = !(await pathExists(p, chain, ETAHEN_DIR));
     if (!removed) {
-      say("left leftover /data/etaHEN — continuing jailbreak");
-      await notify(p, chain, "left leftover /data/etaHEN");
+      say("could not remove /data/etaHEN — rebuild PS5 database to delete etaHEN files", "error");
+      await notify(p, chain, "Rebuild PS5 database to remove etaHEN files");
+    } else {
+      say("etaHEN removed successfully");
     }
     return { existed: true, removed, onionPresent };
   } catch (error) {
