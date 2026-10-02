@@ -14,9 +14,8 @@ const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
-const NANODNS_ELF = "nanodns.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF, SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -384,10 +383,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("saving " + FAKE_SIGNIN_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
   }
-  if (mapped.nanodns) {
-    say("saving " + NANODNS_ELF + " into WebKit Autoloader");
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + NANODNS_ELF, mapped.nanodns.base, mapped.nanodns.size);
-  }
   if (mapped.shadow) {
     say("saving " + SHADOWMOUNT_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
@@ -398,7 +393,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   }
   const afterMs = {};
   afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[NANODNS_ELF] = 0;
   afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
   afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
   afterMs["pldmgr_v0.5.2.elf"] = PAYLOAD_WAIT_S * 1000;
@@ -453,21 +447,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (onionSaveErr)
     log("save to WebKit Autoloader skipped: " +
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
-
-  try {
-    log("preparing nanodns");
-    const nanodns = await sendOne(NANODNS_ELF, p, chain, log);
-    log(NANODNS_ELF + " sent");
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { nanodns });
-    } catch (error) {
-      log("save nanodns skipped: " +
-        (error.message ? error.message : String(error)));
-    }
-  } catch (error) {
-    log("nanodns skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
 
   try {
     log("saving " + SHADOWMOUNT_ELF + " for Autoloader");
