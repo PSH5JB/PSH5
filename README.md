@@ -5,7 +5,7 @@ Supported firmware: 7.00 through 13.60.
 - In the network settings, set Primary DNS to `45.56.67.85` (Recommended)
 - Run `python serve.py` locally, or open https://ntfargo.github.io/Relapse-Exploit/ on the PS5.
 - The default payloads are stored in `payloads/` after a successful run, the ELF loader listens on port `9021`.
-- After elfldr starts on port `9021`, the host auto-sends `payloads/np-fake-signin-ps5.elf` (no wait), then `payloads/nanodns.elf` (no wait), then `payloads/OnionHEN.elf` (5s), then `payloads/webkit-autoloader-installer_v0.5.2.elf` (5s), then `payloads/pldmgr_v0.5.2.elf` (5s). `payloads/shadowmountplus.elf` is saved into `/data/ps5_autoloader` and sent after reboot, so it does not run while User Guide is open. Do not send kstuff/etaHEN first. Payload Manager is then at `http://<PS5>:8084`.
+- After elfldr starts on port `9021`, the host auto-sends `payloads/np-fake-signin-ps5.elf` (no wait), then `payloads/OnionHEN.elf` (5s), then `payloads/nanodns.elf` (no wait), then `payloads/webkit-autoloader-installer_v0.5.2.elf` (5s), then `payloads/pldmgr_v0.5.2.elf` (5s). `payloads/shadowmountplus.elf` is saved into `/data/ps5_autoloader` and sent after reboot, so it does not run while User Guide is open. Do not send kstuff/etaHEN first. Payload Manager is then at `http://<PS5>:8084`.
 - OnionHEN auto-starts a built-in FTP server on TCP `1337`.
 - Leave `http://127.0.0.1:18181/` open until the Autoloader install finishes, then reboot and open **WebKit Autoloader**. The Internet Browser PKG is kept.
 

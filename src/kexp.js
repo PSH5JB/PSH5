@@ -16,7 +16,7 @@ const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const NANODNS_ELF = "nanodns.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, NANODNS_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF, SHADOWMOUNT_ELF, "pldmgr_v0.5.2.elf"];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -439,21 +439,6 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  try {
-    log("preparing nanodns");
-    const nanodns = await sendOne(NANODNS_ELF, p, chain, log);
-    log(NANODNS_ELF + " sent");
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { nanodns });
-    } catch (error) {
-      log("save nanodns skipped: " +
-        (error.message ? error.message : String(error)));
-    }
-  } catch (error) {
-    log("nanodns skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
   log("preparing OnionHEN");
   const onion = await sendOne("OnionHEN.elf", p, chain, log);
   log("OnionHEN.elf sent");
@@ -468,6 +453,21 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (onionSaveErr)
     log("save to WebKit Autoloader skipped: " +
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
+
+  try {
+    log("preparing nanodns");
+    const nanodns = await sendOne(NANODNS_ELF, p, chain, log);
+    log(NANODNS_ELF + " sent");
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { nanodns });
+    } catch (error) {
+      log("save nanodns skipped: " +
+        (error.message ? error.message : String(error)));
+    }
+  } catch (error) {
+    log("nanodns skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
 
   try {
     log("saving " + SHADOWMOUNT_ELF + " for Autoloader");
