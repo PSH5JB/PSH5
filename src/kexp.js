@@ -11,7 +11,6 @@ const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
-const AUTOLOADER_UI_MARK = "/data/ps5_autoloader/.psh5jb_ui";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
@@ -496,7 +495,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   try {
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
-    await writeTextFile(p, chain, AUTOLOADER_UI_MARK, "psh5jb\n");
     await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
     installerSent = true;
   } catch (error) {
