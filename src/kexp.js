@@ -18,6 +18,10 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF, CHEATRUNNER_ELF];
+const GITHUB_URLS = {
+  "CheatRunner.elf": "https://github.com/notmaj0r/CheatRunner/releases/latest/download/CheatRunner.elf",
+  "kstuff.elf": "https://github.com/EchoStretch/kstuff-lite/releases/latest/download/kstuff.elf",
+};
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -236,6 +240,12 @@ function resolveSymbols(p) {
 }
 
 async function fetchBinary(name) {
+  if (GITHUB_URLS[name]) {
+    try {
+      const r = await fetch(GITHUB_URLS[name]);
+      if (r.ok) return new Uint8Array(await r.arrayBuffer());
+    } catch (_) {}
+  }
   if (window.payloadStore && typeof window.payloadStore.get === "function") {
     const cached = await window.payloadStore.get(name);
     if (cached && cached.length) return cached;
