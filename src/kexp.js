@@ -17,7 +17,7 @@ const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -479,20 +479,6 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  try {
-    const pldMapped = await mapElf(PLDMGR_ELF, p, chain);
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
-    } catch (error) {
-      log("Payload Manager save skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-    try { await chain.syscall(SYS_MUNMAP, pldMapped.base, pldMapped.mmapSize); } catch (_) {}
-  } catch (error) {
-    log("Payload Manager skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
   let installerSent = false;
   try {
     log("injecting WebKit Autoloader installer");
@@ -500,6 +486,13 @@ export async function loadOptionalPayloads(p, chain, log) {
     installerSent = true;
   } catch (error) {
     log("WebKit Autoloader installer failed: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  try {
+    await sendOne(PLDMGR_ELF, p, chain, log);
+  } catch (error) {
+    log("Payload Manager skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
