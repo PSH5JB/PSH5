@@ -498,7 +498,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  await notify(p, chain, "PSH5JB v7");
+  await notify(p, chain, "PSH5JB v8");
   if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);
