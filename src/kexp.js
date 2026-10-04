@@ -479,21 +479,22 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  try {
-    await sendOne(PLDMGR_ELF, p, chain, log);
-    await waitSeconds(log, "waiting for Payload Manager", 5, async function () {});
-  } catch (error) {
-    log("Payload Manager skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
   let installerSent = false;
   try {
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
+    await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
     installerSent = true;
   } catch (error) {
     log("WebKit Autoloader installer failed: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  try {
+    await sendOne(PLDMGR_ELF, p, chain, log);
+    await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S);
+  } catch (error) {
+    log("Payload Manager skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
