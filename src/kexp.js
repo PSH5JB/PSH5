@@ -466,7 +466,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   try { await chain.syscall(SYS_MUNMAP, onion.base, onion.mmapSize); } catch (_) {}
 
   try {
-    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
+    const shadow = await sendOne(SHADOWMOUNT_ELF, p, chain, log);
     try {
       await saveAutoloadFiles(p, chain, function () {}, { shadow });
     } catch (error) {
@@ -483,7 +483,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   try {
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
-    await waitSeconds(log, "waiting for WebKit Autoloader", PAYLOAD_WAIT_S);
     installerSent = true;
   } catch (error) {
     log("WebKit Autoloader installer failed: " +
@@ -492,7 +491,6 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   try {
     await sendOne(PLDMGR_ELF, p, chain, log);
-    await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S);
   } catch (error) {
     log("Payload Manager skipped: " +
       (error && error.message ? error.message : String(error)));
