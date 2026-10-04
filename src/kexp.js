@@ -429,6 +429,20 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
+  // Wipe and recreate the autoloader directory so every run starts from a
+  // clean state — prevents stale entries from a previous incomplete run
+  // causing payloads to be missing from the autoloader on reboot.
+  try {
+    if (await pathExists(p, chain, AUTOLOADER_DIR)) {
+      log("resetting WebKit Autoloader directory");
+      await rmTree(p, chain, AUTOLOADER_DIR, 0);
+    }
+    await ensureDir(p, chain, AUTOLOADER_DIR);
+  } catch (error) {
+    log("autoloader directory reset skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
   // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
   try {
