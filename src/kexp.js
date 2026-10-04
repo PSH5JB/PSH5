@@ -16,7 +16,8 @@ const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF];
+const CHEATRUNNER_ELF = "CheatRunner.elf";
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF, CHEATRUNNER_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -392,11 +393,15 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
       await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
     }
   }
+  if (mapped.cheat) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
+  }
   const afterMs = {};
   afterMs[FAKE_SIGNIN_ELF] = 0;
   afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
   afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
   afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs[CHEATRUNNER_ELF] = PAYLOAD_WAIT_S * 1000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -472,6 +477,14 @@ export async function loadOptionalPayloads(p, chain, log) {
     await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
   } catch (error) {
     log("Payload Manager save skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  try {
+    const cheatMapped = await mapElf(CHEATRUNNER_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, function () {}, { cheat: cheatMapped });
+  } catch (error) {
+    log("CheatRunner save skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
