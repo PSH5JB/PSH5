@@ -466,7 +466,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   try { await chain.syscall(SYS_MUNMAP, onion.base, onion.mmapSize); } catch (_) {}
 
   try {
-    const shadow = await sendOne(SHADOWMOUNT_ELF, p, chain, log);
+    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
     try {
       await saveAutoloadFiles(p, chain, function () {}, { shadow });
     } catch (error) {
