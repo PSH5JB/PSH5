@@ -492,12 +492,10 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  try {
-    await sendOne(PLDMGR_ELF, p, chain, log);
-  } catch (error) {
-    log("Payload Manager skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
+  // Payload Manager (PLDM00001) is already installed as a homescreen PKG.
+  // Sending it live here opens the User Guide browser which re-runs the exploit
+  // and crashes the installer before it can write WKAL00001.
+  // pldmgr is loaded automatically by the webkit autoloader after reboot.
 
   await notify(p, chain, "PSH5JB v8");
   if (installerSent) {
