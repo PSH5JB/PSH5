@@ -438,7 +438,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       await rmTree(p, chain, AUTOLOADER_DIR, 0);
     }
     await ensureDir(p, chain, AUTOLOADER_DIR);
-    await writeTextFile(p, chain, AUTOLOADER_DIR + "/.psh5jb_ui", "psh5jb7\n");
+    await writeTextFile(p, chain, AUTOLOADER_DIR + "/.psh5jb_ui", "psh5jb\n");
   } catch (error) {
     log("autoloader directory reset skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -537,6 +537,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
+  await notify(p, chain, "PSH5JB v7");
   if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);
