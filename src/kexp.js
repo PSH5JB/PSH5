@@ -22,6 +22,9 @@ const GITHUB_URLS = {
   "CheatRunner.elf": "https://github.com/notmaj0r/CheatRunner/releases/latest/download/CheatRunner.elf",
   "kstuff.elf": "https://github.com/EchoStretch/kstuff-lite/releases/latest/download/kstuff.elf",
 };
+const GITHUB_API_URLS = {
+  [AUTOLOADER_ELF]: "https://api.github.com/repos/itsPLK/ps5-webkit-autoloader/releases/latest",
+};
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -244,6 +247,19 @@ async function fetchBinary(name) {
     try {
       const r = await fetch(GITHUB_URLS[name]);
       if (r.ok) return new Uint8Array(await r.arrayBuffer());
+    } catch (_) {}
+  }
+  if (GITHUB_API_URLS[name]) {
+    try {
+      const api = await fetch(GITHUB_API_URLS[name], { headers: { Accept: "application/vnd.github+json" } });
+      if (api.ok) {
+        const rel = await api.json();
+        const asset = rel.assets && rel.assets.find(function(a) { return a.name.endsWith(".elf"); });
+        if (asset) {
+          const dl = await fetch(asset.browser_download_url);
+          if (dl.ok) return new Uint8Array(await dl.arrayBuffer());
+        }
+      }
     } catch (_) {}
   }
   if (window.payloadStore && typeof window.payloadStore.get === "function") {
