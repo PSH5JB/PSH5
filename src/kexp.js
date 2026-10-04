@@ -486,9 +486,10 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  // Map pldmgr and save it to the autoloader directory before sending the
-  // installer so the installer sees pldmgr in autoload.txt when it runs.
-  // Then send the installer (wins browser race over pldmgr), then send pldmgr.
+  // Pre-save pldmgr to the autoloader directory first so autoload.txt has it
+  // before the installer runs. Then send pldmgr first so its browser call fires
+  // first; the installer is sent last so its sceSystemServiceLaunchWebBrowser
+  // call fires last and wins the browser — whichever calls it last takes it.
   let pldMapped = null;
   try {
     log("mapping Payload Manager");
@@ -497,19 +498,6 @@ export async function loadOptionalPayloads(p, chain, log) {
     await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
   } catch (error) {
     log("Payload Manager pre-save skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
-  // Send Autoloader installer before pldmgr so it wins the browser race.
-  // pldmgr also calls sceSystemServiceLaunchWebBrowser; whichever runs last
-  // takes the browser — sending the installer first gives it the head start.
-  let installerSent = false;
-  try {
-    log("injecting WebKit Autoloader installer");
-    await sendOne(AUTOLOADER_ELF, p, chain, log);
-    installerSent = true;
-  } catch (error) {
-    log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
 
@@ -534,6 +522,16 @@ export async function loadOptionalPayloads(p, chain, log) {
         (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
   } catch (error) {
     log("Payload Manager skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
+  let installerSent = false;
+  try {
+    log("injecting WebKit Autoloader installer");
+    await sendOne(AUTOLOADER_ELF, p, chain, log);
+    installerSent = true;
+  } catch (error) {
+    log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
 
