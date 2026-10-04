@@ -18,7 +18,7 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const NANODNS_ELF = "nanodns.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF, SHADOWMOUNT_ELF];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -430,7 +430,6 @@ export async function loadOptionalPayloads(p, chain, log) {
       await rmTree(p, chain, AUTOLOADER_DIR, 0);
     }
     await ensureDir(p, chain, AUTOLOADER_DIR);
-    await writeTextFile(p, chain, AUTOLOADER_DIR + "/.psh5jb_ui", "psh5jb\n");
   } catch (error) {
     log("autoloader directory reset skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -479,21 +478,6 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("nanodns skipped: " +
       (error && error.message ? error.message : String(error)));
   }
-
-  try {
-    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { shadow });
-    } catch (error) {
-      log("ShadowMountPlus save skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-    try { await chain.syscall(SYS_MUNMAP, shadow.base, shadow.mmapSize); } catch (_) {}
-  } catch (error) {
-    log("ShadowMountPlus skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
 
   let installerSent = false;
   try {
