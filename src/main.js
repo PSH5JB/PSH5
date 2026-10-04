@@ -285,7 +285,7 @@ async function main(userlandRW) {
   if (result.payloads) {
     log("kernel exploit complete", "info");
     try {
-      const { loadOptionalPayloads } = await import("./kexp.js");
+      const { loadOptionalPayloads } = await import("./kexp.js?v=20261004");
       await loadOptionalPayloads(p, chain, (message, type, replace) =>
         log(message, type || "info", replace));
     } catch (error) {

@@ -28,8 +28,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         path = (self.path or "").split("?", 1)[0]
         self.send_header("Access-Control-Allow-Origin", "*")
-        if path.endswith(".appcache"):
-            self.send_header("Cache-Control", "no-cache")
+        if path.endswith(".appcache") or path.endswith(".js"):
+            self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
 def local_ip():
