@@ -198,22 +198,16 @@ export async function sweepEtaHEN(p, chain, log) {
     const existed = await pathExists(p, chain, ETAHEN_DIR);
     const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
     if (!existed) {
-      say("etaHEN not found — no cleanup needed");
       return { existed: false, removed: false, onionPresent };
     }
 
-    say("removing etaHEN files...");
     await rmTree(p, chain, ETAHEN_DIR, 0);
     const removed = !(await pathExists(p, chain, ETAHEN_DIR));
     if (!removed) {
-      say("could not remove /data/etaHEN — rebuild PS5 database to delete etaHEN files", "error");
       await notify(p, chain, "Rebuild PS5 database to remove etaHEN files");
-    } else {
-      say("etaHEN removed successfully");
     }
     return { existed: true, removed, onionPresent };
   } catch (error) {
-    say("etaHEN cleanup skipped — continuing jailbreak");
     return { existed: false, removed: false, onionPresent: false, error };
   }
 }
@@ -317,11 +311,9 @@ async function sendElf(name, payload, p, chain) {
 }
 
 async function sendOne(name, p, chain, log) {
-  log("mapping " + name);
   const mapped = await mapElf(name, p, chain);
-  log("sending " + name + " to elfldr :9021");
+  log("sending " + name);
   await sendElf(name, mapped, p, chain);
-  log(name + " sent");
   return mapped;
 }
 
@@ -386,19 +378,15 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     return false;
   }
   if (mapped.onion) {
-    say("saving OnionHEN.elf into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
   }
   if (mapped.signin) {
-    say("saving " + FAKE_SIGNIN_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
   }
   if (mapped.shadow) {
-    say("saving " + SHADOWMOUNT_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
   }
   if (mapped.pld) {
-    say("saving " + PLDMGR_ELF + " into WebKit Autoloader");
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
     for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
       await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
@@ -424,7 +412,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   }
   await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt",
     lines.length ? lines.join("\n") + "\n" : "");
-  say("saved jailbreak payloads to /data/ps5_autoloader");
   return true;
 }
 
@@ -434,7 +421,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   // causing payloads to be missing from the autoloader on reboot.
   try {
     if (await pathExists(p, chain, AUTOLOADER_DIR)) {
-      log("resetting WebKit Autoloader directory");
       await rmTree(p, chain, AUTOLOADER_DIR, 0);
     }
     await ensureDir(p, chain, AUTOLOADER_DIR);
@@ -446,9 +432,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
   // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
   try {
-    log("preparing Fake PS5 Sign In");
     const signin = await sendOne(FAKE_SIGNIN_ELF, p, chain, log);
-    log(FAKE_SIGNIN_ELF + " sent");
     try {
       await saveAutoloadFiles(p, chain, function () {}, { signin });
     } catch (error) {
@@ -460,9 +444,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  log("preparing OnionHEN");
   const onion = await sendOne("OnionHEN.elf", p, chain, log);
-  log("OnionHEN.elf sent");
   let onionSaveErr = null;
   await waitSeconds(log, "waiting for OnionHEN", ONION_WAIT_S, async function () {
     try {
@@ -476,10 +458,8 @@ export async function loadOptionalPayloads(p, chain, log) {
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
 
   try {
-    log("saving " + SHADOWMOUNT_ELF + " for Autoloader");
     const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
     await saveAutoloadFiles(p, chain, function () {}, { shadow });
-    log(SHADOWMOUNT_ELF + " saved - loads after reboot");
   } catch (error) {
     log("ShadowMountPlus skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -488,11 +468,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   // Save pldmgr to the autoloader directory so it loads on every reboot.
   // Not live-injected — the autoloader handles it after reboot.
   try {
-    log("mapping Payload Manager");
     const pldMapped = await mapElf(PLDMGR_ELF, p, chain);
-    log("saving Payload Manager to WebKit Autoloader");
     await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
-    log(PLDMGR_ELF + " saved - loads via autoloader after reboot");
   } catch (error) {
     log("Payload Manager save skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -671,6 +648,5 @@ export async function runKexp(krw, p, chain, log) {
   const result = await spawnAndJoin(entry, args, symbols, p, chain);
   if (result.joinResult !== 0)
     throw new Error("kexp: pthread_join returned " + hex(result.joinResult));
-  say("elfldr returned " + hex(result.shellcodeResult));
   return true;
 }
