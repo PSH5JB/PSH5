@@ -473,9 +473,6 @@ export async function loadOptionalPayloads(p, chain, log) {
       log("ShadowMountPlus save skipped: " +
         (error && error.message ? error.message : String(error)));
     }
-    log("sending " + SHADOWMOUNT_ELF);
-    await sendElf(SHADOWMOUNT_ELF, shadow, p, chain);
-    await new Promise(function (resolve) { setTimeout(resolve, 3000); });
     try { await chain.syscall(SYS_MUNMAP, shadow.base, shadow.mmapSize); } catch (_) {}
   } catch (error) {
     log("ShadowMountPlus skipped: " +
