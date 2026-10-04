@@ -486,42 +486,16 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
-  // Pre-save pldmgr to the autoloader directory first so autoload.txt has it
-  // before the installer runs. Then send pldmgr first so its browser call fires
-  // first; the installer is sent last so its sceSystemServiceLaunchWebBrowser
-  // call fires last and wins the browser — whichever calls it last takes it.
-  let pldMapped = null;
+  // Save pldmgr to the autoloader directory so it loads on every reboot.
+  // Not live-injected — the autoloader handles it after reboot.
   try {
     log("mapping Payload Manager");
-    pldMapped = await mapElf(PLDMGR_ELF, p, chain);
+    const pldMapped = await mapElf(PLDMGR_ELF, p, chain);
     log("saving Payload Manager to WebKit Autoloader");
     await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
+    log(PLDMGR_ELF + " saved - loads via autoloader after reboot");
   } catch (error) {
-    log("Payload Manager pre-save skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
-  try {
-    if (!pldMapped) {
-      log("mapping Payload Manager");
-      pldMapped = await mapElf(PLDMGR_ELF, p, chain);
-    }
-    log("sending " + PLDMGR_ELF + " to elfldr :9021");
-    await sendElf(PLDMGR_ELF, pldMapped, p, chain);
-    log(PLDMGR_ELF + " sent - dashboard at http://PS5:8084");
-    let pldSaveErr = null;
-    await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
-      try {
-        await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
-      } catch (error) {
-        pldSaveErr = error;
-      }
-    });
-    if (pldSaveErr)
-      log("save Payload Manager skipped: " +
-        (pldSaveErr.message ? pldSaveErr.message : String(pldSaveErr)));
-  } catch (error) {
-    log("Payload Manager skipped: " +
+    log("Payload Manager save skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
