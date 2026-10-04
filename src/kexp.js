@@ -471,6 +471,20 @@ export async function loadOptionalPayloads(p, chain, log) {
       (error && error.message ? error.message : String(error)));
   }
 
+  // Map pldmgr and save it to the autoloader directory before sending the
+  // installer so the installer sees pldmgr in autoload.txt when it runs.
+  // Then send the installer (wins browser race over pldmgr), then send pldmgr.
+  let pldMapped = null;
+  try {
+    log("mapping Payload Manager");
+    pldMapped = await mapElf(PLDMGR_ELF, p, chain);
+    log("saving Payload Manager to WebKit Autoloader");
+    await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
+  } catch (error) {
+    log("Payload Manager pre-save skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+
   // Send Autoloader installer before pldmgr so it wins the browser race.
   // pldmgr also calls sceSystemServiceLaunchWebBrowser; whichever runs last
   // takes the browser — sending the installer first gives it the head start.
@@ -485,13 +499,17 @@ export async function loadOptionalPayloads(p, chain, log) {
   }
 
   try {
-    log("preparing Payload Manager");
-    const pld = await sendOne(PLDMGR_ELF, p, chain, log);
+    if (!pldMapped) {
+      log("mapping Payload Manager");
+      pldMapped = await mapElf(PLDMGR_ELF, p, chain);
+    }
+    log("sending " + PLDMGR_ELF + " to elfldr :9021");
+    await sendElf(PLDMGR_ELF, pldMapped, p, chain);
     log(PLDMGR_ELF + " sent - dashboard at http://PS5:8084");
     let pldSaveErr = null;
     await waitSeconds(log, "waiting for Payload Manager", PAYLOAD_WAIT_S, async function () {
       try {
-        await saveAutoloadFiles(p, chain, function () {}, { pld });
+        await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
       } catch (error) {
         pldSaveErr = error;
       }
