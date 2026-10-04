@@ -466,13 +466,15 @@ export async function loadOptionalPayloads(p, chain, log) {
   try { await chain.syscall(SYS_MUNMAP, onion.base, onion.mmapSize); } catch (_) {}
 
   try {
-    const shadow = await sendOne(SHADOWMOUNT_ELF, p, chain, log);
+    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
     try {
       await saveAutoloadFiles(p, chain, function () {}, { shadow });
     } catch (error) {
       log("ShadowMountPlus save skipped: " +
         (error && error.message ? error.message : String(error)));
     }
+    log("sending " + SHADOWMOUNT_ELF);
+    await sendElf(SHADOWMOUNT_ELF, shadow, p, chain);
     await new Promise(function (resolve) { setTimeout(resolve, 3000); });
     try { await chain.syscall(SYS_MUNMAP, shadow.base, shadow.mmapSize); } catch (_) {}
   } catch (error) {
