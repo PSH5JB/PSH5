@@ -17,7 +17,7 @@ const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF, CHEATRUNNER_ELF];
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -477,14 +477,6 @@ export async function loadOptionalPayloads(p, chain, log) {
     await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
   } catch (error) {
     log("Payload Manager save skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
-  try {
-    const cheatMapped = await mapElf(CHEATRUNNER_ELF, p, chain);
-    await saveAutoloadFiles(p, chain, function () {}, { cheat: cheatMapped });
-  } catch (error) {
-    log("CheatRunner save skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
