@@ -17,7 +17,8 @@ const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", SHADOWMOUNT_ELF, PLDMGR_ELF];
+const NANODNS_ELF = "nanodns.elf";
+const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF, SHADOWMOUNT_ELF];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
 const PAYLOAD_WAIT_S = 5;
@@ -273,7 +274,7 @@ async function mapElf(name, p, chain) {
   if (p.read4(base) >>> 0 !== 0x464c457f)
     throw new Error("kexp: " + name + " copy failed");
 
-  return { base, size: elf.length };
+  return { base, size: elf.length, mmapSize: size };
 }
 
 async function connectToElfldr(p, chain) {
@@ -444,6 +445,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       log("save Fake PS5 Sign In skipped: " +
         (error.message ? error.message : String(error)));
     }
+    try { await chain.syscall(SYS_MUNMAP, signin.base, signin.mmapSize); } catch (_) {}
   } catch (error) {
     log("Fake PS5 Sign In skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -461,22 +463,33 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (onionSaveErr)
     log("save to WebKit Autoloader skipped: " +
       (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
+  try { await chain.syscall(SYS_MUNMAP, onion.base, onion.mmapSize); } catch (_) {}
 
   try {
-    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
-    await saveAutoloadFiles(p, chain, function () {}, { shadow });
+    const nanodns = await sendOne(NANODNS_ELF, p, chain, log);
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { nanodns });
+    } catch (error) {
+      log("nanodns save skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
+    try { await chain.syscall(SYS_MUNMAP, nanodns.base, nanodns.mmapSize); } catch (_) {}
   } catch (error) {
-    log("ShadowMountPlus skipped: " +
+    log("nanodns skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
-  // Save pldmgr to the autoloader directory so it loads on every reboot.
-  // Not live-injected — the autoloader handles it after reboot.
   try {
-    const pldMapped = await mapElf(PLDMGR_ELF, p, chain);
-    await saveAutoloadFiles(p, chain, function () {}, { pld: pldMapped });
+    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
+    try {
+      await saveAutoloadFiles(p, chain, function () {}, { shadow });
+    } catch (error) {
+      log("ShadowMountPlus save skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
+    try { await chain.syscall(SYS_MUNMAP, shadow.base, shadow.mmapSize); } catch (_) {}
   } catch (error) {
-    log("Payload Manager save skipped: " +
+    log("ShadowMountPlus skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
@@ -484,11 +497,17 @@ export async function loadOptionalPayloads(p, chain, log) {
   try {
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
+    await writeTextFile(p, chain, AUTOLOADER_DIR + "/.psh5jb_ui", "psh5jb\n");
     installerSent = true;
   } catch (error) {
     log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
+
+  // Payload Manager (PLDM00001) is already installed as a homescreen PKG.
+  // Sending it live here opens the User Guide browser which re-runs the exploit
+  // and crashes the installer before it can write WKAL00001.
+  // pldmgr is loaded automatically by the webkit autoloader after reboot.
 
   await notify(p, chain, "PSH5JB v8");
   if (installerSent) {
