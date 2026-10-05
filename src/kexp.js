@@ -450,11 +450,6 @@ async function saveOnly(name, key, p, chain, log) {
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
-  if (typeof applicationCache !== "undefined" &&
-      applicationCache.status !== applicationCache.UNCACHED) {
-    try { applicationCache.update(); } catch (_) {}
-  }
-
   let installerSent = false;
   try {
     log("injecting WebKit Autoloader installer");
