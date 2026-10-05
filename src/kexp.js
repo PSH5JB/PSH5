@@ -18,10 +18,16 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const NANODNS_ELF = "nanodns.elf";
-const AUTOLOAD_NAMES = [FAKE_SIGNIN_ELF, "OnionHEN.elf", NANODNS_ELF];
+const AUTOLOAD_NAMES = [
+  "OnionHEN.elf",
+  FAKE_SIGNIN_ELF,
+  PLDMGR_ELF,
+  SHADOWMOUNT_ELF,
+  CHEATRUNNER_ELF,
+];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
-const PAYLOAD_WAIT_S = 5;
+const PAYLOAD_WAIT_S = 2;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -284,7 +290,7 @@ async function connectToElfldr(p, chain) {
   p.write4(address, 0x3d230210); // AF_INET, port 9021
   p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
 
-  for (let attempt = 0; attempt < 40; attempt++) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
     const fd = socket.low | 0;
     if (fd >= 0) {
@@ -292,7 +298,6 @@ async function connectToElfldr(p, chain) {
       if ((connected.low >>> 0) === 0) return fd;
       await chain.syscall(SYS_CLOSE, fd);
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
   }
 
   throw new Error("elfldr is not listening on port 9021");
@@ -401,12 +406,11 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
   const afterMs = {};
-  afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
-  afterMs[NANODNS_ELF] = 0;
-  afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[CHEATRUNNER_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs["OnionHEN.elf"] = 8000;
+  afterMs[FAKE_SIGNIN_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs[PLDMGR_ELF] = 0;
+  afterMs[SHADOWMOUNT_ELF] = 0;
+  afterMs[CHEATRUNNER_ELF] = 0;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -425,83 +429,79 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   return true;
 }
 
-export async function loadOptionalPayloads(p, chain, log) {
-  // Wipe and recreate the autoloader directory so every run starts from a
-  // clean state — prevents stale entries from a previous incomplete run
-  // causing payloads to be missing from the autoloader on reboot.
+async function saveOnly(name, key, p, chain, log) {
   try {
-    if (await pathExists(p, chain, AUTOLOADER_DIR)) {
-      await rmTree(p, chain, AUTOLOADER_DIR, 0);
-    }
-    await ensureDir(p, chain, AUTOLOADER_DIR);
-  } catch (error) {
-    log("autoloader directory reset skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
-  // OnionHEN is a full stack: bootstrapper → elfldr :9020 → util → kstuff → Toolbox.
-  // Sending kstuff/shadowmount/etaHEN first makes OnionHEN refuse to start.
-  try {
-    const signin = await sendOne(FAKE_SIGNIN_ELF, p, chain, log);
+    const mapped = await mapElf(name, p, chain);
     try {
-      await saveAutoloadFiles(p, chain, function () {}, { signin });
+      const spec = {};
+      spec[key] = mapped;
+      await saveAutoloadFiles(p, chain, function () {}, spec);
     } catch (error) {
-      log("save Fake PS5 Sign In skipped: " +
-        (error.message ? error.message : String(error)));
-    }
-    try { await chain.syscall(SYS_MUNMAP, signin.base, signin.mmapSize); } catch (_) {}
-  } catch (error) {
-    log("Fake PS5 Sign In skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-
-  const onion = await sendOne("OnionHEN.elf", p, chain, log);
-  let onionSaveErr = null;
-  await waitSeconds(log, "waiting for OnionHEN", ONION_WAIT_S, async function () {
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { onion });
-    } catch (error) {
-      onionSaveErr = error;
-    }
-  });
-  if (onionSaveErr)
-    log("save to WebKit Autoloader skipped: " +
-      (onionSaveErr.message ? onionSaveErr.message : String(onionSaveErr)));
-  try { await chain.syscall(SYS_MUNMAP, onion.base, onion.mmapSize); } catch (_) {}
-
-  try {
-    const nanodns = await sendOne(NANODNS_ELF, p, chain, log);
-    try {
-      await saveAutoloadFiles(p, chain, function () {}, { nanodns });
-    } catch (error) {
-      log("nanodns save skipped: " +
+      log("save " + name + " skipped: " +
         (error && error.message ? error.message : String(error)));
     }
-    try { await chain.syscall(SYS_MUNMAP, nanodns.base, nanodns.mmapSize); } catch (_) {}
+    try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
   } catch (error) {
-    log("nanodns skipped: " +
+    log(name + " skipped: " +
       (error && error.message ? error.message : String(error)));
   }
+}
 
-  await waitSeconds(log, "waiting for nanodns DNS server", 2, async function () {});
+export async function loadOptionalPayloads(p, chain, log) {
+  await ensureDir(p, chain, AUTOLOADER_DIR);
 
   let installerSent = false;
   try {
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
-    await writeTextFile(p, chain, AUTOLOADER_DIR + "/.psh5jb_ui", "psh5jb\n");
+    const paramJson =
+      "{\n" +
+      "    \"titleId\": \"WKAL00001\",\n" +
+      "    \"applicationCategoryType\": 65536,\n" +
+      "    \"deeplinkUri\": \"http://127.0.0.1:18181/app/index.html\",\n" +
+      "    \"localizedParameters\": {\n" +
+      "        \"defaultLanguage\": \"en-US\",\n" +
+      "        \"en-US\": {\n" +
+      "            \"titleName\": \"WebKit Autoloader v0.5.2-psh5jbv8\"\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n";
+    try {
+      await writeTextFile(p, chain,
+        "/user/app/WKAL00001/sce_sys/param.json", paramJson);
+    } catch (error) {
+      log("WKAL title update skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
     installerSent = true;
   } catch (error) {
     log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
 
-  // Payload Manager (PLDM00001) is already installed as a homescreen PKG.
-  // Sending it live here opens the User Guide browser which re-runs the exploit
-  // and crashes the installer before it can write WKAL00001.
-  // pldmgr is loaded automatically by the webkit autoloader after reboot.
+  const directInject = [
+    { name: "OnionHEN.elf", label: "OnionHEN" },
+    { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
+    { name: PLDMGR_ELF, label: "Payload Manager" },
+  ];
+  for (const { name, label } of directInject) {
+    try {
+      log("injecting " + label);
+      await sendOne(name, p, chain, log);
+    } catch (error) {
+      log(label + " inject failed: " +
+        (error && error.message ? error.message : String(error)));
+    }
+  }
 
-  await notify(p, chain, "PSH5JB v8");
+  await saveOnly("OnionHEN.elf", "onion", p, chain, log);
+  await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
+  await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
+  await saveOnly(NANODNS_ELF, "nanodns", p, chain, log);
+  await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
+  await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
+
+  await notify(p, chain, "PSH5JB v1.1");
   if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);

@@ -318,6 +318,41 @@
       line-height: 1.8;
     }
     .credits b { color: #9aafcc; font-weight: 700; }
+
+    .jb-select {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(7, 9, 15, 0.94);
+      border: 1px solid var(--border);
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .jb-select h2 {
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .jb-select p { color: var(--muted); font-size: 12px; max-width: 420px; }
+    .jb-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .jb-btn {
+      min-width: 140px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .jb-btn:hover, .jb-btn:focus { border-color: var(--accent); color: #fff; }
+    .jb-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+    .console-wrap { position: relative; }
   </style>
 </head>
 <body>
@@ -328,7 +363,7 @@
         <img src="./psh-logo.png" alt="PSH" class="psh-logo">
         <div>
           <div class="logo"><em>PSH</em>5JB <span class="logo-ver">v1.1</span></div>
-          <div class="logo-sub">PS5 Jailbreak · FW 7.00–13.60</div>
+          <div class="logo-sub">WebKit Autoloader · jailbreak selector</div>
         </div>
       </div>
       <div id="fw-label">Detecting firmware…</div>
@@ -364,10 +399,19 @@
           <span>Scan To Join My Discord</span>
         </div>
         <div id="console"></div>
+        <div class="jb-select" id="jb-select">
+          <h2>Jailbreak selector</h2>
+          <p>Pick a chain. Relapse runs this host (7.00–13.60). After install, open WebKit Autoloader from Media.</p>
+          <div class="jb-row">
+            <button type="button" class="jb-btn" id="btn-relapse">Relapse</button>
+            <button type="button" class="jb-btn" id="btn-poops" disabled>Poops (7.00–12.00)</button>
+            <button type="button" class="jb-btn" id="btn-umtx2" disabled>umtx2 (1.00–5.50)</button>
+          </div>
+        </div>
       </div>
       <div class="patch-panel">
         <div class="patch-panel-hdr">Patch Notes</div>
-        <div class="patch-panel-body">04/10/2026 · Sunday<br><br>- Added CheatRunner to WebKit Autoloader.<br><br>- Bumped WebKit Autoloader to psh5jb8.<br><br>03/10/2026 · Saturday<br><br>- Instant injecting with Payload Manager.<br><br>01/10/2026 · Thursday<br><br>- Added np-fake-signin for ps5<br><br>30/09/2026 · Wednesday<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.<br><br>- Changed to WebKit Autoloader.</div>
+        <div class="patch-panel-body">05/10/2026 · Monday<br><br>- OnionHEN, Payload Manager and Fake Signin now inject directly via WebKit.<br><br>04/10/2026 · Sunday<br><br>- Added CheatRunner to WebKit Autoloader.<br><br>- Bumped WebKit Autoloader to psh5jb8.<br><br>03/10/2026 · Saturday<br><br>- Instant injecting with Payload Manager.<br><br>01/10/2026 · Thursday<br><br>- Added np-fake-signin for ps5<br><br>30/09/2026 · Wednesday<br><br>- Replaced etaHEN with OnionHEN.<br><br>- Added Payload Manager (pldmgr v0.5.2).<br><br>- Added FTP Server In OnionHEN.<br><br>- Changed to WebKit Autoloader.</div>
       </div>
     </div>
 
@@ -376,6 +420,20 @@
     </div>
 
   </div>
+  <script>
+    window.waitForJailbreakChoice = function () {
+      return new Promise(function (resolve) {
+        var box = document.getElementById("jb-select");
+        var btn = document.getElementById("btn-relapse");
+        if (!btn) { resolve("relapse"); return; }
+        btn.addEventListener("click", function () {
+          if (box && box.parentNode) box.parentNode.removeChild(box);
+          if (window.writeLog) window.writeLog("Relapse selected", "info");
+          resolve("relapse");
+        });
+      });
+    };
+  </script>
   <script src="./src/firmware.js"></script>
   <script src="./src/main.js"></script>
   <script src="./src/rop.js"></script>
