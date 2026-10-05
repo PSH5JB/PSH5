@@ -399,7 +399,7 @@
           <span>Scan To Join My Discord</span>
         </div>
         <div id="console"></div>
-        <div class="jb-select" id="jb-select">
+        <div class="jb-select" id="jb-select" style="display:none">
           <h2>Jailbreak selector</h2>
           <p>Pick a chain. Relapse runs this host (7.00–13.60). After install, open WebKit Autoloader from Media.</p>
           <div class="jb-row">
@@ -426,6 +426,7 @@
         var box = document.getElementById("jb-select");
         var btn = document.getElementById("btn-relapse");
         if (!btn) { resolve("relapse"); return; }
+        if (box) box.style.display = "flex";
         btn.addEventListener("click", function () {
           if (box && box.parentNode) box.parentNode.removeChild(box);
           if (window.writeLog) window.writeLog("Relapse selected", "info");
