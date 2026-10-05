@@ -394,12 +394,16 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
       await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
     }
   }
+  if (mapped.nanodns) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + NANODNS_ELF, mapped.nanodns.base, mapped.nanodns.size);
+  }
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
   const afterMs = {};
   afterMs[FAKE_SIGNIN_ELF] = 0;
   afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
+  afterMs[NANODNS_ELF] = 0;
   afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
   afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
   afterMs[CHEATRUNNER_ELF] = PAYLOAD_WAIT_S * 1000;
@@ -478,6 +482,8 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("nanodns skipped: " +
       (error && error.message ? error.message : String(error)));
   }
+
+  await waitSeconds(log, "waiting for nanodns DNS server", 2, async function () {});
 
   let installerSent = false;
   try {
