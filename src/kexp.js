@@ -453,6 +453,36 @@ async function saveOnly(name, key, p, chain, log) {
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
+  // Save all payloads to disk FIRST while the chain is alive.
+  // The installer runs last and may close the WebKit session when it
+  // triggers the system PKG install UI — if saves happened after it,
+  // they would run on a dead chain and silently fail, leaving autoload.txt
+  // empty so the autoloader has nothing to inject on next boot.
+  log("saving payloads to autoloader");
+  await saveOnly("OnionHEN.elf", "onion", p, chain, log);
+  await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
+  await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
+  await saveOnly(NANODNS_ELF, "nanodns", p, chain, log);
+  await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
+  await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
+
+  // Live-inject safe payloads (no browser open, chain stays alive).
+  const directInject = [
+    { name: "OnionHEN.elf", label: "OnionHEN" },
+    { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
+  ];
+  for (const { name, label } of directInject) {
+    try {
+      log("injecting " + label);
+      await sendOne(name, p, chain, log);
+    } catch (error) {
+      log(label + " inject failed: " +
+        (error && error.message ? error.message : String(error)));
+    }
+  }
+
+  // Send the installer last — it opens the system PKG UI which closes
+  // the browser session, but payloads are already saved so that is fine.
   let installerSent = false;
   try {
     log("injecting WebKit Autoloader installer");
@@ -481,27 +511,6 @@ export async function loadOptionalPayloads(p, chain, log) {
     log("WebKit Autoloader installer failed: " +
       (error && error.message ? error.message : String(error)));
   }
-
-  const directInject = [
-    { name: "OnionHEN.elf", label: "OnionHEN" },
-    { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
-  ];
-  for (const { name, label } of directInject) {
-    try {
-      log("injecting " + label);
-      await sendOne(name, p, chain, log);
-    } catch (error) {
-      log(label + " inject failed: " +
-        (error && error.message ? error.message : String(error)));
-    }
-  }
-
-  await saveOnly("OnionHEN.elf", "onion", p, chain, log);
-  await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
-  await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
-  await saveOnly(NANODNS_ELF, "nanodns", p, chain, log);
-  await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
-  await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
 
   await notify(p, chain, "PSH5JB v1.1");
   if (installerSent) {
