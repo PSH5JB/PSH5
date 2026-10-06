@@ -21,6 +21,7 @@ const NANODNS_ELF = "nanodns.elf";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
+  NANODNS_ELF,
   PLDMGR_ELF,
   SHADOWMOUNT_ELF,
   CHEATRUNNER_ELF,
@@ -290,7 +291,7 @@ async function connectToElfldr(p, chain) {
   p.write4(address, 0x3d230210); // AF_INET, port 9021
   p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
 
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 20; attempt++) {
     const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
     const fd = socket.low | 0;
     if (fd >= 0) {
@@ -298,6 +299,7 @@ async function connectToElfldr(p, chain) {
       if ((connected.low >>> 0) === 0) return fd;
       await chain.syscall(SYS_CLOSE, fd);
     }
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
 
   throw new Error("elfldr is not listening on port 9021");
@@ -408,8 +410,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 8000;
   afterMs[FAKE_SIGNIN_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[PLDMGR_ELF] = 0;
-  afterMs[SHADOWMOUNT_ELF] = 0;
+  afterMs[NANODNS_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
   afterMs[CHEATRUNNER_ELF] = 0;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
@@ -482,7 +485,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   const directInject = [
     { name: "OnionHEN.elf", label: "OnionHEN" },
     { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
-    { name: PLDMGR_ELF, label: "Payload Manager" },
   ];
   for (const { name, label } of directInject) {
     try {
