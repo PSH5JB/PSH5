@@ -291,7 +291,7 @@ async function connectToElfldr(p, chain) {
   p.write4(address, 0x3d230210); // AF_INET, port 9021
   p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
 
-  for (let attempt = 0; attempt < 20; attempt++) {
+  for (let attempt = 0; attempt < 40; attempt++) {
     const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
     const fd = socket.low | 0;
     if (fd >= 0) {
@@ -400,6 +400,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
       await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
     }
+  }
+  if (mapped.blackbox) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BLACKBOX_ELF, mapped.blackbox.base, mapped.blackbox.size);
   }
   if (mapped.nanodns) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + NANODNS_ELF, mapped.nanodns.base, mapped.nanodns.size);
