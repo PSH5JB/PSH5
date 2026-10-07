@@ -404,16 +404,13 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.blackbox) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BLACKBOX_ELF, mapped.blackbox.base, mapped.blackbox.size);
   }
-  if (mapped.nanodns) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + NANODNS_ELF, mapped.nanodns.base, mapped.nanodns.size);
-  }
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 5000;
   afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[BLACKBOX_ELF] = 0;
+  afterMs[BLACKBOX_ELF] = 5000;
   afterMs[PLDMGR_ELF] = 3000;
   afterMs[CHEATRUNNER_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
