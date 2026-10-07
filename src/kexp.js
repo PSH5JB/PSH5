@@ -469,9 +469,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   // Live-inject safe payloads (no browser open, chain stays alive).
   const directInject = [
     { name: "OnionHEN.elf", label: "OnionHEN" },
+    { name: PLDMGR_ELF, label: "Payload Manager" },
     { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
     { name: NANODNS_ELF, label: "NanoDNS" },
-    { name: PLDMGR_ELF, label: "Payload Manager" },
   ];
   for (const { name, label } of directInject) {
     try {
