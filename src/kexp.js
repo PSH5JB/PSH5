@@ -470,6 +470,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   const directInject = [
     { name: "OnionHEN.elf", label: "OnionHEN" },
     { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
+    { name: NANODNS_ELF, label: "NanoDNS" },
+    { name: PLDMGR_ELF, label: "Payload Manager" },
   ];
   for (const { name, label } of directInject) {
     try {
