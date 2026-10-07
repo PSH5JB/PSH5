@@ -466,22 +466,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
   await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
 
-  // Live-inject safe payloads (no browser open, chain stays alive).
-  const directInject = [
-    { name: "OnionHEN.elf", label: "OnionHEN" },
-    { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
-    { name: BLACKBOX_ELF, label: "Blackbox" },
-  ];
-  for (const { name, label } of directInject) {
-    try {
-      log("injecting " + label);
-      await sendOne(name, p, chain, log);
-    } catch (error) {
-      log(label + " inject failed: " +
-        (error && error.message ? error.message : String(error)));
-    }
-  }
-
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
   let installerSent = false;
