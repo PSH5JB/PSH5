@@ -439,6 +439,10 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
 }
 
 async function saveOnly(name, key, p, chain, log) {
+  if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + name)) {
+    log(name + " already saved, skipping");
+    return;
+  }
   try {
     const mapped = await mapElf(name, p, chain);
     try {
@@ -472,6 +476,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
   await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
   await saveOnly(ANYPAD_ELF, "anypad", p, chain, log);
+
+  // Refresh autoload.txt after all saves (handles case where every payload was already present).
+  try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
