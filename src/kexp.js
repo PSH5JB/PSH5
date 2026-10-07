@@ -18,12 +18,14 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
+const ANYPAD_ELF = "AnyPad-PS5-0.6.0-beta.elf";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
   BLACKBOX_ELF,
   PLDMGR_ELF,
   CHEATRUNNER_ELF,
+  ANYPAD_ELF,
   SHADOWMOUNT_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
@@ -407,12 +409,16 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
+  if (mapped.anypad) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
+  }
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 5000;
   afterMs[FAKE_SIGNIN_ELF] = 0;
   afterMs[BLACKBOX_ELF] = 5000;
   afterMs[PLDMGR_ELF] = 3000;
   afterMs[CHEATRUNNER_ELF] = 2000;
+  afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
@@ -465,6 +471,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(BLACKBOX_ELF, "blackbox", p, chain, log);
   await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
   await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
+  await saveOnly(ANYPAD_ELF, "anypad", p, chain, log);
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
