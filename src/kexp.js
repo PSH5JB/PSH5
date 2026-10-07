@@ -17,11 +17,11 @@ const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
-const NANODNS_ELF = "nanodns.elf";
+const BLACKBOX_ELF = "blackbox.elf";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
-  NANODNS_ELF,
+  BLACKBOX_ELF,
   PLDMGR_ELF,
   CHEATRUNNER_ELF,
   SHADOWMOUNT_ELF,
@@ -410,7 +410,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 5000;
   afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[NANODNS_ELF] = 0;
+  afterMs[BLACKBOX_ELF] = 0;
   afterMs[PLDMGR_ELF] = 3000;
   afterMs[CHEATRUNNER_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
@@ -462,7 +462,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly("OnionHEN.elf", "onion", p, chain, log);
   await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
   await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
-  await saveOnly(NANODNS_ELF, "nanodns", p, chain, log);
+  await saveOnly(BLACKBOX_ELF, "blackbox", p, chain, log);
   await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
   await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
 
@@ -470,7 +470,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   const directInject = [
     { name: "OnionHEN.elf", label: "OnionHEN" },
     { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
-    { name: NANODNS_ELF, label: "NanoDNS" },
+    { name: BLACKBOX_ELF, label: "Blackbox" },
     { name: PLDMGR_ELF, label: "Payload Manager" },
   ];
   for (const { name, label } of directInject) {
