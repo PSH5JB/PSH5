@@ -408,12 +408,12 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 8000;
-  afterMs[FAKE_SIGNIN_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[NANODNS_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[CHEATRUNNER_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[SHADOWMOUNT_ELF] = 0;
+  afterMs["OnionHEN.elf"] = 5000;
+  afterMs[FAKE_SIGNIN_ELF] = 0;
+  afterMs[NANODNS_ELF] = 0;
+  afterMs[PLDMGR_ELF] = 3000;
+  afterMs[CHEATRUNNER_ELF] = 2000;
+  afterMs[SHADOWMOUNT_ELF] = 5000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
