@@ -508,6 +508,10 @@ export async function loadOptionalPayloads(p, chain, log) {
   if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);
+    /* Navigate the browser to the installer page. The installer no longer
+     * calls sceSystemServiceLaunchWebBrowser (that was crashing SceShellUI),
+     * so we redirect from JS instead. */
+    setTimeout(() => { window.location.replace("http://127.0.0.1:18181/?v=" + Date.now()); }, 500);
   } else {
     log("done - press the PS button to go home");
     await notify(p, chain, "done - press the PS button to go home");
