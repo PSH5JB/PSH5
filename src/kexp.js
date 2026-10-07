@@ -1,4 +1,4 @@
-import { int64 } from "./utils/int64.js";
+﻿import { int64 } from "./utils/int64.js";
 
 const O_NONBLOCK = 0x4;
 const O_WRONLY_CREAT_TRUNC = 0x601;
@@ -21,14 +21,16 @@ const NANODNS_ELF = "nanodns.elf";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
-  NANODNS_ELF,
   PLDMGR_ELF,
-  SHADOWMOUNT_ELF,
+  NANODNS_ELF,
   CHEATRUNNER_ELF,
+  SHADOWMOUNT_ELF,
 ];
+const WKAL_DIR = "/user/app/WKAL00001";
+const WKAL_DEEPLINK = "http://127.0.0.1:18181/app/index.html";
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
-const PAYLOAD_WAIT_S = 2;
+const PAYLOAD_WAIT_S = 5;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
 const DEFAULT_ELFLDR = "elfldr-ps5-1360.elf";
@@ -207,16 +209,22 @@ export async function sweepEtaHEN(p, chain, log) {
     const existed = await pathExists(p, chain, ETAHEN_DIR);
     const onionPresent = await pathExists(p, chain, ONIONHEN_DIR);
     if (!existed) {
+      say("etaHEN not found — no cleanup needed");
       return { existed: false, removed: false, onionPresent };
     }
 
+    say("removing etaHEN files...");
     await rmTree(p, chain, ETAHEN_DIR, 0);
     const removed = !(await pathExists(p, chain, ETAHEN_DIR));
     if (!removed) {
+      say("could not remove /data/etaHEN — rebuild PS5 database to delete etaHEN files", "error");
       await notify(p, chain, "Rebuild PS5 database to remove etaHEN files");
+    } else {
+      say("etaHEN removed successfully");
     }
     return { existed: true, removed, onionPresent };
   } catch (error) {
+    say("etaHEN cleanup skipped — continuing jailbreak");
     return { existed: false, removed: false, onionPresent: false, error };
   }
 }
@@ -273,7 +281,7 @@ async function mapElf(name, p, chain) {
   const dwords = elf.length & ~3;
   for (let offset = 0; offset < dwords; offset += 4) {
     p.write4(base.add32(offset), readU32(elf, offset));
-    if (offset && (offset & 0x3ffff) === 0)
+    if (offset && (offset & 0xffff) === 0)
       await new Promise((resolve) => setTimeout(resolve, 0));
   }
   for (let offset = dwords; offset < elf.length; offset++)
@@ -291,7 +299,7 @@ async function connectToElfldr(p, chain) {
   p.write4(address, 0x3d230210); // AF_INET, port 9021
   p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
 
-  for (let attempt = 0; attempt < 20; attempt++) {
+  for (let attempt = 0; attempt < 40; attempt++) {
     const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
     const fd = socket.low | 0;
     if (fd >= 0) {
@@ -305,14 +313,38 @@ async function connectToElfldr(p, chain) {
   throw new Error("elfldr is not listening on port 9021");
 }
 
-async function sendElf(name, payload, p, chain) {
+async function sendElf(name, payload, p, chain, log) {
+  const say = typeof log === "function" ? log : function () {};
+  say("connecting elfldr :9021 for " + name);
   const fd = await connectToElfldr(p, chain);
+  const flags = sysRv(await chain.syscall(SYS_FCNTL, fd, 3, 0));
+  if (flags >= 0)
+    await chain.syscall(SYS_FCNTL, fd, 4, flags | O_NONBLOCK);
+  const started = Date.now();
+  let lastLog = -1;
   try {
     for (let offset = 0; offset < payload.size;) {
-      const length = Math.min(0x40000, payload.size - offset);
-      const written = (await chain.syscall(SYS_WRITE, fd, payload.base.add32(offset), length)).low | 0;
-      if (written <= 0) throw new Error(name + " socket write failed");
-      offset += written;
+      if (Date.now() - started > 90000)
+        throw new Error(name + " send to :9021 timed out");
+      const length = Math.min(0x4000, payload.size - offset);
+      const written = sysRv(await chain.syscall(
+        SYS_WRITE, fd, payload.base.add32(offset), length));
+      if (written > 0) {
+        offset += written;
+        const mb = (offset / 1048576).toFixed(1);
+        const total = (payload.size / 1048576).toFixed(1);
+        if (offset === payload.size || (offset >> 19) !== lastLog) {
+          lastLog = offset >> 19;
+          say("sending " + name + " to :9021 — " + mb + "/" + total + " MB", "info", true);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        continue;
+      }
+      if (written === -35 || written === -11 || written === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        continue;
+      }
+      throw new Error(name + " socket write failed (" + written + ")");
     }
   } finally {
     await chain.syscall(SYS_CLOSE, fd);
@@ -320,9 +352,10 @@ async function sendElf(name, payload, p, chain) {
 }
 
 async function sendOne(name, p, chain, log) {
+  log("mapping " + name);
   const mapped = await mapElf(name, p, chain);
-  log("sending " + name);
-  await sendElf(name, mapped, p, chain);
+  await sendElf(name, mapped, p, chain, log);
+  log(name + " sent");
   return mapped;
 }
 
@@ -392,9 +425,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.signin) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
   }
-  if (mapped.shadow) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
-  }
   if (mapped.pld) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
     for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
@@ -407,13 +437,16 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
+  if (mapped.shadow) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
+  }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 8000;
-  afterMs[FAKE_SIGNIN_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[NANODNS_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs["OnionHEN.elf"] = ONION_WAIT_S * 1000;
+  afterMs[FAKE_SIGNIN_ELF] = 0;
   afterMs[PLDMGR_ELF] = PAYLOAD_WAIT_S * 1000;
+  afterMs[NANODNS_ELF] = 0;
+  afterMs[CHEATRUNNER_ELF] = ONION_WAIT_S * 1000;
   afterMs[SHADOWMOUNT_ELF] = PAYLOAD_WAIT_S * 1000;
-  afterMs[CHEATRUNNER_ELF] = 0;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -432,94 +465,53 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   return true;
 }
 
-async function saveOnly(name, key, p, chain, log) {
-  try {
-    const mapped = await mapElf(name, p, chain);
-    try {
-      const spec = {};
-      spec[key] = mapped;
-      await saveAutoloadFiles(p, chain, function () {}, spec);
-    } catch (error) {
-      log("save " + name + " skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-    try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-  } catch (error) {
-    log(name + " skipped: " +
-      (error && error.message ? error.message : String(error)));
-  }
-}
-
 export async function loadOptionalPayloads(p, chain, log) {
-  await ensureDir(p, chain, AUTOLOADER_DIR);
-
-  // Save all payloads to disk FIRST while the chain is alive.
-  // The installer runs last and may close the WebKit session when it
-  // triggers the system PKG install UI — if saves happened after it,
-  // they would run on a dead chain and silently fail, leaving autoload.txt
-  // empty so the autoloader has nothing to inject on next boot.
-  log("saving payloads to autoloader");
-  await saveOnly("OnionHEN.elf", "onion", p, chain, log);
-  await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
-  await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
-  await saveOnly(NANODNS_ELF, "nanodns", p, chain, log);
-  await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
-  await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
-
-  // Live-inject safe payloads (no browser open, chain stays alive).
-  const directInject = [
-    { name: "OnionHEN.elf", label: "OnionHEN" },
-    { name: FAKE_SIGNIN_ELF, label: "Fake Signin" },
-  ];
-  for (const { name, label } of directInject) {
-    try {
-      log("injecting " + label);
-      await sendOne(name, p, chain, log);
-    } catch (error) {
-      log(label + " inject failed: " +
-        (error && error.message ? error.message : String(error)));
-    }
-  }
-
-  // Send the installer last — it opens the system PKG UI which closes
-  // the browser session, but payloads are already saved so that is fine.
-  let installerSent = false;
+  const quiet = function () {};
   try {
-    log("injecting WebKit Autoloader installer");
-    await sendOne(AUTOLOADER_ELF, p, chain, log);
-    const paramJson =
-      "{\n" +
-      "    \"titleId\": \"WKAL00001\",\n" +
-      "    \"applicationCategoryType\": 65536,\n" +
-      "    \"deeplinkUri\": \"http://127.0.0.1:18181/app/index.html\",\n" +
-      "    \"localizedParameters\": {\n" +
-      "        \"defaultLanguage\": \"en-US\",\n" +
-      "        \"en-US\": {\n" +
-      "            \"titleName\": \"WebKit Autoloader v0.5.2-psh5jbv8\"\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n";
-    try {
-      await writeTextFile(p, chain,
-        "/user/app/WKAL00001/sce_sys/param.json", paramJson);
-    } catch (error) {
-      log("WKAL title update skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-    installerSent = true;
+    if (await pathExists(p, chain, AUTOLOADER_DIR))
+      await rmTree(p, chain, AUTOLOADER_DIR, 0);
+    await ensureDir(p, chain, AUTOLOADER_DIR);
+  } catch (_) {}
+
+  await waitSeconds(quiet, "kernel", 2);
+
+  log("moving the payloads to autoload");
+  try {
+    const onion = await mapElf("OnionHEN.elf", p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { onion });
+  } catch (_) {}
+  try {
+    const signin = await mapElf(FAKE_SIGNIN_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { signin });
+  } catch (_) {}
+  try {
+    const pld = await mapElf(PLDMGR_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { pld });
+  } catch (_) {}
+  try {
+    const nanodns = await mapElf(NANODNS_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { nanodns });
+  } catch (_) {}
+  try {
+    const cheat = await mapElf(CHEATRUNNER_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { cheat });
+  } catch (_) {}
+  try {
+    const shadow = await mapElf(SHADOWMOUNT_ELF, p, chain);
+    await saveAutoloadFiles(p, chain, quiet, { shadow });
+  } catch (_) {}
+
+  try {
+    log("updating WebKit Autoloader");
+    await sendOne(AUTOLOADER_ELF, p, chain, quiet);
+    await waitSeconds(log, "WebKit Autoloader", PAYLOAD_WAIT_S);
   } catch (error) {
-    log("WebKit Autoloader installer failed: " +
+    log("WebKit Autoloader skipped: " +
       (error && error.message ? error.message : String(error)));
   }
 
-  await notify(p, chain, "PSH5JB v1.1");
-  if (installerSent) {
-    log(INSTALL_TOAST);
-    await notify(p, chain, INSTALL_TOAST);
-  } else {
-    log("done - press the PS button to go home");
-    await notify(p, chain, "done - press the PS button to go home");
-  }
+  log("done - power off, then open WebKit Autoloader");
+  await notify(p, chain, "done - power off, then open WebKit Autoloader");
 }
 
 function patchShellcode(blob, symbols) {
@@ -675,5 +667,6 @@ export async function runKexp(krw, p, chain, log) {
   const result = await spawnAndJoin(entry, args, symbols, p, chain);
   if (result.joinResult !== 0)
     throw new Error("kexp: pthread_join returned " + hex(result.joinResult));
+  say("elfldr returned " + hex(result.shellcodeResult));
   return true;
 }
