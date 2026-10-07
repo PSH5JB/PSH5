@@ -11,7 +11,7 @@ const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
-const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2-psh5jbv9.elf";
+const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.5.2-psh5jbv10.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
@@ -487,7 +487,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       "    \"localizedParameters\": {\n" +
       "        \"defaultLanguage\": \"en-US\",\n" +
       "        \"en-US\": {\n" +
-      "            \"titleName\": \"WebKit Autoloader v0.5.2-psh5jbv9\"\n" +
+      "            \"titleName\": \"WebKit Autoloader v0.5.2-psh5jbv10\"\n" +
       "        }\n" +
       "    }\n" +
       "}\n";
