@@ -494,7 +494,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       "    \"localizedParameters\": {\n" +
       "        \"defaultLanguage\": \"en-US\",\n" +
       "        \"en-US\": {\n" +
-      "            \"titleName\": \"WebKit Autoloader v0.5.2-psh5jbv10\"\n" +
+      "            \"titleName\": \"WebKit Autoloader v0.6.0-psh5jbv10\"\n" +
       "        }\n" +
       "    }\n" +
       "}\n";
