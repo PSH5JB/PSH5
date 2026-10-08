@@ -438,8 +438,8 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   return true;
 }
 
-async function saveOnly(name, key, p, chain, log) {
-  if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + name)) {
+async function saveOnly(name, key, p, chain, log, isPresent) {
+  if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
     log(name + " already saved, skipping");
     return;
   }
@@ -469,16 +469,24 @@ export async function loadOptionalPayloads(p, chain, log) {
   // they would run on a dead chain and silently fail, leaving autoload.txt
   // empty so the autoloader has nothing to inject on next boot.
   log("saving payloads to autoloader");
-  await saveOnly("OnionHEN.elf", "onion", p, chain, log);
-  await saveOnly(FAKE_SIGNIN_ELF, "signin", p, chain, log);
-  await saveOnly(PLDMGR_ELF, "pld", p, chain, log);
-  await saveOnly(BLACKBOX_ELF, "blackbox", p, chain, log);
-  await saveOnly(SHADOWMOUNT_ELF, "shadow", p, chain, log);
-  await saveOnly(CHEATRUNNER_ELF, "cheat", p, chain, log);
-  await saveOnly(ANYPAD_ELF, "anypad", p, chain, log);
+  // One sweep instead of per-payload pathExists — avoids a second sweep in the final refresh.
+  const _present = new Set();
+  for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
+    if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
+  }
+  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
+  await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
+  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
+  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF));
+  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF));
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF));
+  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
-  // Refresh autoload.txt after all saves (handles case where every payload was already present).
-  try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
+  // Rebuild autoload.txt only when something was missing (first run or new payload added).
+  // All-present path skips this to avoid 7 redundant pathExists kernel calls.
+  if (_present.size < AUTOLOAD_NAMES.length) {
+    try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
+  }
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
