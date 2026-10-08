@@ -480,6 +480,7 @@ async function saveFile(dir, name, ver, p, chain, log, isPresent) {
       return;
     }
   }
+  log("downloading " + name + " — please wait, this may take a few minutes...");
   try {
     const mapped = await mapBinary(name, p, chain);
     try {
