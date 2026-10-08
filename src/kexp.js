@@ -19,6 +19,10 @@ const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.6.0-beta.elf";
+// Payload versions — updated by GitHub Actions when a new release is downloaded.
+const BLACKBOX_VER = "v1.0.7";
+const CHEATRUNNER_VER = "v0.17.2";
+const SHADOWMOUNT_VER = "1.7beta3";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
@@ -438,10 +442,22 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   return true;
 }
 
-async function saveOnly(name, key, p, chain, log, isPresent) {
-  if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
-    log(name + " already saved, skipping");
-    return;
+async function saveOnly(name, key, p, chain, log, isPresent, ver) {
+  if (ver) {
+    const marker = AUTOLOADER_DIR + "/" + name + "." + ver;
+    if (await pathExists(p, chain, marker)) {
+      log(name + " already saved (" + ver + "), skipping");
+      return;
+    }
+    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
+      log(name + " outdated, replacing with " + ver);
+      try { await chain.syscall(SYS_UNLINK, cstring(p, AUTOLOADER_DIR + "/" + name)); } catch (_) {}
+    }
+  } else {
+    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
+      log(name + " already saved, skipping");
+      return;
+    }
   }
   try {
     const mapped = await mapElf(name, p, chain);
@@ -449,14 +465,15 @@ async function saveOnly(name, key, p, chain, log, isPresent) {
       const spec = {};
       spec[key] = mapped;
       await saveAutoloadFiles(p, chain, function () {}, spec);
+      if (ver) {
+        try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/" + name + "." + ver, ver); } catch (_) {}
+      }
     } catch (error) {
-      log("save " + name + " skipped: " +
-        (error && error.message ? error.message : String(error)));
+      log("save " + name + " skipped: " + (error && error.message ? error.message : String(error)));
     }
     try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
   } catch (error) {
-    log(name + " skipped: " +
-      (error && error.message ? error.message : String(error)));
+    log(name + " skipped: " + (error && error.message ? error.message : String(error)));
   }
 }
 
@@ -477,9 +494,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
-  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF));
-  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF));
-  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF));
+  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
+  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
   try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}

@@ -5,6 +5,12 @@ PAYLOADS = "payloads"
 KEXP = "src/kexp.js"
 VERSIONS_FILE = ".github/payload-versions.json"
 
+VER_CONSTS = {
+    "blackbox": "BLACKBOX_VER",
+    "CheatRunner": "CHEATRUNNER_VER",
+    "ShadowMountPlus": "SHADOWMOUNT_VER",
+}
+
 with open(VERSIONS_FILE) as f:
     versions = json.load(f)
 
@@ -87,6 +93,8 @@ def update_fixed_gh(key, repo, asset_pat, dest):
     download(url, tmp)
     shutil.move(tmp, f"{PAYLOADS}/{dest}")
     versions[key] = tag
+    if key in VER_CONSTS:
+        update_kexp_const(VER_CONSTS[key], tag)
     changed[0] = True
 
 
@@ -113,6 +121,8 @@ def update_fixed_zip_gh(key, repo, asset_pat, inner, dest):
             dst.write(src.read())
     os.unlink(tmpzip)
     versions[key] = tag
+    if key in VER_CONSTS:
+        update_kexp_const(VER_CONSTS[key], tag)
     changed[0] = True
 
 
