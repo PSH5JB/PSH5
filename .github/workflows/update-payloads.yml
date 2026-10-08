@@ -2,40 +2,48 @@ name: Update Payloads
 
 on:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  update:
+  update-payloads:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout with LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download latest kstuff.elf
-        run: |
-          URL=$(curl -s https://api.github.com/repos/EchoStretch/kstuff-lite/releases/latest \
-            | jq -r '.assets[] | select(.name == "kstuff.elf") | .browser_download_url')
-          curl -L "$URL" -o payloads/kstuff.elf
-          echo "kstuff: $URL"
+      - name: Check and download updated payloads
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/update_payloads.py
 
-      - name: Download latest shadowmountplus.elf
-        run: |
-          URL=$(curl -s https://api.github.com/repos/drakmor/ShadowMountPlus/releases/latest \
-            | jq -r '.assets[] | select(.name == "shadowmountplus.elf") | .browser_download_url')
-          curl -L "$URL" -o payloads/shadowmountplus.elf
-          echo "shadowmountplus: $URL"
-
-      - name: Commit if changed
+      - name: Commit and push
+        if: steps.update.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add payloads/kstuff.elf payloads/shadowmountplus.elf
-          if git diff --cached --quiet; then
-            echo "No payload updates."
-          else
-            git commit -m "chore: update payloads from upstream releases"
-            git push
-          fi
+          git add payloads/ src/kexp.js .github/payload-versions.json
+          UPDATED=$(git diff --cached --name-only -- payloads/ | sed 's|payloads/||' | sort | paste -sd ', ')
+          git commit -m "chore: update payloads — ${UPDATED}
+
+          Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+          git push
+
+      - name: Deploy to VPS
+        if: steps.update.outputs.changed == 'true'
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh -i ~/.ssh/vps_key -o StrictHostKeyChecking=no root@167.99.91.255 \
+            "cd /var/www/html && git stash && git pull origin main && git stash drop 2>/dev/null || true"
