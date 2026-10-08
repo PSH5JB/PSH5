@@ -465,11 +465,12 @@ async function mapBinary(name, p, chain) {
 async function saveFile(dir, name, ver, p, chain, log, isPresent) {
   if (ver) {
     const marker = dir + "/" + name + "." + ver;
-    if (await pathExists(p, chain, marker)) {
+    const filePresent = isPresent === true || (isPresent !== false && await pathExists(p, chain, dir + "/" + name));
+    if (await pathExists(p, chain, marker) && filePresent) {
       log(name + " already saved (" + ver + "), skipping");
       return;
     }
-    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, dir + "/" + name))) {
+    if (filePresent) {
       log(name + " outdated, replacing with " + ver);
       try { await chain.syscall(SYS_UNLINK, cstring(p, dir + "/" + name)); } catch (_) {}
     }
@@ -499,11 +500,12 @@ async function saveFile(dir, name, ver, p, chain, log, isPresent) {
 async function saveOnly(name, key, p, chain, log, isPresent, ver) {
   if (ver) {
     const marker = AUTOLOADER_DIR + "/" + name + "." + ver;
-    if (await pathExists(p, chain, marker)) {
+    const filePresent = isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name));
+    if (await pathExists(p, chain, marker) && filePresent) {
       log(name + " already saved (" + ver + "), skipping");
       return;
     }
-    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
+    if (filePresent) {
       log(name + " outdated, replacing with " + ver);
       try { await chain.syscall(SYS_UNLINK, cstring(p, AUTOLOADER_DIR + "/" + name)); } catch (_) {}
     }
