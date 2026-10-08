@@ -1,7 +1,7 @@
 {
   "np-fake-signin": "none",
   "CheatRunner": "v0.17.2",
-  "blackbox": "none",
+  "blackbox": "v1.0.7",
   "ShadowMountPlus": "1.7beta3",
   "AnyPad": "v0.6.0-beta"
 }
