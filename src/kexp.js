@@ -23,6 +23,9 @@ const ANYPAD_ELF = "AnyPad-PS5-0.6.0-beta.elf";
 const BLACKBOX_VER = "v1.0.7";
 const CHEATRUNNER_VER = "v0.17.2";
 const SHADOWMOUNT_VER = "1.7beta3";
+const HOMEBREW_DIR = "/data/homebrew";
+const BLACKBOX_PKG = "PPSA01453.ffpkg";
+const BLACKBOX_PKG_VER = "v1.0.7";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
@@ -442,6 +445,57 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   return true;
 }
 
+async function mapBinary(name, p, chain) {
+  const data = await fetchBinary(name);
+  const size = (data.length + 0x3fff) & ~0x3fff;
+  const base = await chain.syscall(SYS_MMAP, 0, size, PROT_RW, MAP_PRIVATE_ANON, -1, 0);
+  if (base.low >>> 0 === 0xffffffff || base.low < 0x10000)
+    throw new Error("kexp: " + name + " mmap failed");
+  const dwords = data.length & ~3;
+  for (let offset = 0; offset < dwords; offset += 4) {
+    p.write4(base.add32(offset), readU32(data, offset));
+    if (offset && (offset & 0x3ffff) === 0)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  for (let offset = dwords; offset < data.length; offset++)
+    p.write1(base.add32(offset), data[offset]);
+  return { base, size: data.length, mmapSize: size };
+}
+
+async function saveFile(dir, name, ver, p, chain, log, isPresent) {
+  if (ver) {
+    const marker = dir + "/" + name + "." + ver;
+    if (await pathExists(p, chain, marker)) {
+      log(name + " already saved (" + ver + "), skipping");
+      return;
+    }
+    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, dir + "/" + name))) {
+      log(name + " outdated, replacing with " + ver);
+      try { await chain.syscall(SYS_UNLINK, cstring(p, dir + "/" + name)); } catch (_) {}
+    }
+  } else {
+    if (isPresent === true || (isPresent !== false && await pathExists(p, chain, dir + "/" + name))) {
+      log(name + " already saved, skipping");
+      return;
+    }
+  }
+  try {
+    const mapped = await mapBinary(name, p, chain);
+    try {
+      await writeBuf(p, chain, dir + "/" + name, mapped.base, mapped.size);
+      if (ver) {
+        try { await writeTextFile(p, chain, dir + "/" + name + "." + ver, ver); } catch (_) {}
+      }
+      log(name + " saved");
+    } catch (error) {
+      log("save " + name + " skipped: " + (error && error.message ? error.message : String(error)));
+    }
+    try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+  } catch (error) {
+    log(name + " skipped: " + (error && error.message ? error.message : String(error)));
+  }
+}
+
 async function saveOnly(name, key, p, chain, log, isPresent, ver) {
   if (ver) {
     const marker = AUTOLOADER_DIR + "/" + name + "." + ver;
@@ -498,6 +552,10 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
+  await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_PKG_VER, p, chain, log, _pkgPresent);
 
   try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
