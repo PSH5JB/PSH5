@@ -482,11 +482,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF));
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
-  // Rebuild autoload.txt only when something was missing (first run or new payload added).
-  // All-present path skips this to avoid 7 redundant pathExists kernel calls.
-  if (_present.size < AUTOLOAD_NAMES.length) {
-    try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
-  }
+  try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
