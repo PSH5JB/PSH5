@@ -556,6 +556,10 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
 
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
+  await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_PKG_VER, p, chain, log, _pkgPresent);
+
   try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
   // Send the installer last — it opens the system PKG UI which closes
