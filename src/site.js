@@ -64,6 +64,8 @@ async function run() {
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 
+  if (typeof window.waitForJailbreakChoice === "function")
+    await window.waitForJailbreakChoice();
   await import("./relapse_exploit.js");
   await main(primitive);
 }
