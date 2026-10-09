@@ -25,7 +25,6 @@ const CHEATRUNNER_VER = "v0.17.2";
 const SHADOWMOUNT_VER = "1.7beta3";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
-const BLACKBOX_PKG_VER = "v1.0.7";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
@@ -559,7 +558,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
-  await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_PKG_VER, p, chain, log, _pkgPresent);
+  await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_VER, p, chain, log, _pkgPresent);
 
   try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
