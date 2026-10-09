@@ -41,9 +41,9 @@ const EMU_PS5SX2_VER       = "vk-285-139";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "v1.0";
 const EMU_PS5X360_VER      = "v1.0";
-const EMU_PORPOISE_VER     = "v2.7";
-const EMU_PS5CEMU_VER      = "v3.5.0";
-const EMU_PROSPEROEDEN_VER = "v1.000.095";
+const EMU_PORPOISE_VER     = "v2.7.1";
+const EMU_PS5CEMU_VER      = "v3.5.1";
+const EMU_PROSPEROEDEN_VER = "v1.000.095.1";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
@@ -592,6 +592,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     }
     log("extracting " + psaId + "...");
     await sendOne(EMU_UNZIP_ELF, p, chain, log);
+    await waitSeconds(log, "waiting for " + psaId + " extraction", 25, null);
     try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
     log(psaId + " installed");
   } catch (e) {
