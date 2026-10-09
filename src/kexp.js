@@ -621,22 +621,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
-  // Live-inject safe payloads immediately so ports are up right away.
-  const _directInject = [
-    { name: "OnionHEN.elf",  label: "OnionHEN" },
-    { name: FAKE_SIGNIN_ELF,  label: "Fake Signin" },
-    { name: BLACKBOX_ELF,     label: "Blackbox" },
-    { name: PLDMGR_ELF,       label: "Payload Manager" },
-  ];
-  for (const { name, label } of _directInject) {
-    try {
-      log("injecting " + label);
-      await sendOne(name, p, chain, log);
-    } catch (error) {
-      log(label + " inject failed: " + (error && error.message ? error.message : String(error)));
-    }
-  }
-
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
   await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_VER, p, chain, log, _pkgPresent);
