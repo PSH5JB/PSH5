@@ -64,31 +64,6 @@ async function run() {
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 
-  const _jbBox = document.getElementById("jb-select");
-  const _jbBtnRelapse = document.getElementById("btn-relapse");
-  const _jbBtnUmtx = document.getElementById("btn-umtx2");
-  if (_jbBtnRelapse) {
-    const _choice = await new Promise(function (resolve) {
-      if (_jbBox) _jbBox.style.display = "flex";
-      _jbBtnRelapse.addEventListener("click", function _r() {
-        _jbBtnRelapse.removeEventListener("click", _r);
-        if (_jbBox && _jbBox.parentNode) _jbBox.parentNode.removeChild(_jbBox);
-        writeLog("Relapse selected", "info");
-        resolve("relapse");
-      });
-      if (_jbBtnUmtx) {
-        _jbBtnUmtx.addEventListener("click", function _u() {
-          _jbBtnUmtx.removeEventListener("click", _u);
-          writeLog("Redirecting to umtx2...", "info");
-          resolve("umtx2");
-        });
-      }
-    });
-    if (_choice === "umtx2") {
-      window.location.href = "https://umtx2.pages.dev/";
-      return;
-    }
-  }
   await import("./relapse_exploit.js");
   await main(primitive);
 }
