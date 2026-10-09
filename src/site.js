@@ -64,8 +64,19 @@ async function run() {
   const primitive = await getPrimitive();
   writeLog(`WebKit base: 0x${getWebKitBase().toString(16)}`, "info");
 
-  if (typeof window.waitForJailbreakChoice === "function")
-    await window.waitForJailbreakChoice();
+  const _jbBox = document.getElementById("jb-select");
+  const _jbBtn = document.getElementById("btn-relapse");
+  if (_jbBtn) {
+    await new Promise(function (resolve) {
+      if (_jbBox) _jbBox.style.display = "flex";
+      _jbBtn.addEventListener("click", function _handler() {
+        _jbBtn.removeEventListener("click", _handler);
+        if (_jbBox && _jbBox.parentNode) _jbBox.parentNode.removeChild(_jbBox);
+        writeLog("Relapse selected", "info");
+        resolve();
+      });
+    });
+  }
   await import("./relapse_exploit.js");
   await main(primitive);
 }
