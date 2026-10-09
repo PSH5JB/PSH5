@@ -178,6 +178,7 @@ def update_versioned_cb(key, repo, asset_pat, glob_prefix, const):
 update_fixed_gh("np-fake-signin", "earthonion/np-fake-signin",  r"np-fake-signin-ps5\.elf$",  "np-fake-signin-ps5.elf")
 update_fixed_gh("CheatRunner",    "notmaj0r/CheatRunner",        r"CheatRunner\.elf$",         "CheatRunner.elf")
 update_fixed_gh("blackbox",       "D3ATHLY/blackbox",            r"^blackbox\.elf$",           "blackbox.elf")
+update_fixed_gh("blackbox_ffpkg", "D3ATHLY/blackbox",            r"^PPSA01453\.ffpkg$",        "PPSA01453.ffpkg")
 update_fixed_zip_gh("ShadowMountPlus", "drakmor/ShadowMountPlus", r"\.zip$",                  "shadowmountplus.elf", "shadowmountplus.elf")
 update_versioned_gh("webkit-autoloader", "itsPLK/ps5-webkit-autoloader", r"webkit-autoloader-installer_v.*.elf$", "webkit-autoloader-installer_v*.elf", "AUTOLOADER_ELF")
 update_versioned_cb("AnyPad",     "elmonomalva0/Any-Pad-ps5",    r"AnyPad-PS5-.*\.elf$",      "AnyPad-PS5-*.elf", "ANYPAD_ELF")
