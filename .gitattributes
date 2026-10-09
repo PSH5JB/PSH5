@@ -3,3 +3,7 @@
 *.bin binary
 payloads/blackbox.elf filter=lfs diff=lfs merge=lfs -text
 payloads/PPSA01453.ffpkg filter=lfs diff=lfs merge=lfs -text
+payloads/emulators/**/*.elf filter=lfs diff=lfs merge=lfs -text
+payloads/emulators/**/*.zip filter=lfs diff=lfs merge=lfs -text
+payloads/ps5-unzip.elf filter=lfs diff=lfs merge=lfs -text
+payloads/emulators/ps5-unzip.elf filter=lfs diff=lfs merge=lfs -text

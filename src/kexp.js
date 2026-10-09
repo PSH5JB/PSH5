@@ -25,6 +25,25 @@ const CHEATRUNNER_VER = "v0.17.2";
 const SHADOWMOUNT_VER = "1.7beta3";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
+// Emulator payloads
+const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
+const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
+const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.3.elf";
+const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
+const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
+const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
+const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
+const EMU_PS5X360_ELF      = "emulators/PS5X360/PS5X360-AutoLog.elf";
+const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
+const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip";
+const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
+const EMU_PS5SX2_VER       = "vk-285-139";
+const EMU_SNES9X_VER       = "v2.3";
+const EMU_XPSEMU_VER       = "v1.0";
+const EMU_PS5X360_VER      = "v1.0";
+const EMU_PORPOISE_VER     = "v2.7";
+const EMU_PS5CEMU_VER      = "v3.5.0";
+const EMU_PROSPEROEDEN_VER = "v1.000.095";
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
@@ -533,6 +552,53 @@ async function saveOnly(name, key, p, chain, log, isPresent, ver) {
   }
 }
 
+
+async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
+  const dest = HOMEBREW_DIR + "/" + destName;
+  const marker = dest + "." + ver;
+  if (await pathExists(p, chain, marker) && await pathExists(p, chain, dest)) {
+    log(destName + " already downloaded (" + ver + "), skipping");
+    return;
+  }
+  log("downloading " + destName + " — please wait...");
+  try {
+    const mapped = await mapBinary(fetchPath, p, chain);
+    try {
+      await writeBuf(p, chain, dest, mapped.base, mapped.size);
+      try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
+      log(destName + " saved");
+    } catch (e) {
+      log("save " + destName + " failed: " + (e && e.message ? e.message : String(e)));
+    }
+    try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+  } catch (e) {
+    log(destName + " download failed: " + (e && e.message ? e.message : String(e)));
+  }
+}
+
+async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
+  const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
+  if (await pathExists(p, chain, marker)) {
+    log(psaId + " already installed (" + ver + "), skipping");
+    return;
+  }
+  log("downloading " + psaId + " (" + ver + ") — please wait...");
+  try {
+    const mapped = await mapBinary(fetchPath, p, chain);
+    try {
+      await writeBuf(p, chain, HOMEBREW_DIR + "/emu.zip", mapped.base, mapped.size);
+    } finally {
+      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+    }
+    log("extracting " + psaId + "...");
+    await sendOne(EMU_UNZIP_ELF, p, chain, log);
+    try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
+    log(psaId + " installed");
+  } catch (e) {
+    log(psaId + " install failed: " + (e && e.message ? e.message : String(e)));
+  }
+}
+
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
@@ -559,6 +625,33 @@ export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
   await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_VER, p, chain, log, _pkgPresent);
+
+  // Emulators
+  await ensureDir(p, chain, HOMEBREW_DIR);
+
+  // PS5SX2 (PS2 emulator)
+  await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
+  await sendOne(EMU_PS5SX2_INSTALLER, p, chain, log);
+
+  // snes9x (SNES — saved to /data/homebrew for manual launch)
+  await downloadToHB(EMU_SNES9X_ELF, "Snes9xPS5-v2.3.elf", EMU_SNES9X_VER, p, chain, log);
+
+  // XPSemu (PS1/PS2 emulator)
+  await downloadToHB(EMU_XPSEMU_ZIP, "PPSA97358.zip", EMU_XPSEMU_VER, p, chain, log);
+  await sendOne(EMU_XPSEMU_HELPER, p, chain, log);
+
+  // Porpoise (PS1 emulator, ZIP extraction)
+  await installZipEmu(EMU_PORPOISE_ZIP, "PPSA99764", EMU_PORPOISE_VER, p, chain, log);
+
+  // PS5CEMU-HAR
+  await installZipEmu(EMU_PS5CEMU_ZIP, "PPSA99360", EMU_PS5CEMU_VER, p, chain, log);
+
+  // PS5X360 (Xbox 360 emulator)
+  await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
+  await sendOne(EMU_PS5X360_ELF, p, chain, log);
+
+  // ProsperoEden (Switch emulator, ZIP extraction)
+  await installZipEmu(EMU_PROSPEROEDEN_ZIP, "PPSA99008", EMU_PROSPEROEDEN_VER, p, chain, log);
 
   try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
 
