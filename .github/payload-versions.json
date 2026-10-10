@@ -2,8 +2,18 @@
   "np-fake-signin": "1.1",
   "CheatRunner": "v0.17.2",
   "blackbox": "v1.0.8",
-  "ShadowMountPlus": "1.7beta3",
+  "ShadowMountPlus": "1.7-beta5fix1",
   "AnyPad": "v0.8.1-beta",
   "webkit-autoloader": "v0.6.1",
-  "blackbox_ffpkg": "v1.0.8"
+  "blackbox_ffpkg": "v1.0.8",
+  "PS5SX2": "vk-285-162",
+  "PS5SX2_zip": "vk-285-162",
+  "snes9x": "v2.3",
+  "XPSemu": "Alpha-2.1",
+  "XPSemu_helper": "Alpha-2.1",
+  "PS5X360": "v0.5.9-fix1",
+  "Porpoise": "v2.7",
+  "PS5CEMU-HAR": "v3.5.0",
+  "ProsperoEden": "v1.000.100",
+  "PS5_RPCS3": "release"
 }

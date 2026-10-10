@@ -19,3 +19,6 @@ payloads/emulators/PS5_RPCS3/*.zip
 payloads/emulators/PS5_RPCS3/extracted/
 payloads/emulators/PS5_RPCS3/PS3UPDAT.PUP
 payloads/emulators/PS5_RPCS3/PPSA42674/
+
+# PS5SX2 title tree is unpacked from the release zip on the host / VPS.
+payloads/emulators/PS5SX2/PPSA99203/

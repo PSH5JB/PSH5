@@ -23,7 +23,9 @@ jobs:
         id: update
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 .github/scripts/update_payloads.py
+        run: |
+          python3 .github/scripts/update_payloads.py
+          python3 .github/scripts/extract_emu_zips.py
 
       - name: Commit and push
         if: steps.update.outputs.changed == 'true'
@@ -46,4 +48,4 @@ jobs:
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_key
           chmod 600 ~/.ssh/vps_key
           ssh -i ~/.ssh/vps_key -o StrictHostKeyChecking=no root@167.99.91.255 \
-            "cd /var/www/html && git stash && git pull origin main && git stash drop 2>/dev/null || true"
+            "cd /var/www/html && git stash && git pull origin main && git stash drop 2>/dev/null || true; python3 .github/scripts/extract_emu_zips.py"
