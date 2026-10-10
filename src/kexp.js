@@ -848,13 +848,33 @@ async function installXpsTitle(p, chain, log) {
   return true;
 }
 
+async function countNcaFiles(p, chain, dir) {
+  const entries = await listDir(p, chain, dir);
+  let n = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const name = entries[i] && entries[i].name;
+    if (!name) continue;
+    const lower = name.toLowerCase();
+    if (lower.length >= 4 && lower.substring(lower.length - 4) === ".nca") n++;
+  }
+  return n;
+}
+
 async function installEdenKeys(p, chain, log) {
   await ensureDir(p, chain, "/data/prosperoeden");
   await ensureDir(p, chain, EDEN_KEYS_DIR);
   await chmodPath(p, chain, "/data/prosperoeden");
   await chmodPath(p, chain, EDEN_KEYS_DIR);
-  await installNamedFile(EMU_EDEN_PRODKEYS, EDEN_KEYS_DIR, "prod.keys", p, chain, log);
-  await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log);
+  if (await pathExists(p, chain, EDEN_KEYS_DIR + "/prod.keys")) {
+    log("prod.keys already at " + EDEN_KEYS_DIR + ", skipping");
+  } else {
+    await installNamedFile(EMU_EDEN_PRODKEYS, EDEN_KEYS_DIR, "prod.keys", p, chain, log);
+  }
+  if (await pathExists(p, chain, EDEN_KEYS_DIR + "/title.keys")) {
+    log("title.keys already at " + EDEN_KEYS_DIR + ", skipping");
+  } else {
+    await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log);
+  }
 }
 
 async function installEdenFirmware(p, chain, log) {
@@ -866,28 +886,43 @@ async function installEdenFirmware(p, chain, log) {
     log("Switch firmware " + EDEN_FW_VER + " already installed, skipping");
     return true;
   }
+  const have = await countNcaFiles(p, chain, EDEN_FW_DIR);
+  if (have >= 200) {
+    log("Switch firmware already on disk (" + have + " NCAs), skipping");
+    try { await writeTextFile(p, chain, marker, EDEN_FW_VER); } catch (_) {}
+    return true;
+  }
   log("copying Switch firmware " + EDEN_FW_VER + " — this takes a while...");
   let names = [];
   try {
     const resp = await fetch("payloads/" + EDEN_FW_LIST);
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-    names = (await resp.text()).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    names = (await resp.text()).split(String.fromCharCode(10)).map(function (s) { return s.trim(); }).filter(Boolean);
   } catch (e) {
     log("firmware list skipped: " + (e && e.message ? e.message : String(e)));
     return false;
   }
   let ok = 0;
+  let copied = 0;
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
+    const dest = EDEN_FW_DIR + "/" + name;
+    if (await pathExists(p, chain, dest)) {
+      ok++;
+      continue;
+    }
     emitLog(log, "firmware " + (i + 1) + "/" + names.length + " " + name, true);
-    if (await installNamedFile("emulators/ProsperoEden/firmware/" + name, EDEN_FW_DIR, name, p, chain, log)) ok++;
+    if (await installNamedFile("emulators/ProsperoEden/firmware/" + name, EDEN_FW_DIR, name, p, chain, log)) {
+      ok++;
+      copied++;
+    }
   }
   if (ok < 50) {
     log("Switch firmware copy incomplete (" + ok + "/" + names.length + ")");
     return false;
   }
   try { await writeTextFile(p, chain, marker, EDEN_FW_VER); } catch (_) {}
-  log("Switch firmware " + EDEN_FW_VER + " installed (" + ok + " files)");
+  log("Switch firmware " + EDEN_FW_VER + " installed (" + ok + " files, " + copied + " new)");
   return true;
 }
 
