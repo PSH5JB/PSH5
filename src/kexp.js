@@ -755,9 +755,9 @@ async function ensureXpsWhitelist(p, chain, log) {
   }
 }
 
-async function installNamedFile(fetchPath, destDir, destName, p, chain, log) {
+async function installNamedFile(fetchPath, destDir, destName, p, chain, log, force) {
   const dest = destDir + "/" + destName;
-  if (await pathExists(p, chain, dest)) {
+  if (!force && await pathExists(p, chain, dest)) {
     log(destName + " already at " + destDir);
     await chmodPath(p, chain, dest);
     return true;
@@ -867,16 +867,8 @@ async function installEdenKeys(p, chain, log) {
   await ensureDir(p, chain, EDEN_KEYS_DIR);
   await chmodPath(p, chain, "/data/prosperoeden");
   await chmodPath(p, chain, EDEN_KEYS_DIR);
-  if (await pathExists(p, chain, EDEN_KEYS_DIR + "/prod.keys")) {
-    log("prod.keys already at " + EDEN_KEYS_DIR + ", skipping");
-  } else {
-    await installNamedFile(EMU_EDEN_PRODKEYS, EDEN_KEYS_DIR, "prod.keys", p, chain, log);
-  }
-  if (await pathExists(p, chain, EDEN_KEYS_DIR + "/title.keys")) {
-    log("title.keys already at " + EDEN_KEYS_DIR + ", skipping");
-  } else {
-    await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log);
-  }
+  await installNamedFile(EMU_EDEN_PRODKEYS, EDEN_KEYS_DIR, "prod.keys", p, chain, log, true);
+  await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log, true);
 }
 
 async function installEdenFirmware(p, chain, log) {
