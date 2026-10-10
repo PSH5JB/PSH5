@@ -53,6 +53,7 @@ const AUTOLOAD_NAMES = [
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
+  "sandbox-elevator.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -446,6 +447,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[CHEATRUNNER_ELF] = 2000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
+  afterMs["sandbox-elevator.elf"] = 2000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -646,7 +648,17 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5CEMU-HAR
   await installZipEmu(EMU_PS5CEMU_ZIP, "PPSA99360", EMU_PS5CEMU_VER, p, chain, log);
-  await sendOne(EMU_PS5CEMU_ELEVATOR, p, chain, log);
+  if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/sandbox-elevator.elf"))) {
+    log("saving sandbox-elevator.elf to autoloader...");
+    try {
+      const _elev = await mapElf(EMU_PS5CEMU_ELEVATOR, p, chain);
+      try {
+        await writeBuf(p, chain, AUTOLOADER_DIR + "/sandbox-elevator.elf", _elev.base, _elev.size);
+      } finally {
+        try { await chain.syscall(SYS_MUNMAP, _elev.base, _elev.mmapSize); } catch (_) {}
+      }
+    } catch (_e) { log("sandbox-elevator save skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  }
 
   // PS5X360 (Xbox 360 emulator)
   await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
