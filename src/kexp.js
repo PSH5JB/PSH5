@@ -18,7 +18,7 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
-const ANYPAD_ELF = "AnyPad-PS5-0.7.0-beta.elf";
+const ANYPAD_ELF = "AnyPad-PS5-0.8.1-beta.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
 const CHEATRUNNER_VER = "v0.17.2";
