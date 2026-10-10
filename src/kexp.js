@@ -38,6 +38,9 @@ const PCSX2_BIOS_DIR       = "/data/PCSX2/bios";
 const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.3.elf";
 const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
 const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
+const EMU_XPSEMU_MCPX      = "emulators/XPSemu/mcpx_1.0.bin";
+const EMU_XPSEMU_BIOS      = "emulators/XPSemu/Complex_4627.bin";
+const XPS_DATA_DIR         = "/data/xemu";
 const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
 const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
 const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
@@ -45,6 +48,9 @@ const EMU_PS5CEMU_KEYS     = "emulators/PS5CEMU-HAR/keys.txt";
 const CEMU_DATA_DIR        = "/data/ps5cemu";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
 const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip";
+const EMU_EDEN_PRODKEYS    = "emulators/ProsperoEden/keys/prod.keys";
+const EMU_EDEN_TITLEKEYS   = "emulators/ProsperoEden/keys/title.keys";
+const EDEN_KEYS_DIR        = "/data/prosperoeden/keys";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-139";
 const EMU_SNES9X_VER       = "v2.3";
@@ -778,6 +784,22 @@ async function installCemuKeys(p, chain, log) {
   await installNamedFile(EMU_PS5CEMU_KEYS, CEMU_DATA_DIR, "keys.txt", p, chain, log);
 }
 
+async function installXpsBios(p, chain, log) {
+  await ensureDir(p, chain, XPS_DATA_DIR);
+  await chmodPath(p, chain, XPS_DATA_DIR);
+  await installNamedFile(EMU_XPSEMU_MCPX, XPS_DATA_DIR, "mcpx_1.0.bin", p, chain, log);
+  await installNamedFile(EMU_XPSEMU_BIOS, XPS_DATA_DIR, "Complex_4627.bin", p, chain, log);
+}
+
+async function installEdenKeys(p, chain, log) {
+  await ensureDir(p, chain, "/data/prosperoeden");
+  await ensureDir(p, chain, EDEN_KEYS_DIR);
+  await chmodPath(p, chain, "/data/prosperoeden");
+  await chmodPath(p, chain, EDEN_KEYS_DIR);
+  await installNamedFile(EMU_EDEN_PRODKEYS, EDEN_KEYS_DIR, "prod.keys", p, chain, log);
+  await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log);
+}
+
 async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   const dest = HOMEBREW_DIR + "/" + destName;
   const marker = dest + "." + ver;
@@ -963,6 +985,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installZipEmu(EMU_XPSEMU_ZIP, HB_XPS, EMU_XPSEMU_VER, p, chain, log);
   await saveAutoloadElf(EMU_XPSEMU_HELPER, XPSEMU_HELPER_DEST, EMU_XPSEMU_VER, p, chain, log);
   await ensureXpsWhitelist(p, chain, log);
+  await installXpsBios(p, chain, log);
 
   await installZipEmu(EMU_PORPOISE_ZIP, HB_PORPOISE, EMU_PORPOISE_VER, p, chain, log);
 
@@ -974,6 +997,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installZipEmu(EMU_PS5X360_ZIP, HB_X360, EMU_PS5X360_VER, p, chain, log);
 
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, HB_EDEN, EMU_PROSPEROEDEN_VER, p, chain, log);
+  await installEdenKeys(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {

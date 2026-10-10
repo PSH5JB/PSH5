@@ -3,3 +3,8 @@ payloads/emulators/PS5SX2/bios/
 
 # Cemu Wii U disc keys stay on the host; do not push to GitHub.
 payloads/emulators/PS5CEMU-HAR/keys.txt
+
+# Xbox MCPX/BIOS and Switch keys stay on the host; do not push to GitHub.
+payloads/emulators/XPSemu/mcpx_1.0.bin
+payloads/emulators/XPSemu/Complex_4627.bin
+payloads/emulators/ProsperoEden/keys/
