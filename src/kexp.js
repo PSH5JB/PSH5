@@ -53,6 +53,7 @@ const AUTOLOAD_NAMES = [
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
+  "PS5SXHelper.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -632,6 +633,23 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5SX2 (PS2 emulator)
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
+  // Also save to autoloader so it runs on every boot (needed for PS2 BIOS detection)
+  {
+    const _sx2helperAutoMarker = AUTOLOADER_DIR + "/PS5SXHelper.elf." + EMU_PS5SX2_VER;
+    if (!(await pathExists(p, chain, _sx2helperAutoMarker))) {
+      try {
+        const _sx2h = await mapBinary(EMU_PS5SX2_HELPER, p, chain);
+        try {
+          await writeBuf(p, chain, AUTOLOADER_DIR + "/PS5SXHelper.elf", _sx2h.base, _sx2h.size);
+          try { await writeTextFile(p, chain, _sx2helperAutoMarker, EMU_PS5SX2_VER); } catch (_) {}
+          log("PS5SXHelper.elf saved to autoloader");
+        } catch (_e) { log("PS5SXHelper.elf autoloader save skipped"); }
+        try { await chain.syscall(SYS_MUNMAP, _sx2h.base, _sx2h.mmapSize); } catch (_) {}
+      } catch (_e) { log("PS5SXHelper.elf not saved: " + (_e && _e.message ? _e.message : String(_e))); }
+    } else {
+      log("PS5SXHelper.elf already in autoloader (" + EMU_PS5SX2_VER + ")");
+    }
+  }
   try { await sendOne(EMU_PS5SX2_INSTALLER, p, chain, log); } catch (_e) { log("PS5SX2 installer skipped: " + (_e && _e.message ? _e.message : String(_e))); }
 
   // snes9x (SNES — saved to /data/homebrew for manual launch)
