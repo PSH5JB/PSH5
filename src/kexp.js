@@ -62,6 +62,8 @@ const EMU_PS5X360_VER      = "v1.0.1";
 const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
 const EMU_PROSPEROEDEN_VER = "v1.000.095.2";
+const EMU_PS5RPCS3_ZIP     = "emulators/PS5_RPCS3/PPSA42674.zip";
+const EMU_PS5RPCS3_VER     = "v1.0";
 const HB_SX2 = "PPSA99203";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
@@ -69,13 +71,15 @@ const HB_X360 = "PPSA50011";
 const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
+const HB_RPCS3 = "PPSA42674";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
+ZIP_DONE_REL[HB_RPCS3] = "cores/rpcs3_libretro.so";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN,
+  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3,
 ];
 // OnionHEN first, then Payload Manager / ShadowMount / helpers.
 // Large ELFs next so they cannot stall 8084. sandbox-elevator last:
@@ -1136,11 +1140,14 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenKeys(p, chain, log);
   await installEdenFirmware(p, chain, log);
 
+  await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
+
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
+      ["RPCS3", HB_RPCS3],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {

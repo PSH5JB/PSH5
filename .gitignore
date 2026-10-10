@@ -13,3 +13,7 @@ payloads/emulators/XPSemu/PPSA97358/
 # Switch firmware NCAs stay on the host; do not push to GitHub.
 payloads/emulators/ProsperoEden/firmware/*
 !payloads/emulators/ProsperoEden/firmware/list.txt
+
+# PS5 RPCS3 title zip (~437MB) and extract stay on the host.
+payloads/emulators/PS5_RPCS3/*.zip
+payloads/emulators/PS5_RPCS3/extracted/
