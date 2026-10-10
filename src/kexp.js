@@ -61,7 +61,7 @@ const EMU_XPSEMU_VER       = "v1.0.1";
 const EMU_PS5X360_VER      = "v1.0.1";
 const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
-const EMU_PROSPEROEDEN_VER = "v1.000.095.1";
+const EMU_PROSPEROEDEN_VER = "v1.000.095.2";
 const HB_SX2 = "PPSA99203";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
@@ -69,6 +69,11 @@ const HB_X360 = "PPSA50011";
 const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
+const ZIP_DONE_REL = {};
+ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
+ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
+ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
+ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN,
 ];
@@ -918,7 +923,7 @@ async function elfldrListening(p, chain, address) {
   return (connected.low >>> 0) === 0;
 }
 
-async function waitForZipExtract(p, chain, log, psaId, eboot, param, deadline) {
+async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, deadline) {
   const title = HOMEBREW_DIR + "/" + psaId;
   const sysDir = title + "/sce_sys";
   while (Date.now() < deadline) {
@@ -927,13 +932,17 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, deadline) {
     await chmodPath(p, chain, param);
     const foundEboot = await pathExists(p, chain, eboot);
     const foundParam = await pathExists(p, chain, param);
-    if (foundEboot && foundParam) {
+    const foundExtra = !extra || (await pathExists(p, chain, extra));
+    if (foundEboot && foundParam && foundExtra) {
       await new Promise((resolve) => setTimeout(resolve, 8000));
-      return (await pathExists(p, chain, eboot)) && (await pathExists(p, chain, param));
+      return (await pathExists(p, chain, eboot)) &&
+             (await pathExists(p, chain, param)) &&
+             (!extra || (await pathExists(p, chain, extra)));
     }
     const bits = [];
     if (!foundEboot) bits.push("eboot");
     if (!foundParam) bits.push("param");
+    if (!foundExtra) bits.push(extraLabel || "files");
     emitLog(log, "waiting for " + psaId + " (" + bits.join("+") + ")...", true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
@@ -943,11 +952,15 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, deadline) {
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
   const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
+  const extraRel = ZIP_DONE_REL[psaId] || null;
+  const extra = extraRel ? (HOMEBREW_DIR + "/" + psaId + "/" + extraRel) : null;
+  const extraLabel = extraRel ? extraRel.split("/").pop() : null;
   const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
   const zipPath = HOMEBREW_DIR + "/emu.zip";
   if (await pathExists(p, chain, marker) &&
       await pathExists(p, chain, eboot) &&
-      await pathExists(p, chain, param)) {
+      await pathExists(p, chain, param) &&
+      (!extra || (await pathExists(p, chain, extra)))) {
     log(psaId + " already installed (" + ver + "), skipping");
     await chmodHomebrewTitle(p, chain, psaId);
     if (psaId === HB_X360) {
@@ -967,18 +980,27 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_module");
+    if (extraRel) {
+      const parts = extraRel.split("/");
+      let acc = HOMEBREW_DIR + "/" + psaId;
+      for (let i = 0; i < parts.length - 1; i++) {
+        acc += "/" + parts[i];
+        await ensureDir(p, chain, acc);
+        await chmodPath(p, chain, acc);
+      }
+    }
     await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId);
     await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, Date.now() + 300000);
+    let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + 300000);
     if (!found) {
       log(psaId + " unzip retry...");
       await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-      found = await waitForZipExtract(p, chain, log, psaId, eboot, param, Date.now() + 180000);
+      found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + 180000);
     }
     if (!found) {
-      log(psaId + " extract failed: unzip did not finish with eboot+param");
+      log(psaId + " extract failed: unzip did not finish");
       return false;
     }
     try { await unlinkPath(p, chain, zipPath); } catch (_) {}
