@@ -284,12 +284,20 @@ async function main(userlandRW) {
 
   if (result.payloads) {
     log("kernel exploit complete", "info");
-    try {
-      const { loadOptionalPayloads } = await import("./kexp.js");
-      await loadOptionalPayloads(p, chain, (message, type, replace) =>
-        log(message, type || "info", replace));
-    } catch (error) {
-      log(error instanceof Error ? error.message : String(error), "error");
+    let _payloadsOk = false;
+    for (let _pa = 1; _pa <= 2 && !_payloadsOk; _pa++) {
+      try {
+        if (_pa > 1) {
+          log("payload load failed, retrying in 5s...", "info");
+          await new Promise(function(r) { setTimeout(r, 5000); });
+        }
+        const { loadOptionalPayloads } = await import("./kexp.js");
+        await loadOptionalPayloads(p, chain, (message, type, replace) =>
+          log(message, type || "info", replace));
+        _payloadsOk = true;
+      } catch (error) {
+        log(error instanceof Error ? error.message : String(error), "error");
+      }
     }
   } else {
     log("kernel chain complete: root and sandbox escape are active", "info");

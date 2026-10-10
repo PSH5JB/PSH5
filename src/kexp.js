@@ -692,7 +692,12 @@ export async function loadOptionalPayloads(p, chain, log) {
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
   let installerSent = false;
+  for (let _autoAttempt = 1; _autoAttempt <= 3 && !installerSent; _autoAttempt++) {
   try {
+    if (_autoAttempt > 1) {
+      log("autoloader retry " + _autoAttempt + "/3 — waiting 5s...");
+      await new Promise(function(r) { setTimeout(r, 5000); });
+    }
     log("injecting WebKit Autoloader installer");
     await sendOne(AUTOLOADER_ELF, p, chain, log);
     const paramJson =
@@ -716,9 +721,15 @@ export async function loadOptionalPayloads(p, chain, log) {
     }
     installerSent = true;
   } catch (error) {
-    log("WebKit Autoloader installer failed: " +
-      (error && error.message ? error.message : String(error)));
+    if (_autoAttempt < 3) {
+      log("autoloader send failed (attempt " + _autoAttempt + "), retrying: " +
+        (error && error.message ? error.message : String(error)));
+    } else {
+      log("WebKit Autoloader installer failed: " +
+        (error && error.message ? error.message : String(error)));
+    }
   }
+  } // end retry loop
 
   await notify(p, chain, "PSH5JB v2");
   if (installerSent) {
