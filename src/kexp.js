@@ -43,8 +43,8 @@ const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-139";
 const EMU_SNES9X_VER       = "v2.3";
-const EMU_XPSEMU_VER       = "v1.0";
-const EMU_PS5X360_VER      = "v1.0";
+const EMU_XPSEMU_VER       = "v1.0.1";
+const EMU_PS5X360_VER      = "v1.0.1";
 const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
 const EMU_PROSPEROEDEN_VER = "v1.000.095.1";
@@ -66,11 +66,11 @@ const AUTOLOAD_NAMES = [
   BLACKBOX_ELF,
   "sandbox-elevator.elf",
   "PS5SXHelper.elf",
+  XPSEMU_HELPER_DEST,
   PLDMGR_ELF,
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
-  XPSEMU_HELPER_DEST,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -757,10 +757,55 @@ async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   }
 }
 
+async function elfldrListening(p, chain, address) {
+  const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
+  const fd = socket.low | 0;
+  if (fd < 0) return false;
+  const connected = await chain.syscall(SYS_CONNECT, fd, address, 16);
+  await chain.syscall(SYS_CLOSE, fd);
+  return (connected.low >>> 0) === 0;
+}
+
+async function waitForZipExtract(p, chain, log, psaId, eboot, param, deadline) {
+  const address = p.malloc(16);
+  p.write8(address, new int64(0, 0));
+  p.write8(address.add32(8), new int64(0, 0));
+  p.write4(address, 0x3d230210); // AF_INET, port 9021
+  p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
+  const startBy = Date.now() + 15000;
+  let started = false;
+  while (Date.now() < startBy) {
+    if (!(await elfldrListening(p, chain, address))) {
+      started = true;
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  if (!started) started = true;
+  while (Date.now() < deadline) {
+    const foundEboot = await pathExists(p, chain, eboot);
+    const foundParam = await pathExists(p, chain, param);
+    const unzipDone = await elfldrListening(p, chain, address);
+    if (foundEboot && foundParam && unzipDone) return true;
+    const bits = [];
+    if (!started) bits.push("start");
+    if (!foundEboot) bits.push("eboot");
+    if (!foundParam) bits.push("param");
+    if (!unzipDone) bits.push("unzip");
+    emitLog(log, "waiting for " + psaId + " (" + (bits.join("+") || "settle") + ")...", true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  return false;
+}
+
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
+  const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
   const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
-  if (await pathExists(p, chain, marker) && await pathExists(p, chain, eboot)) {
+  const zipPath = HOMEBREW_DIR + "/emu.zip";
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
     log(psaId + " already installed (" + ver + "), skipping");
     await chmodHomebrewTitle(p, chain, psaId);
     if (psaId === HB_X360) {
@@ -772,23 +817,20 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   try {
     const mapped = await mapBinary(fetchPath, p, chain);
     try {
-      await writeBuf(p, chain, HOMEBREW_DIR + "/emu.zip", mapped.base, mapped.size);
+      await writeBuf(p, chain, zipPath, mapped.base, mapped.size);
     } finally {
       try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
     }
+    try { await unlinkPath(p, chain, eboot); } catch (_) {}
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    const deadline = Date.now() + 90000;
-    let found = await pathExists(p, chain, eboot);
-    while (!found && Date.now() < deadline) {
-      emitLog(log, "waiting for " + psaId + " eboot.bin...", true);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      found = await pathExists(p, chain, eboot);
-    }
+    const deadline = Date.now() + 180000;
+    const found = await waitForZipExtract(p, chain, log, psaId, eboot, param, deadline);
     if (!found) {
-      log(psaId + " extract failed: eboot.bin missing");
+      log(psaId + " extract failed: unzip did not finish with eboot+param");
       return false;
     }
+    try { await unlinkPath(p, chain, zipPath); } catch (_) {}
     await chmodHomebrewTitle(p, chain, psaId);
     if (psaId === HB_X360) {
       log("fixing " + psaId + " file permissions");
