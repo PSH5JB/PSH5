@@ -634,6 +634,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, HOMEBREW_DIR);
 
   // PS5SX2 (PS2 emulator)
+  const _sx2FirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PS5SXHelper.elf." + EMU_PS5SX2_VER));
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   // Also save to autoloader so it runs on every boot (needed for PS2 BIOS detection)
   {
@@ -652,14 +653,23 @@ export async function loadOptionalPayloads(p, chain, log) {
       log("PS5SXHelper.elf already in autoloader (" + EMU_PS5SX2_VER + ")");
     }
   }
-  try { await sendOne(EMU_PS5SX2_INSTALLER, p, chain, log); } catch (_e) { log("PS5SX2 installer skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  if (_sx2FirstInstall) {
+    try { await sendOne(EMU_PS5SX2_INSTALLER, p, chain, log); } catch (_e) { log("PS5SX2 installer skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  } else {
+    log("PS5SX2 already installed, skipping installer");
+  }
 
   // snes9x (SNES — saved to /data/homebrew for manual launch)
   await downloadToHB(EMU_SNES9X_ELF, "Snes9xPS5-v2.3.elf", EMU_SNES9X_VER, p, chain, log);
 
   // XPSemu (PS1/PS2 emulator)
+  const _xpsFirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PPSA97358.zip." + EMU_XPSEMU_VER));
   await downloadToHB(EMU_XPSEMU_ZIP, "PPSA97358.zip", EMU_XPSEMU_VER, p, chain, log);
-  try { await sendOne(EMU_XPSEMU_HELPER, p, chain, log); } catch (_e) { log("XPSemu helper skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  if (_xpsFirstInstall) {
+    try { await sendOne(EMU_XPSEMU_HELPER, p, chain, log); } catch (_e) { log("XPSemu helper skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  } else {
+    log("XPSemu already installed, skipping helper");
+  }
 
   // Porpoise (PS1 emulator, ZIP extraction)
   await installZipEmu(EMU_PORPOISE_ZIP, "PPSA99764", EMU_PORPOISE_VER, p, chain, log);
@@ -679,9 +689,14 @@ export async function loadOptionalPayloads(p, chain, log) {
   }
 
   // PS5X360 (Xbox 360 emulator)
+  const _ps5x360FirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PPSA50011.zip." + EMU_PS5X360_VER));
   await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
-  try { await sendOne(EMU_PS5X360_ELF, p, chain, log); } catch (_e) { log("PS5X360 skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-  await waitSeconds(log, "waiting for PS5X360 to install", 40, null);
+  if (_ps5x360FirstInstall) {
+    try { await sendOne(EMU_PS5X360_ELF, p, chain, log); } catch (_e) { log("PS5X360 skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+    await waitSeconds(log, "waiting for PS5X360 to install", 40, null);
+  } else {
+    log("PS5X360 already installed, skipping installer");
+  }
 
   // ProsperoEden (Switch emulator, ZIP extraction)
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, "PPSA99008", EMU_PROSPEROEDEN_VER, p, chain, log);
