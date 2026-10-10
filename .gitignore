@@ -17,3 +17,4 @@ payloads/emulators/ProsperoEden/firmware/*
 # PS5 RPCS3 title zip (~437MB) and extract stay on the host.
 payloads/emulators/PS5_RPCS3/*.zip
 payloads/emulators/PS5_RPCS3/extracted/
+payloads/emulators/PS5_RPCS3/PS3UPDAT.PUP

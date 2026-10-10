@@ -63,6 +63,7 @@ const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
 const EMU_PROSPEROEDEN_VER = "v1.000.095.2";
 const EMU_PS5RPCS3_ZIP     = "emulators/PS5_RPCS3/PPSA42674.zip";
+const EMU_PS5RPCS3_PUP     = "emulators/PS5_RPCS3/PS3UPDAT.PUP";
 const EMU_PS5RPCS3_VER     = "v1.0";
 const HB_SX2 = "PPSA99203";
 const HB_SNES = "PPSA99009";
@@ -783,6 +784,15 @@ async function installNamedFile(fetchPath, destDir, destName, p, chain, log, for
   }
 }
 
+async function installRpcs3Firmware(p, chain, log) {
+  const dir = HOMEBREW_DIR + "/" + HB_RPCS3 + "/system/RPCS3";
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3 + "/system");
+  await ensureDir(p, chain, dir);
+  await chmodPath(p, chain, dir);
+  await installNamedFile(EMU_PS5RPCS3_PUP, dir, "PS3UPDAT.PUP", p, chain, log);
+}
+
 async function installPs2Bios(p, chain, log) {
   await ensureDir(p, chain, "/data/PCSX2");
   await ensureDir(p, chain, PCSX2_BIOS_DIR);
@@ -1141,6 +1151,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenFirmware(p, chain, log);
 
   await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
+  await installRpcs3Firmware(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
