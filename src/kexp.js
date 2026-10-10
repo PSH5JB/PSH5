@@ -51,6 +51,9 @@ const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip
 const EMU_EDEN_PRODKEYS    = "emulators/ProsperoEden/keys/prod.keys";
 const EMU_EDEN_TITLEKEYS   = "emulators/ProsperoEden/keys/title.keys";
 const EDEN_KEYS_DIR        = "/data/prosperoeden/keys";
+const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
+const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
+const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-139";
 const EMU_SNES9X_VER       = "v2.3";
@@ -849,6 +852,40 @@ async function installEdenKeys(p, chain, log) {
   await installNamedFile(EMU_EDEN_TITLEKEYS, EDEN_KEYS_DIR, "title.keys", p, chain, log);
 }
 
+async function installEdenFirmware(p, chain, log) {
+  const marker = EDEN_FW_DIR + "/.installed." + EDEN_FW_VER;
+  await ensureDir(p, chain, "/data/prosperoeden");
+  await ensureDir(p, chain, EDEN_FW_DIR);
+  await chmodPath(p, chain, EDEN_FW_DIR);
+  if (await pathExists(p, chain, marker)) {
+    log("Switch firmware " + EDEN_FW_VER + " already installed, skipping");
+    return true;
+  }
+  log("copying Switch firmware " + EDEN_FW_VER + " — this takes a while...");
+  let names = [];
+  try {
+    const resp = await fetch("payloads/" + EDEN_FW_LIST);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    names = (await resp.text()).split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+  } catch (e) {
+    log("firmware list skipped: " + (e && e.message ? e.message : String(e)));
+    return false;
+  }
+  let ok = 0;
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i];
+    emitLog(log, "firmware " + (i + 1) + "/" + names.length + " " + name, true);
+    if (await installNamedFile("emulators/ProsperoEden/firmware/" + name, EDEN_FW_DIR, name, p, chain, log)) ok++;
+  }
+  if (ok < 50) {
+    log("Switch firmware copy incomplete (" + ok + "/" + names.length + ")");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EDEN_FW_VER); } catch (_) {}
+  log("Switch firmware " + EDEN_FW_VER + " installed (" + ok + " files)");
+  return true;
+}
+
 async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   const dest = HOMEBREW_DIR + "/" + destName;
   const marker = dest + "." + ver;
@@ -1046,6 +1083,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, HB_EDEN, EMU_PROSPEROEDEN_VER, p, chain, log);
   await installEdenKeys(p, chain, log);
+  await installEdenFirmware(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {

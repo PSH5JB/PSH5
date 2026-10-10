@@ -9,3 +9,7 @@ payloads/emulators/XPSemu/mcpx_1.0.bin
 payloads/emulators/XPSemu/Complex_4627.bin
 payloads/emulators/ProsperoEden/keys/
 payloads/emulators/XPSemu/PPSA97358/
+
+# Switch firmware NCAs stay on the host; do not push to GitHub.
+payloads/emulators/ProsperoEden/firmware/*
+!payloads/emulators/ProsperoEden/firmware/list.txt
