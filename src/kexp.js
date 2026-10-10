@@ -41,6 +41,8 @@ const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
 const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
 const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
 const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
+const EMU_PS5CEMU_KEYS     = "emulators/PS5CEMU-HAR/keys.txt";
+const CEMU_DATA_DIR        = "/data/ps5cemu";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
 const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
@@ -770,6 +772,12 @@ async function installPs2Bios(p, chain, log) {
   await installNamedFile(EMU_PS5SX2_BIOS_NVM, PCSX2_BIOS_DIR, "SCPH-70012.NVM", p, chain, log);
 }
 
+async function installCemuKeys(p, chain, log) {
+  await ensureDir(p, chain, CEMU_DATA_DIR);
+  await chmodPath(p, chain, CEMU_DATA_DIR);
+  await installNamedFile(EMU_PS5CEMU_KEYS, CEMU_DATA_DIR, "keys.txt", p, chain, log);
+}
+
 async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   const dest = HOMEBREW_DIR + "/" + destName;
   const marker = dest + "." + ver;
@@ -960,6 +968,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await installZipEmu(EMU_PS5CEMU_ZIP, HB_CEMU, EMU_PS5CEMU_VER, p, chain, log);
   await saveAutoloadElf(EMU_PS5CEMU_ELEVATOR, "sandbox-elevator.elf", null, p, chain, log);
+  await installCemuKeys(p, chain, log);
 
   // PS5X360 — unzip (not AutoLog.elf) and fix 0600 zip permissions.
   await installZipEmu(EMU_PS5X360_ZIP, HB_X360, EMU_PS5X360_VER, p, chain, log);

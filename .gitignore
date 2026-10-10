@@ -1,2 +1,5 @@
 # PS2 BIOS dumps stay on the host; do not push Sony firmware to GitHub.
 payloads/emulators/PS5SX2/bios/
+
+# Cemu Wii U disc keys stay on the host; do not push to GitHub.
+payloads/emulators/PS5CEMU-HAR/keys.txt
