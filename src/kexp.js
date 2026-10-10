@@ -53,6 +53,7 @@ const AUTOLOAD_NAMES = [
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
+  "sandbox-elevator.elf",
   "PS5SXHelper.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
@@ -447,6 +448,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[CHEATRUNNER_ELF] = 2000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
+  afterMs["sandbox-elevator.elf"] = 2000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -679,6 +681,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   // PS5X360 (Xbox 360 emulator)
   await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
   try { await sendOne(EMU_PS5X360_ELF, p, chain, log); } catch (_e) { log("PS5X360 skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  await waitSeconds(log, "waiting for PS5X360 to install", 40, null);
 
   // ProsperoEden (Switch emulator, ZIP extraction)
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, "PPSA99008", EMU_PROSPEROEDEN_VER, p, chain, log);
