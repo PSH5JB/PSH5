@@ -2,6 +2,7 @@ import { int64 } from "./utils/int64.js";
 
 const O_NONBLOCK = 0x4;
 const O_WRONLY_CREAT_TRUNC = 0x601;
+const O_WRONLY_CREAT_APPEND = 0x209;
 const MODE_0777 = 0x1ff;
 const PROT_RW = 0x3, PROT_RWX = 0x7;
 const MAP_SHARED = 0x1, MAP_PRIVATE_ANON = 0x1002;
@@ -429,8 +430,12 @@ async function ensureDir(p, chain, path) {
 }
 
 async function writeBuf(p, chain, path, buf, length) {
+  await writeBufFlags(p, chain, path, buf, length, O_WRONLY_CREAT_TRUNC);
+}
+
+async function writeBufFlags(p, chain, path, buf, length, flags) {
   const fd = sysRv(await chain.syscall(
-    SYS_OPEN, cstring(p, path), O_WRONLY_CREAT_TRUNC, MODE_0777));
+    SYS_OPEN, cstring(p, path), flags, MODE_0777));
   if (fd < 0) throw new Error("open " + path + " failed (" + fd + ")");
   try {
     for (let offset = 0; offset < length; ) {
@@ -441,6 +446,59 @@ async function writeBuf(p, chain, path, buf, length) {
     }
   } finally {
     await chain.syscall(SYS_CLOSE, fd);
+  }
+}
+
+async function mmapBytes(data, p, chain) {
+  const size = (data.length + 0x3fff) & ~0x3fff;
+  const base = await chain.syscall(SYS_MMAP, 0, size, PROT_RW, MAP_PRIVATE_ANON, -1, 0);
+  if (base.low >>> 0 === 0xffffffff || base.low < 0x10000)
+    throw new Error("kexp: mmapBytes failed");
+  const dwords = data.length & ~3;
+  for (let offset = 0; offset < dwords; offset += 4) {
+    p.write4(base.add32(offset), readU32(data, offset));
+    if (offset && (offset & 0x3ffff) === 0)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  for (let offset = dwords; offset < data.length; offset++)
+    p.write1(base.add32(offset), data[offset]);
+  return { base, size: data.length, mmapSize: size };
+}
+
+async function fetchWriteFile(fetchPath, dest, p, chain, log) {
+  const url = "payloads/" + fetchPath;
+  const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
+  if (!probe.ok && probe.status !== 206)
+    throw new Error("kexp: " + fetchPath + " returned HTTP " + probe.status);
+  const cr = probe.headers.get("Content-Range") || probe.headers.get("content-range") || "";
+  let total = 0;
+  const slash = cr.lastIndexOf("/");
+  if (slash >= 0) total = parseInt(cr.slice(slash + 1), 10) || 0;
+  if (!total)
+    total = parseInt(probe.headers.get("Content-Length") || probe.headers.get("content-length") || "0", 10) || 0;
+  if (!total)
+    throw new Error("kexp: " + fetchPath + " has no size (need HTTP Range)");
+  const CHUNK = 0x100000;
+  let offset = 0;
+  let first = true;
+  const label = fetchPath.split("/").pop();
+  while (offset < total) {
+    const end = Math.min(offset + CHUNK - 1, total - 1);
+    const resp = await fetch(url, { headers: { Range: "bytes=" + offset + "-" + end } });
+    if (!resp.ok && resp.status !== 206)
+      throw new Error("kexp: " + fetchPath + " range HTTP " + resp.status);
+    const data = new Uint8Array(await resp.arrayBuffer());
+    if (!data.length) throw new Error("kexp: " + fetchPath + " empty range at " + offset);
+    const mapped = await mmapBytes(data, p, chain);
+    try {
+      await writeBufFlags(p, chain, dest, mapped.base, mapped.size,
+        first ? O_WRONLY_CREAT_TRUNC : O_WRONLY_CREAT_APPEND);
+    } finally {
+      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+    }
+    offset += data.length;
+    first = false;
+    emitLog(log, "downloading " + label + " " + Math.floor(offset / 1048576) + "/" + Math.floor(total / 1048576) + " MB", true);
   }
 }
 
@@ -769,6 +827,12 @@ async function installNamedFile(fetchPath, destDir, destName, p, chain, log, for
   }
   log("copying " + destName + " to " + destDir);
   try {
+    if (destName === "PS3UPDAT.PUP") {
+      await fetchWriteFile(fetchPath, dest, p, chain, log);
+      await chmodPath(p, chain, dest);
+      log(destName + " saved to " + destDir);
+      return true;
+    }
     const mapped = await mapBinary(fetchPath, p, chain);
     try {
       await writeBuf(p, chain, dest, mapped.base, mapped.size);
@@ -1013,11 +1077,15 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
   log("downloading " + psaId + " (" + ver + ") — please wait...");
   try {
-    const mapped = await mapBinary(fetchPath, p, chain);
-    try {
-      await writeBuf(p, chain, zipPath, mapped.base, mapped.size);
-    } finally {
-      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+    if (psaId === HB_RPCS3) {
+      await fetchWriteFile(fetchPath, zipPath, p, chain, log);
+    } else {
+      const mapped = await mapBinary(fetchPath, p, chain);
+      try {
+        await writeBuf(p, chain, zipPath, mapped.base, mapped.size);
+      } finally {
+        try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+      }
     }
     await ensureDir(p, chain, HOMEBREW_DIR);
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
@@ -1036,11 +1104,13 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + 300000);
+    const zipMs = (psaId === HB_RPCS3) ? 1200000 : 300000;
+    const zipRetryMs = (psaId === HB_RPCS3) ? 600000 : 180000;
+    let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + zipMs);
     if (!found) {
       log(psaId + " unzip retry...");
       await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-      found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + 180000);
+      found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + zipRetryMs);
     }
     if (!found) {
       log(psaId + " extract failed: unzip did not finish");
@@ -1048,7 +1118,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     }
     try { await unlinkPath(p, chain, zipPath); } catch (_) {}
     await chmodHomebrewTitle(p, chain, psaId);
-    if (psaId === HB_X360) {
+    if (psaId === HB_X360 || psaId === HB_RPCS3) {
       log("fixing " + psaId + " file permissions");
       try { await chmodTree(p, chain, HOMEBREW_DIR + "/" + psaId, 0); } catch (_) {}
     }
