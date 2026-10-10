@@ -791,6 +791,55 @@ async function installXpsBios(p, chain, log) {
   await installNamedFile(EMU_XPSEMU_BIOS, XPS_DATA_DIR, "Complex_4627.bin", p, chain, log);
 }
 
+async function installXpsTitle(p, chain, log) {
+  const base = HOMEBREW_DIR + "/" + HB_XPS;
+  const eboot = base + "/eboot.bin";
+  const param = base + "/sce_sys/param.json";
+  const marker = base + ".installed." + EMU_XPSEMU_VER;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(HB_XPS + " already installed (" + EMU_XPSEMU_VER + "), skipping");
+    await chmodHomebrewTitle(p, chain, HB_XPS);
+    return true;
+  }
+  log("installing " + HB_XPS + " (" + EMU_XPSEMU_VER + ") file by file...");
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, base);
+  await ensureDir(p, chain, base + "/sce_sys");
+  await ensureDir(p, chain, base + "/sce_module");
+  await chmodPath(p, chain, base);
+  await chmodPath(p, chain, base + "/sce_sys");
+  await chmodPath(p, chain, base + "/sce_module");
+  const files = [
+    ["emulators/XPSemu/PPSA97358/eboot.bin", base, "eboot.bin"],
+    ["emulators/XPSemu/PPSA97358/imports.txt", base, "imports.txt"],
+    ["emulators/XPSemu/PPSA97358/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
+    ["emulators/XPSemu/PPSA97358/sce_sys/param.json", base + "/sce_sys", "param.json"],
+    ["emulators/XPSemu/PPSA97358/sce_sys/icon0.png", base + "/sce_sys", "icon0.png"],
+    ["emulators/XPSemu/PPSA97358/sce_sys/pic0.dds", base + "/sce_sys", "pic0.dds"],
+    ["emulators/XPSemu/PPSA97358/sce_sys/pic1.dds", base + "/sce_sys", "pic1.dds"],
+  ];
+  for (let i = 0; i < files.length; i++) {
+    const spec = files[i];
+    const dest = spec[1] + "/" + spec[2];
+    try { await unlinkPath(p, chain, dest); } catch (_) {}
+    const ok = await installNamedFile(spec[0], spec[1], spec[2], p, chain, log);
+    if (!ok && (spec[2] === "eboot.bin" || spec[2] === "param.json")) {
+      log(HB_XPS + " install failed on " + spec[2]);
+      return false;
+    }
+  }
+  await chmodHomebrewTitle(p, chain, HB_XPS);
+  if (!(await pathExists(p, chain, eboot)) || !(await pathExists(p, chain, param))) {
+    log(HB_XPS + " install failed: eboot or param missing");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EMU_XPSEMU_VER); } catch (_) {}
+  log(HB_XPS + " installed");
+  return true;
+}
+
 async function installEdenKeys(p, chain, log) {
   await ensureDir(p, chain, "/data/prosperoeden");
   await ensureDir(p, chain, EDEN_KEYS_DIR);
@@ -833,33 +882,23 @@ async function elfldrListening(p, chain, address) {
 }
 
 async function waitForZipExtract(p, chain, log, psaId, eboot, param, deadline) {
-  const address = p.malloc(16);
-  p.write8(address, new int64(0, 0));
-  p.write8(address.add32(8), new int64(0, 0));
-  p.write4(address, 0x3d230210); // AF_INET, port 9021
-  p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
-  const startBy = Date.now() + 15000;
-  let started = false;
-  while (Date.now() < startBy) {
-    if (!(await elfldrListening(p, chain, address))) {
-      started = true;
-      break;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  if (!started) started = true;
+  const title = HOMEBREW_DIR + "/" + psaId;
+  const sysDir = title + "/sce_sys";
   while (Date.now() < deadline) {
+    await chmodPath(p, chain, title);
+    await chmodPath(p, chain, sysDir);
+    await chmodPath(p, chain, param);
     const foundEboot = await pathExists(p, chain, eboot);
     const foundParam = await pathExists(p, chain, param);
-    const unzipDone = await elfldrListening(p, chain, address);
-    if (foundEboot && foundParam && unzipDone) return true;
+    if (foundEboot && foundParam) {
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+      return (await pathExists(p, chain, eboot)) && (await pathExists(p, chain, param));
+    }
     const bits = [];
-    if (!started) bits.push("start");
     if (!foundEboot) bits.push("eboot");
     if (!foundParam) bits.push("param");
-    if (!unzipDone) bits.push("unzip");
-    emitLog(log, "waiting for " + psaId + " (" + (bits.join("+") || "settle") + ")...", true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    emitLog(log, "waiting for " + psaId + " (" + bits.join("+") + ")...", true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
   return false;
 }
@@ -887,11 +926,20 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     } finally {
       try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
     }
-    try { await unlinkPath(p, chain, eboot); } catch (_) {}
+    await ensureDir(p, chain, HOMEBREW_DIR);
+    await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
+    await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
+    await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_module");
+    await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId);
+    await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    const deadline = Date.now() + 180000;
-    const found = await waitForZipExtract(p, chain, log, psaId, eboot, param, deadline);
+    let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, Date.now() + 300000);
+    if (!found) {
+      log(psaId + " unzip retry...");
+      await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
+      found = await waitForZipExtract(p, chain, log, psaId, eboot, param, Date.now() + 180000);
+    }
     if (!found) {
       log(psaId + " extract failed: unzip did not finish with eboot+param");
       return false;
@@ -982,7 +1030,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   }
 
   // XPSemu — unzip the title folder, autoload helper, whitelist the title.
-  await installZipEmu(EMU_XPSEMU_ZIP, HB_XPS, EMU_XPSEMU_VER, p, chain, log);
+  await installXpsTitle(p, chain, log);
   await saveAutoloadElf(EMU_XPSEMU_HELPER, XPSEMU_HELPER_DEST, EMU_XPSEMU_VER, p, chain, log);
   await ensureXpsWhitelist(p, chain, log);
   await installXpsBios(p, chain, log);
