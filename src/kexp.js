@@ -593,7 +593,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     }
     log("extracting " + psaId + "...");
     await sendOne(EMU_UNZIP_ELF, p, chain, log);
-    await waitSeconds(log, "waiting for " + psaId + " extraction", 25, null);
+    await waitSeconds(log, "waiting for " + psaId + " extraction", 60, null);
     try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
     log(psaId + " installed");
   } catch (e) {
