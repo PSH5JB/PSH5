@@ -501,7 +501,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 8000;
+  afterMs["OnionHEN.elf"] = 15000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs[PLDMGR_ELF] = 4000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
