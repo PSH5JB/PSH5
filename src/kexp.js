@@ -33,6 +33,7 @@ const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
 const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
 const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
 const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
+const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
 const EMU_PS5X360_ELF      = "emulators/PS5X360/PS5X360-AutoLog.elf";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
 const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip";
@@ -645,6 +646,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5CEMU-HAR
   await installZipEmu(EMU_PS5CEMU_ZIP, "PPSA99360", EMU_PS5CEMU_VER, p, chain, log);
+  await sendOne(EMU_PS5CEMU_ELEVATOR, p, chain, log);
 
   // PS5X360 (Xbox 360 emulator)
   await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
