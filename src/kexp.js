@@ -64,6 +64,8 @@ const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
 const EMU_PROSPEROEDEN_VER = "v1.000.095.2";
 const EMU_PS5RPCS3_ZIP     = "emulators/PS5_RPCS3/PPSA42674.zip";
+const EMU_PS5RPCS3_FILES   = "emulators/PS5_RPCS3/PPSA42674";
+const EMU_PS5RPCS3_LIST    = "emulators/PS5_RPCS3/list.txt";
 const EMU_PS5RPCS3_PUP     = "emulators/PS5_RPCS3/PS3UPDAT.PUP";
 const EMU_PS5RPCS3_VER     = "v1.0";
 const HB_SX2 = "PPSA99203";
@@ -848,6 +850,102 @@ async function installNamedFile(fetchPath, destDir, destName, p, chain, log, for
   }
 }
 
+async function ensureRelDirs(p, chain, base, rel) {
+  const parts = rel.split("/");
+  let acc = base;
+  await ensureDir(p, chain, acc);
+  for (let i = 0; i < parts.length - 1; i++) {
+    acc += "/" + parts[i];
+    await ensureDir(p, chain, acc);
+    await chmodPath(p, chain, acc);
+  }
+}
+
+async function installRpcs3Title(p, chain, log) {
+  const title = HOMEBREW_DIR + "/" + HB_RPCS3;
+  const eboot = title + "/eboot.bin";
+  const param = title + "/sce_sys/param.json";
+  const core = title + "/cores/rpcs3_libretro.so";
+  const marker = HOMEBREW_DIR + "/" + HB_RPCS3 + ".installed." + EMU_PS5RPCS3_VER;
+  if (await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param) &&
+      await pathExists(p, chain, core)) {
+    log(HB_RPCS3 + " already on disk, skipping");
+    try { await writeTextFile(p, chain, marker, EMU_PS5RPCS3_VER); } catch (_) {}
+    await chmodHomebrewTitle(p, chain, HB_RPCS3);
+    return true;
+  }
+  log("copying RPCS3 files small-to-large...");
+  let raw = "";
+  try {
+    const resp = await fetch("payloads/" + EMU_PS5RPCS3_LIST);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    raw = await resp.text();
+  } catch (e) {
+    log("RPCS3 list skipped: " + (e && e.message ? e.message : String(e)));
+    return false;
+  }
+  const entries = [];
+  const lines = raw.split(String.fromCharCode(10));
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const sp = line.indexOf(" ");
+    if (sp < 1) continue;
+    const size = parseInt(line.slice(0, sp), 10);
+    const rel = line.slice(sp + 1);
+    if (!rel || isNaN(size)) continue;
+    entries.push({ size: size, rel: rel });
+  }
+  entries.sort(function (a, b) { return a.size - b.size; });
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, title);
+  let ok = 0;
+  let copied = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const rel = entries[i].rel;
+    const size = entries[i].size;
+    const dest = title + "/" + rel;
+    if (await pathExists(p, chain, dest)) {
+      ok++;
+      continue;
+    }
+    emitLog(log, "RPCS3 " + (i + 1) + "/" + entries.length + " " + rel, true);
+    try {
+      await ensureRelDirs(p, chain, title, rel);
+      if (size === 0) {
+        await writeTextFile(p, chain, dest, "");
+      } else if (size >= 0x80000) {
+        await fetchWriteFile(EMU_PS5RPCS3_FILES + "/" + rel, dest, p, chain, log);
+      } else {
+        const mapped = await mapBinary(EMU_PS5RPCS3_FILES + "/" + rel, p, chain);
+        try {
+          await writeBuf(p, chain, dest, mapped.base, mapped.size);
+        } finally {
+          try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+        }
+      }
+      await chmodPath(p, chain, dest);
+      ok++;
+      copied++;
+    } catch (e) {
+      log("RPCS3 skip " + rel + ": " + (e && e.message ? e.message : String(e)));
+    }
+  }
+  const haveCore = await pathExists(p, chain, core);
+  const haveEboot = await pathExists(p, chain, eboot);
+  const haveParam = await pathExists(p, chain, param);
+  if (!haveEboot || !haveParam || !haveCore) {
+    log("RPCS3 copy incomplete (" + ok + "/" + entries.length + ")");
+    return false;
+  }
+  try { await chmodTree(p, chain, title, 0); } catch (_) {}
+  await chmodHomebrewTitle(p, chain, HB_RPCS3);
+  try { await writeTextFile(p, chain, marker, EMU_PS5RPCS3_VER); } catch (_) {}
+  log("RPCS3 installed (" + copied + " new, " + ok + "/" + entries.length + ")");
+  return true;
+}
+
 async function installRpcs3Firmware(p, chain, log) {
   const dir = HOMEBREW_DIR + "/" + HB_RPCS3 + "/system/RPCS3";
   await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3);
@@ -1220,7 +1318,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenKeys(p, chain, log);
   await installEdenFirmware(p, chain, log);
 
-  await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
+  await installRpcs3Title(p, chain, log);
   await installRpcs3Firmware(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
