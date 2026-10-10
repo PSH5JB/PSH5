@@ -992,11 +992,11 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const extraLabel = extraRel ? extraRel.split("/").pop() : null;
   const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
   const zipPath = HOMEBREW_DIR + "/emu.zip";
-  if (await pathExists(p, chain, marker) &&
-      await pathExists(p, chain, eboot) &&
+  if (await pathExists(p, chain, eboot) &&
       await pathExists(p, chain, param) &&
       (!extra || (await pathExists(p, chain, extra)))) {
-    log(psaId + " already installed (" + ver + "), skipping");
+    log(psaId + " already on disk, skipping");
+    try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
     await chmodHomebrewTitle(p, chain, psaId);
     if (psaId === HB_X360) {
       try { await chmodTree(p, chain, HOMEBREW_DIR + "/" + psaId, 0); } catch (_) {}
