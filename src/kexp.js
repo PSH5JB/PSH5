@@ -53,7 +53,6 @@ const AUTOLOAD_NAMES = [
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
-  "sandbox-elevator.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -447,7 +446,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[CHEATRUNNER_ELF] = 2000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
-  afterMs["sandbox-elevator.elf"] = 2000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -629,7 +627,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
   await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_VER, p, chain, log, _pkgPresent);
 
-  try { await saveAutoloadFiles(p, chain, function () {}, {}); } catch (_) {}
+  try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
