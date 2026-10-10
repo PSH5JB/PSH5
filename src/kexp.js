@@ -62,16 +62,15 @@ const ONION_EMU_TITLE_IDS = [
 // write cannot stall elfldr before Payload Manager binds 8084.
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
-  KSTUFF_ELF,
   FAKE_SIGNIN_ELF,
-  SHADOWMOUNT_ELF,
+  BLACKBOX_ELF,
   PLDMGR_ELF,
+  CHEATRUNNER_ELF,
+  ANYPAD_ELF,
+  SHADOWMOUNT_ELF,
+  "sandbox-elevator.elf",
   "PS5SXHelper.elf",
   XPSEMU_HELPER_DEST,
-  "sandbox-elevator.elf",
-  ANYPAD_ELF,
-  CHEATRUNNER_ELF,
-  BLACKBOX_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -480,21 +479,17 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
-  if (mapped.kstuff) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + KSTUFF_ELF, mapped.kstuff.base, mapped.kstuff.size);
-  }
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 5000;
-  afterMs[KSTUFF_ELF] = 3000;
   afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[SHADOWMOUNT_ELF] = 5000;
+  afterMs[BLACKBOX_ELF] = 5000;
   afterMs[PLDMGR_ELF] = 3000;
+  afterMs[CHEATRUNNER_ELF] = 2000;
+  afterMs[ANYPAD_ELF] = 2000;
+  afterMs[SHADOWMOUNT_ELF] = 5000;
+  afterMs["sandbox-elevator.elf"] = 2000;
   afterMs["PS5SXHelper.elf"] = 2000;
   afterMs[XPSEMU_HELPER_DEST] = 2000;
-  afterMs["sandbox-elevator.elf"] = 2000;
-  afterMs[ANYPAD_ELF] = 2000;
-  afterMs[CHEATRUNNER_ELF] = 2000;
-  afterMs[BLACKBOX_ELF] = 5000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -823,13 +818,12 @@ export async function loadOptionalPayloads(p, chain, log) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
   await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
-  await saveOnly(KSTUFF_ELF,       "kstuff",   p, chain, log, _present.has(KSTUFF_ELF));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
-  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
   await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
-  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
-  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
+  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
+  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
 
   await ensureOnionTitleIds(p, chain, log);
 
