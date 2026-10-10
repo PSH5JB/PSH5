@@ -89,22 +89,22 @@ ZIP_DONE_REL[HB_RPCS3] = "cores/rpcs3_libretro.so";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3,
 ];
-// OnionHEN first, then fake-signin / Payload Manager / ShadowMount so
-// kstuff can finish before any other kernel helper. PS5SXHelper aio and
-// xpsemu-helper both elevate (Lapy); sending them in that window panics
-// WKAL the same way sandbox-elevator did. Large ELFs next so they cannot
-// stall 8084. sandbox-elevator last.
+// OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
+// (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
+// xpsemu-helper or sandbox-elevator: both also grab elfldr 9021, so
+// the next emu cannot elevate after you close the first. Those ELFs
+// still save to /data/ps5_autoloader for Payload Manager. CEMU ships
+// its own elevator and sends it itself. Large ELFs last so they
+// cannot stall 8084.
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
   PLDMGR_ELF,
   SHADOWMOUNT_ELF,
   "PS5SXHelper.elf",
-  XPSEMU_HELPER_DEST,
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
   BLACKBOX_ELF,
-  "sandbox-elevator.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -576,11 +576,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[PLDMGR_ELF] = 4000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
   afterMs["PS5SXHelper.elf"] = 4000;
-  afterMs[XPSEMU_HELPER_DEST] = 2000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
   afterMs[BLACKBOX_ELF] = 8000;
-  afterMs["sandbox-elevator.elf"] = 3000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -767,6 +765,30 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   }
 }
 
+function onionTitleIdOk(id) {
+  return /^[A-Z0-9]{9}$/.test(id);
+}
+
+function mergeOnionTitleIds(raw) {
+  let ids = (raw || "").split(",").map((s) => s.trim()).filter(onionTitleIdOk);
+  for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) {
+    const id = ONION_EMU_TITLE_IDS[i];
+    if (ids.indexOf(id) < 0) ids.push(id);
+  }
+  if (ids.length > 20) {
+    const keep = {};
+    for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) keep[ONION_EMU_TITLE_IDS[i]] = true;
+    const rest = [];
+    for (let i = 0; i < ids.length; i++) {
+      if (keep[ids[i]]) continue;
+      rest.push(ids[i]);
+    }
+    ids = ONION_EMU_TITLE_IDS.slice();
+    for (let i = 0; i < rest.length && ids.length < 20; i++) ids.push(rest[i]);
+  }
+  return ids;
+}
+
 async function ensureOnionTitleIds(p, chain, log) {
   try {
     await ensureDir(p, chain, ONIONHEN_DIR);
@@ -774,34 +796,29 @@ async function ensureOnionTitleIds(p, chain, log) {
     if (text == null) text = "";
     const lineRe = /^exact_title_ids=(.*)$/m;
     const match = text.match(lineRe);
-    if (match) {
-      let raw = (match[1] || "").trim();
-      if (raw === "none") raw = "";
-      const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
-      let changed = false;
-      for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) {
-        const id = ONION_EMU_TITLE_IDS[i];
-        if (ids.indexOf(id) < 0) {
-          ids.push(id);
-          changed = true;
-        }
-      }
-      if (!changed) {
-        log("OnionHEN exact_title_ids already has emulator titles");
-        return;
-      }
-      text = text.replace(lineRe, "exact_title_ids=" + ids.join(","));
-      await writeTextFile(p, chain, ONIONHEN_CONFIG, text);
-      log("OnionHEN exact_title_ids updated");
+    const ids = mergeOnionTitleIds(match ? match[1] : "");
+    const idLine = "exact_title_ids=" + ids.join(",");
+    let next = text;
+    if (match) next = next.replace(lineRe, idLine);
+    if (!/\[app_jailbreak\]/.test(next)) {
+      next += (next && !next.endsWith("\n") ? "\n" : "") +
+        "\n[app_jailbreak]\n" +
+        "enabled=true\n" +
+        idLine + "\n";
+    } else {
+      next = next.replace(/(\[app_jailbreak\][^\[]*)/, function (block) {
+        if (/^enabled=/m.test(block))
+          return block.replace(/^enabled=.*$/m, "enabled=true");
+        return "[app_jailbreak]\nenabled=true" + block.slice("[app_jailbreak]".length);
+      });
+      if (!match) next += (next.endsWith("\n") ? "" : "\n") + idLine + "\n";
+    }
+    if (next === text) {
+      log("OnionHEN exact_title_ids already has emulator titles");
       return;
     }
-    const extra =
-      (text && !text.endsWith("\n") ? "\n" : "") +
-      "\n[app_jailbreak]\n" +
-      "enabled=true\n" +
-      "exact_title_ids=" + ONION_EMU_TITLE_IDS.join(",") + "\n";
-    await writeTextFile(p, chain, ONIONHEN_CONFIG, (text || "") + extra);
-    log("OnionHEN exact_title_ids written");
+    await writeTextFile(p, chain, ONIONHEN_CONFIG, next);
+    log("OnionHEN exact_title_ids updated (" + ids.length + ")");
   } catch (error) {
     log("OnionHEN config skipped: " +
       (error && error.message ? error.message : String(error)));
@@ -1442,6 +1459,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await installZipEmu(EMU_PS5CEMU_ZIP, HB_CEMU, EMU_PS5CEMU_VER, p, chain, log);
   await saveAutoloadElf(EMU_PS5CEMU_ELEVATOR, "sandbox-elevator.elf", null, p, chain, log);
+  await installNamedFile(EMU_PS5CEMU_ELEVATOR, HOMEBREW_DIR + "/" + HB_CEMU, "sandbox-elevator.elf", p, chain, log);
   await installCemuKeys(p, chain, log);
 
   // PS5X360 — unzip (not AutoLog.elf) and fix 0600 zip permissions.
@@ -1471,6 +1489,8 @@ export async function loadOptionalPayloads(p, chain, log) {
       _marks.push((_ok ? "[ok]" : "[!!]") + " " + _cl[_ci][0]);
     }
     log("emus: " + _marks.join("  "), "info");
+    for (let _ci = 0; _ci < _cl.length; _ci++)
+      await chmodHomebrewTitle(p, chain, _cl[_ci][1]);
   } catch (_) {}
 
   try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
