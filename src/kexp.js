@@ -19,12 +19,16 @@ const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.8.1-beta.elf";
+const KSTUFF_ELF = "kstuff.elf";
+const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
 const CHEATRUNNER_VER = "v0.17.2";
 const SHADOWMOUNT_VER = "1.7beta3";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
+const ONIONHEN_CONFIG = "/data/OnionHEN/config.ini";
+const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
@@ -34,7 +38,6 @@ const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
 const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
 const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
 const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
-const EMU_PS5X360_ELF      = "emulators/PS5X360/PS5X360-AutoLog.elf";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
 const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.095.zip";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
@@ -45,16 +48,30 @@ const EMU_PS5X360_VER      = "v1.0";
 const EMU_PORPOISE_VER     = "v2.7.1";
 const EMU_PS5CEMU_VER      = "v3.5.1";
 const EMU_PROSPEROEDEN_VER = "v1.000.095.1";
+const HB_SX2 = "PPSA99203";
+const HB_SNES = "PPSA99009";
+const HB_XPS = "PPSA97358";
+const HB_X360 = "PPSA50011";
+const HB_PORPOISE = "PPSA99764";
+const HB_CEMU = "PPSA99360";
+const HB_EDEN = "PPSA99008";
+const ONION_EMU_TITLE_IDS = [
+  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN,
+];
+// HEN and title-registration first. Large ELFs last so a 49MB blackbox
+// write cannot stall elfldr before Payload Manager binds 8084.
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
+  KSTUFF_ELF,
   FAKE_SIGNIN_ELF,
-  BLACKBOX_ELF,
-  PLDMGR_ELF,
-  CHEATRUNNER_ELF,
-  ANYPAD_ELF,
   SHADOWMOUNT_ELF,
-  "sandbox-elevator.elf",
+  PLDMGR_ELF,
   "PS5SXHelper.elf",
+  XPSEMU_HELPER_DEST,
+  "sandbox-elevator.elf",
+  ANYPAD_ELF,
+  CHEATRUNNER_ELF,
+  BLACKBOX_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -321,7 +338,7 @@ async function connectToElfldr(p, chain) {
   p.write4(address, 0x3d230210); // AF_INET, port 9021
   p.write4(address.add32(4), 0x0100007f); // 127.0.0.1
 
-  for (let attempt = 0; attempt < 40; attempt++) {
+  for (let attempt = 0; attempt < 80; attempt++) {
     const socket = await chain.syscall(SYS_SOCKET, 2, 1, 0);
     const fd = socket.low | 0;
     if (fd >= 0) {
@@ -333,6 +350,13 @@ async function connectToElfldr(p, chain) {
   }
 
   throw new Error("elfldr is not listening on port 9021");
+}
+
+async function waitForElfldr(p, chain, log) {
+  if (typeof log === "function") log("waiting for elfldr on 9021");
+  const fd = await connectToElfldr(p, chain);
+  await chain.syscall(SYS_CLOSE, fd);
+  if (typeof log === "function") log("elfldr ready");
 }
 
 async function sendElf(name, payload, p, chain) {
@@ -354,6 +378,22 @@ async function sendOne(name, p, chain, log) {
   log("sending " + name);
   await sendElf(name, mapped, p, chain);
   return mapped;
+}
+
+async function sendOneRetry(name, p, chain, log, attempts) {
+  const n = attempts > 0 ? attempts : 3;
+  let last = null;
+  for (let i = 1; i <= n; i++) {
+    try {
+      return await sendOne(name, p, chain, log);
+    } catch (error) {
+      last = error;
+      const msg = error && error.message ? error.message : String(error);
+      log(name + " send failed (" + i + "/" + n + "): " + msg);
+      if (i < n) await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+  throw last;
 }
 
 async function ensureDir(p, chain, path) {
@@ -440,15 +480,21 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
+  if (mapped.kstuff) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + KSTUFF_ELF, mapped.kstuff.base, mapped.kstuff.size);
+  }
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 5000;
+  afterMs[KSTUFF_ELF] = 3000;
   afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[BLACKBOX_ELF] = 5000;
-  afterMs[PLDMGR_ELF] = 3000;
-  afterMs[CHEATRUNNER_ELF] = 2000;
-  afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
+  afterMs[PLDMGR_ELF] = 3000;
+  afterMs["PS5SXHelper.elf"] = 2000;
+  afterMs[XPSEMU_HELPER_DEST] = 2000;
   afterMs["sandbox-elevator.elf"] = 2000;
+  afterMs[ANYPAD_ELF] = 2000;
+  afterMs[CHEATRUNNER_ELF] = 2000;
+  afterMs[BLACKBOX_ELF] = 5000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -557,6 +603,142 @@ async function saveOnly(name, key, p, chain, log, isPresent, ver) {
 }
 
 
+function readBytesAsString(p, buf, n) {
+  let text = "";
+  for (let i = 0; i < n; i++) {
+    const c = p.read1(buf.add32(i)) & 0xff;
+    if (c === 0) break;
+    text += String.fromCharCode(c);
+  }
+  return text;
+}
+
+async function readTextFile(p, chain, path, maxLen) {
+  const fd = sysRv(await chain.syscall(SYS_OPEN, cstring(p, path), 0, 0));
+  if (fd < 0) return null;
+  const cap = maxLen > 0 ? maxLen : 0x10000;
+  const buf = p.malloc(cap, 1);
+  try {
+    const n = sysRv(await chain.syscall(SYS_READ, fd, buf, cap - 1));
+    if (n <= 0) return "";
+    return readBytesAsString(p, buf, n);
+  } finally {
+    await chain.syscall(SYS_CLOSE, fd);
+  }
+}
+
+async function chmodPath(p, chain, path) {
+  if (!(await pathExists(p, chain, path))) return;
+  if (!chain.syscalls[SYS_CHMOD]) return;
+  try { await chain.syscall(SYS_CHMOD, cstring(p, path), MODE_0777); } catch (_) {}
+}
+
+async function chmodHomebrewTitle(p, chain, psaId) {
+  const base = HOMEBREW_DIR + "/" + psaId;
+  const paths = [
+    base,
+    base + "/eboot.bin",
+    base + "/sce_sys",
+    base + "/sce_sys/param.json",
+    base + "/sce_module",
+    base + "/sce_module/libc.prx",
+  ];
+  for (let i = 0; i < paths.length; i++) await chmodPath(p, chain, paths[i]);
+}
+
+async function chmodTree(p, chain, path, depth) {
+  if (depth > 6) return;
+  await chmodPath(p, chain, path);
+  const entries = await listDir(p, chain, path);
+  for (const { name, type } of entries) {
+    const child = path + "/" + name;
+    await chmodPath(p, chain, child);
+    if (type === DT_DIR) await chmodTree(p, chain, child, depth + 1);
+  }
+}
+
+async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
+  const dest = AUTOLOADER_DIR + "/" + destName;
+  const marker = ver ? dest + "." + ver : "";
+  if (await pathExists(p, chain, dest) && (!ver || await pathExists(p, chain, marker))) {
+    log(destName + " already in autoloader" + (ver ? " (" + ver + ")" : ""));
+    return;
+  }
+  try {
+    const mapped = await mapElf(fetchPath, p, chain);
+    try {
+      await writeBuf(p, chain, dest, mapped.base, mapped.size);
+      if (marker) {
+        try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
+      }
+      log(destName + " saved to autoloader");
+    } finally {
+      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+    }
+  } catch (error) {
+    log(destName + " autoloader save skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+}
+
+async function ensureOnionTitleIds(p, chain, log) {
+  try {
+    await ensureDir(p, chain, ONIONHEN_DIR);
+    let text = await readTextFile(p, chain, ONIONHEN_CONFIG, 0x10000);
+    if (text == null) text = "";
+    const lineRe = /^exact_title_ids=(.*)$/m;
+    const match = text.match(lineRe);
+    if (match) {
+      let raw = (match[1] || "").trim();
+      if (raw === "none") raw = "";
+      const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
+      let changed = false;
+      for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) {
+        const id = ONION_EMU_TITLE_IDS[i];
+        if (ids.indexOf(id) < 0) {
+          ids.push(id);
+          changed = true;
+        }
+      }
+      if (!changed) {
+        log("OnionHEN exact_title_ids already has emulator titles");
+        return;
+      }
+      text = text.replace(lineRe, "exact_title_ids=" + ids.join(","));
+      await writeTextFile(p, chain, ONIONHEN_CONFIG, text);
+      log("OnionHEN exact_title_ids updated");
+      return;
+    }
+    const extra =
+      (text && !text.endsWith("\n") ? "\n" : "") +
+      "\n[app_jailbreak]\n" +
+      "enabled=true\n" +
+      "exact_title_ids=" + ONION_EMU_TITLE_IDS.join(",") + "\n";
+    await writeTextFile(p, chain, ONIONHEN_CONFIG, (text || "") + extra);
+    log("OnionHEN exact_title_ids written");
+  } catch (error) {
+    log("OnionHEN config skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+}
+
+async function ensureXpsWhitelist(p, chain, log) {
+  try {
+    let text = await readTextFile(p, chain, XPSEMU_WHITELIST, 0x4000);
+    if (text == null) text = "";
+    if (text.indexOf(HB_XPS) >= 0) {
+      log("XPSemu whitelist already has " + HB_XPS);
+      return;
+    }
+    const next = (text && !text.endsWith("\n") ? text + "\n" : text) + HB_XPS + "\n";
+    await writeTextFile(p, chain, XPSEMU_WHITELIST, next);
+    log("wrote " + XPSEMU_WHITELIST);
+  } catch (error) {
+    log("XPSemu whitelist skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+}
+
 async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   const dest = HOMEBREW_DIR + "/" + destName;
   const marker = dest + "." + ver;
@@ -581,10 +763,15 @@ async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
 }
 
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
+  const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
   const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
-  if (await pathExists(p, chain, marker)) {
+  if (await pathExists(p, chain, marker) && await pathExists(p, chain, eboot)) {
     log(psaId + " already installed (" + ver + "), skipping");
-    return;
+    await chmodHomebrewTitle(p, chain, psaId);
+    if (psaId === HB_X360) {
+      try { await chmodTree(p, chain, HOMEBREW_DIR + "/" + psaId, 0); } catch (_) {}
+    }
+    return true;
   }
   log("downloading " + psaId + " (" + ver + ") — please wait...");
   try {
@@ -595,12 +782,29 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
       try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
     }
     log("extracting " + psaId + "...");
-    await sendOne(EMU_UNZIP_ELF, p, chain, log);
-    await waitSeconds(log, "waiting for " + psaId + " extraction", 60, null);
+    await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
+    const deadline = Date.now() + 90000;
+    let found = await pathExists(p, chain, eboot);
+    while (!found && Date.now() < deadline) {
+      emitLog(log, "waiting for " + psaId + " eboot.bin...", true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      found = await pathExists(p, chain, eboot);
+    }
+    if (!found) {
+      log(psaId + " extract failed: eboot.bin missing");
+      return false;
+    }
+    await chmodHomebrewTitle(p, chain, psaId);
+    if (psaId === HB_X360) {
+      log("fixing " + psaId + " file permissions");
+      try { await chmodTree(p, chain, HOMEBREW_DIR + "/" + psaId, 0); } catch (_) {}
+    }
     try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
     log(psaId + " installed");
+    return true;
   } catch (e) {
     log(psaId + " install failed: " + (e && e.message ? e.message : String(e)));
+    return false;
   }
 }
 
@@ -619,88 +823,75 @@ export async function loadOptionalPayloads(p, chain, log) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
   await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
+  await saveOnly(KSTUFF_ELF,       "kstuff",   p, chain, log, _present.has(KSTUFF_ELF));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
-  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
-  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
-  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
+  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
+  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
+
+  await ensureOnionTitleIds(p, chain, log);
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
   await saveFile(HOMEBREW_DIR, BLACKBOX_PKG, BLACKBOX_VER, p, chain, log, _pkgPresent);
 
-  // Emulators — run before autoloader (original working order)
+  // Emulators — unzip/install before the autoloader installer, which may
+  // close WebKit. Skip only when eboot.bin is actually on disk.
   await ensureDir(p, chain, HOMEBREW_DIR);
 
-  // PS5SX2 (PS2 emulator)
-  const _sx2FirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PS5SXHelper.elf." + EMU_PS5SX2_VER));
+  // PS5SX2 (PS2) — installer ELF pulls the title; helper must autoload.
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
-  // Also save to autoloader so it runs on every boot (needed for PS2 BIOS detection)
+  await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   {
-    const _sx2helperAutoMarker = AUTOLOADER_DIR + "/PS5SXHelper.elf." + EMU_PS5SX2_VER;
-    if (!(await pathExists(p, chain, _sx2helperAutoMarker))) {
-      try {
-        const _sx2h = await mapBinary(EMU_PS5SX2_HELPER, p, chain);
-        try {
-          await writeBuf(p, chain, AUTOLOADER_DIR + "/PS5SXHelper.elf", _sx2h.base, _sx2h.size);
-          try { await writeTextFile(p, chain, _sx2helperAutoMarker, EMU_PS5SX2_VER); } catch (_) {}
-          log("PS5SXHelper.elf saved to autoloader");
-        } catch (_e) { log("PS5SXHelper.elf autoloader save skipped"); }
-        try { await chain.syscall(SYS_MUNMAP, _sx2h.base, _sx2h.mmapSize); } catch (_) {}
-      } catch (_e) { log("PS5SXHelper.elf not saved: " + (_e && _e.message ? _e.message : String(_e))); }
+    const sx2Eboot = HOMEBREW_DIR + "/" + HB_SX2 + "/eboot.bin";
+    if (await pathExists(p, chain, sx2Eboot)) {
+      log("PS5SX2 already installed, skipping installer");
     } else {
-      log("PS5SXHelper.elf already in autoloader (" + EMU_PS5SX2_VER + ")");
+      try {
+        await sendOneRetry(EMU_PS5SX2_INSTALLER, p, chain, log, 3);
+        await waitSeconds(log, "waiting for PS5SX2 installer", 30, null);
+        if (!(await pathExists(p, chain, sx2Eboot)))
+          log("PS5SX2 installer sent, eboot.bin not found yet");
+      } catch (_e) {
+        log("PS5SX2 installer skipped: " + (_e && _e.message ? _e.message : String(_e)));
+      }
     }
   }
-  if (_sx2FirstInstall) {
-    try { await sendOne(EMU_PS5SX2_INSTALLER, p, chain, log); } catch (_e) { log("PS5SX2 installer skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-  } else {
-    log("PS5SX2 already installed, skipping installer");
-  }
 
-  // snes9x (SNES — saved to /data/homebrew for manual launch)
-  await downloadToHB(EMU_SNES9X_ELF, "Snes9xPS5-v2.3.elf", EMU_SNES9X_VER, p, chain, log);
-
-  // XPSemu (PS1/PS2 emulator)
-  const _xpsFirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PPSA97358.zip." + EMU_XPSEMU_VER));
-  await downloadToHB(EMU_XPSEMU_ZIP, "PPSA97358.zip", EMU_XPSEMU_VER, p, chain, log);
-  if (_xpsFirstInstall) {
-    try { await sendOne(EMU_XPSEMU_HELPER, p, chain, log); } catch (_e) { log("XPSemu helper skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-  } else {
-    log("XPSemu already installed, skipping helper");
-  }
-
-  // Porpoise (PS1 emulator, ZIP extraction)
-  await installZipEmu(EMU_PORPOISE_ZIP, "PPSA99764", EMU_PORPOISE_VER, p, chain, log);
-
-  // PS5CEMU-HAR
-  await installZipEmu(EMU_PS5CEMU_ZIP, "PPSA99360", EMU_PS5CEMU_VER, p, chain, log);
-  if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/sandbox-elevator.elf"))) {
-    log("saving sandbox-elevator.elf to autoloader...");
-    try {
-      const _elev = await mapElf(EMU_PS5CEMU_ELEVATOR, p, chain);
+  // snes9x — the ELF is the installer and helper. Do not autoload the 25MB
+  // file; the app respawns its helper through 9021 after install.
+  {
+    const snesEboot = HOMEBREW_DIR + "/" + HB_SNES + "/eboot.bin";
+    if (await pathExists(p, chain, snesEboot)) {
+      log("snes9x already installed, skipping installer");
+    } else {
       try {
-        await writeBuf(p, chain, AUTOLOADER_DIR + "/sandbox-elevator.elf", _elev.base, _elev.size);
-      } finally {
-        try { await chain.syscall(SYS_MUNMAP, _elev.base, _elev.mmapSize); } catch (_) {}
+        await sendOneRetry(EMU_SNES9X_ELF, p, chain, log, 3);
+        await waitSeconds(log, "waiting for snes9x installer", 25, null);
+        if (!(await pathExists(p, chain, snesEboot)))
+          log("snes9x installer sent, eboot.bin not found yet");
+      } catch (_e) {
+        log("snes9x installer skipped: " + (_e && _e.message ? _e.message : String(_e)));
       }
-    } catch (_e) { log("sandbox-elevator save skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+    }
   }
 
-  // PS5X360 (Xbox 360 emulator)
-  const _ps5x360FirstInstall = !(await pathExists(p, chain, HOMEBREW_DIR + "/PPSA50011.zip." + EMU_PS5X360_VER));
-  await downloadToHB(EMU_PS5X360_ZIP, "PPSA50011.zip", EMU_PS5X360_VER, p, chain, log);
-  if (_ps5x360FirstInstall) {
-    try { await sendOne(EMU_PS5X360_ELF, p, chain, log); } catch (_e) { log("PS5X360 skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-    await waitSeconds(log, "waiting for PS5X360 to install", 40, null);
-  } else {
-    log("PS5X360 already installed, skipping installer");
-  }
+  // XPSemu — unzip the title folder, autoload helper, whitelist the title.
+  await installZipEmu(EMU_XPSEMU_ZIP, HB_XPS, EMU_XPSEMU_VER, p, chain, log);
+  await saveAutoloadElf(EMU_XPSEMU_HELPER, XPSEMU_HELPER_DEST, EMU_XPSEMU_VER, p, chain, log);
+  await ensureXpsWhitelist(p, chain, log);
 
-  // ProsperoEden (Switch emulator, ZIP extraction)
-  await installZipEmu(EMU_PROSPEROEDEN_ZIP, "PPSA99008", EMU_PROSPEROEDEN_VER, p, chain, log);
+  await installZipEmu(EMU_PORPOISE_ZIP, HB_PORPOISE, EMU_PORPOISE_VER, p, chain, log);
 
+  await installZipEmu(EMU_PS5CEMU_ZIP, HB_CEMU, EMU_PS5CEMU_VER, p, chain, log);
+  await saveAutoloadElf(EMU_PS5CEMU_ELEVATOR, "sandbox-elevator.elf", null, p, chain, log);
+
+  // PS5X360 — unzip (not AutoLog.elf) and fix 0600 zip permissions.
+  await installZipEmu(EMU_PS5X360_ZIP, HB_X360, EMU_PS5X360_VER, p, chain, log);
+
+  await installZipEmu(EMU_PROSPEROEDEN_ZIP, HB_EDEN, EMU_PROSPEROEDEN_VER, p, chain, log);
 
   try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
 
@@ -909,5 +1100,6 @@ export async function runKexp(krw, p, chain, log) {
   const result = await spawnAndJoin(entry, args, symbols, p, chain);
   if (result.joinResult !== 0)
     throw new Error("kexp: pthread_join returned " + hex(result.joinResult));
+  await waitForElfldr(p, chain, say);
   return true;
 }
