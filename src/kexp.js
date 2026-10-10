@@ -32,6 +32,9 @@ const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
+const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
+const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
+const PCSX2_BIOS_DIR       = "/data/PCSX2/bios";
 const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.3.elf";
 const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
 const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
@@ -734,6 +737,39 @@ async function ensureXpsWhitelist(p, chain, log) {
   }
 }
 
+async function installNamedFile(fetchPath, destDir, destName, p, chain, log) {
+  const dest = destDir + "/" + destName;
+  if (await pathExists(p, chain, dest)) {
+    log(destName + " already at " + destDir);
+    await chmodPath(p, chain, dest);
+    return true;
+  }
+  log("copying " + destName + " to " + destDir);
+  try {
+    const mapped = await mapBinary(fetchPath, p, chain);
+    try {
+      await writeBuf(p, chain, dest, mapped.base, mapped.size);
+      await chmodPath(p, chain, dest);
+      log(destName + " saved to " + destDir);
+      return true;
+    } finally {
+      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+    }
+  } catch (e) {
+    log(destName + " copy skipped: " + (e && e.message ? e.message : String(e)));
+    return false;
+  }
+}
+
+async function installPs2Bios(p, chain, log) {
+  await ensureDir(p, chain, "/data/PCSX2");
+  await ensureDir(p, chain, PCSX2_BIOS_DIR);
+  await chmodPath(p, chain, "/data/PCSX2");
+  await chmodPath(p, chain, PCSX2_BIOS_DIR);
+  await installNamedFile(EMU_PS5SX2_BIOS, PCSX2_BIOS_DIR, "SCPH-70012.BIN", p, chain, log);
+  await installNamedFile(EMU_PS5SX2_BIOS_NVM, PCSX2_BIOS_DIR, "SCPH-70012.NVM", p, chain, log);
+}
+
 async function downloadToHB(fetchPath, destName, ver, p, chain, log) {
   const dest = HOMEBREW_DIR + "/" + destName;
   const marker = dest + "." + ver;
@@ -895,6 +931,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       }
     }
   }
+  await installPs2Bios(p, chain, log);
 
   // snes9x — the ELF is the installer and helper. Do not autoload the 25MB
   // file; the app respawns its helper through 9021 after install.
