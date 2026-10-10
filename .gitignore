@@ -22,3 +22,6 @@ payloads/emulators/PS5_RPCS3/PPSA42674/
 
 # PS5SX2 title tree is unpacked from the release zip on the host / VPS.
 payloads/emulators/PS5SX2/PPSA99203/
+
+# 3DS AES keys stay on the host; do not push to GitHub.
+payloads/emulators/PS5CEMU-HAR/aes_keys.txt

@@ -49,6 +49,7 @@ const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-2.7.zip";
 const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
 const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
 const EMU_PS5CEMU_KEYS     = "emulators/PS5CEMU-HAR/keys.txt";
+const EMU_PS5CEMU_AESKEYS  = "emulators/PS5CEMU-HAR/aes_keys.txt";
 const CEMU_DATA_DIR        = "/data/ps5cemu";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
 const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.100.zip";
@@ -1095,6 +1096,7 @@ async function installCemuKeys(p, chain, log) {
   await chmodPath(p, chain, CEMU_DATA_DIR + "/games");
   await chmodPath(p, chain, CEMU_DATA_DIR + "/azahar/sysdata");
   await installNamedFile(EMU_PS5CEMU_KEYS, CEMU_DATA_DIR, "keys.txt", p, chain, log);
+  await installNamedFile(EMU_PS5CEMU_AESKEYS, CEMU_DATA_DIR + "/azahar/sysdata", "aes_keys.txt", p, chain, log);
 }
 
 async function installXpsBios(p, chain, log) {
