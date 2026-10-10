@@ -82,7 +82,6 @@ const ONION_EMU_TITLE_IDS = [
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
-  BLACKBOX_ELF,
   "sandbox-elevator.elf",
   "PS5SXHelper.elf",
   XPSEMU_HELPER_DEST,
@@ -90,6 +89,7 @@ const AUTOLOAD_NAMES = [
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
+  BLACKBOX_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
