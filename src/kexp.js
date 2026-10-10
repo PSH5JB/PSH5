@@ -55,7 +55,7 @@ const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
-const EMU_PS5SX2_VER       = "vk-285-139";
+const EMU_PS5SX2_VER       = "vk-285-161";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "v1.0.1";
 const EMU_PS5X360_VER      = "v1.0.1";
@@ -84,10 +84,10 @@ const ONION_EMU_TITLE_IDS = [
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
-  PLDMGR_ELF,
-  SHADOWMOUNT_ELF,
   "PS5SXHelper.elf",
   XPSEMU_HELPER_DEST,
+  PLDMGR_ELF,
+  SHADOWMOUNT_ELF,
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
   BLACKBOX_ELF,
@@ -503,10 +503,10 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 15000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
+  afterMs["PS5SXHelper.elf"] = 4000;
+  afterMs[XPSEMU_HELPER_DEST] = 2000;
   afterMs[PLDMGR_ELF] = 4000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
-  afterMs["PS5SXHelper.elf"] = 3000;
-  afterMs[XPSEMU_HELPER_DEST] = 2000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
   afterMs[BLACKBOX_ELF] = 8000;
