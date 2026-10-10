@@ -64,12 +64,12 @@ const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
   BLACKBOX_ELF,
+  "sandbox-elevator.elf",
+  "PS5SXHelper.elf",
   PLDMGR_ELF,
   CHEATRUNNER_ELF,
   ANYPAD_ELF,
   SHADOWMOUNT_ELF,
-  "sandbox-elevator.elf",
-  "PS5SXHelper.elf",
   XPSEMU_HELPER_DEST,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
@@ -488,7 +488,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
   afterMs["sandbox-elevator.elf"] = 2000;
-  afterMs["PS5SXHelper.elf"] = 2000;
+  afterMs["PS5SXHelper.elf"] = 3000;
   afterMs[XPSEMU_HELPER_DEST] = 2000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
@@ -886,6 +886,20 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installZipEmu(EMU_PS5X360_ZIP, HB_X360, EMU_PS5X360_VER, p, chain, log);
 
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, HB_EDEN, EMU_PROSPEROEDEN_VER, p, chain, log);
+
+  // Emulator checklist — shows which titles have eboot.bin on disk
+  try {
+    const _cl = [
+      ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
+      ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
+    ];
+    const _marks = [];
+    for (let _ci = 0; _ci < _cl.length; _ci++) {
+      const _ok = await pathExists(p, chain, HOMEBREW_DIR + "/" + _cl[_ci][1] + "/eboot.bin");
+      _marks.push((_ok ? "[ok]" : "[!!]") + " " + _cl[_ci][0]);
+    }
+    log("emus: " + _marks.join("  "), "info");
+  } catch (_) {}
 
   try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
 
