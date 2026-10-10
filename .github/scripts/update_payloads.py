@@ -17,6 +17,7 @@ VER_CONSTS = {
     "PS5CEMU-HAR": "EMU_PS5CEMU_VER",
     "ProsperoEden": "EMU_PROSPEROEDEN_VER",
     "PS5_RPCS3": "EMU_PS5RPCS3_VER",
+    "PS5_RetroArch": "EMU_PS5RA_VER",
 }
 
 PATH_CONSTS = {
@@ -356,6 +357,7 @@ update_emu_versioned_dir("Porpoise", "elripalda/Porpoise-Dolphin-Emulator-for-PS
 update_emu_versioned_dir("PS5CEMU-HAR", "premohq/PS5CEMU-HAR", r"^PS5CEMU-HAR-v.*\.zip$", "emulators/PS5CEMU-HAR", "PS5CEMU-HAR-v*.zip", "EMU_PS5CEMU_ZIP")
 update_emu_versioned_dir("ProsperoEden", "blackbearreloaded/ProsperoEden", r"^ProsperoEden-v.*\.zip$", "emulators/ProsperoEden", "ProsperoEden-v*.zip", "EMU_PROSPEROEDEN_ZIP")
 update_emu_asset("PS5_RPCS3", "dmzebro/PS5_RPCS3", r"^PPSA42674\.zip$", "emulators/PS5_RPCS3/PPSA42674.zip", skip_download=True)
+update_emu_asset("PS5_RetroArch", "mihawk-99/PS5_RetroArch", r"^PS5_RetroArch-.*\.zip$", "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip", path_const="EMU_PS5RA_ZIP", skip_download=True)
 
 # ── save & output ─────────────────────────────────────────────────────────────
 

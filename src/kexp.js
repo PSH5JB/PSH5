@@ -72,6 +72,10 @@ const EMU_PS5RPCS3_FILES   = "emulators/PS5_RPCS3/PPSA42674";
 const EMU_PS5RPCS3_LIST    = "emulators/PS5_RPCS3/list.txt";
 const EMU_PS5RPCS3_PUP     = "emulators/PS5_RPCS3/PS3UPDAT.PUP";
 const EMU_PS5RPCS3_VER     = "v1.0";
+const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip";
+const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
+const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
+const EMU_PS5RA_VER        = "v1.0.0-beta.1";
 const HB_SX2 = "PPSA99203";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
@@ -80,6 +84,7 @@ const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
 const HB_RPCS3 = "PPSA42674";
+const HB_RA = "PPSA99169";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
@@ -87,7 +92,7 @@ ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RPCS3] = "cores/rpcs3_libretro.so";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3,
+  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -913,6 +918,18 @@ async function ensureEmuDataDirs(p, chain, log) {
     HOMEBREW_DIR + "/" + HB_X360 + "/assets/roms",
     HOMEBREW_DIR + "/" + HB_RPCS3,
     HOMEBREW_DIR + "/" + HB_RPCS3 + "/games",
+    HOMEBREW_DIR + "/" + HB_RA,
+    HOMEBREW_DIR + "/" + HB_RA + "/content",
+    HOMEBREW_DIR + "/" + HB_RA + "/content/Saturn",
+    HOMEBREW_DIR + "/" + HB_RA + "/system",
+    HOMEBREW_DIR + "/" + HB_RA + "/system/Saturn",
+    HOMEBREW_DIR + "/" + HB_RA + "/system/pcsx2",
+    HOMEBREW_DIR + "/" + HB_RA + "/system/pcsx2/bios",
+    HOMEBREW_DIR + "/" + HB_RA + "/system/fbneo",
+    HOMEBREW_DIR + "/" + HB_RA + "/savefiles",
+    HOMEBREW_DIR + "/" + HB_RA + "/savestates",
+    HOMEBREW_DIR + "/" + HB_RA + "/library",
+    HOMEBREW_DIR + "/" + HB_RA + "/config",
   ];
   let ok = 0;
   for (let i = 0; i < dirs.length; i++) {
@@ -1023,6 +1040,115 @@ async function installRpcs3Firmware(p, chain, log) {
   await ensureDir(p, chain, dir);
   await chmodPath(p, chain, dir);
   await installNamedFile(EMU_PS5RPCS3_PUP, dir, "PS3UPDAT.PUP", p, chain, log);
+}
+
+async function ensureRaDataDirs(p, chain, log) {
+  const title = HOMEBREW_DIR + "/" + HB_RA;
+  const dirs = [
+    title,
+    title + "/content",
+    title + "/content/Saturn",
+    title + "/system",
+    title + "/system/Saturn",
+    title + "/system/pcsx2",
+    title + "/system/pcsx2/bios",
+    title + "/system/fbneo",
+    title + "/savefiles",
+    title + "/savestates",
+    title + "/library",
+    title + "/config",
+  ];
+  for (let i = 0; i < dirs.length; i++) {
+    await ensureDir(p, chain, dirs[i]);
+    await chmodPath(p, chain, dirs[i]);
+  }
+}
+
+async function installRaTitle(p, chain, log) {
+  const title = HOMEBREW_DIR + "/" + HB_RA;
+  const eboot = title + "/eboot.bin";
+  const param = title + "/sce_sys/param.json";
+  const core = title + "/cores/snes9x_libretro.so";
+  const marker = HOMEBREW_DIR + "/" + HB_RA + ".installed." + EMU_PS5RA_VER;
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureRaDataDirs(p, chain, log);
+  if (await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param) &&
+      await pathExists(p, chain, core)) {
+    log(HB_RA + " already on disk, skipping");
+    try { await writeTextFile(p, chain, marker, EMU_PS5RA_VER); } catch (_) {}
+    await chmodHomebrewTitle(p, chain, HB_RA);
+    await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
+    return true;
+  }
+  log("copying RetroArch files small-to-large...");
+  let raw = "";
+  try {
+    const resp = await fetch("payloads/" + EMU_PS5RA_LIST);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    raw = await resp.text();
+  } catch (e) {
+    log("RetroArch list skipped: " + (e && e.message ? e.message : String(e)));
+    return false;
+  }
+  const entries = [];
+  const lines = raw.split(String.fromCharCode(10));
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const sp = line.indexOf(" ");
+    if (sp < 1) continue;
+    const size = parseInt(line.slice(0, sp), 10);
+    const rel = line.slice(sp + 1);
+    if (!rel || isNaN(size)) continue;
+    entries.push({ size: size, rel: rel });
+  }
+  entries.sort(function (a, b) { return a.size - b.size; });
+  let ok = 0;
+  let copied = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const rel = entries[i].rel;
+    const size = entries[i].size;
+    const dest = title + "/" + rel;
+    if (await pathExists(p, chain, dest)) {
+      ok++;
+      continue;
+    }
+    emitLog(log, "RetroArch " + (i + 1) + "/" + entries.length + " " + rel, true);
+    try {
+      await ensureRelDirs(p, chain, title, rel);
+      if (size === 0) {
+        await writeTextFile(p, chain, dest, "");
+      } else if (size >= 0x80000) {
+        await fetchWriteFile(EMU_PS5RA_FILES + "/" + rel, dest, p, chain, log);
+      } else {
+        const mapped = await mapBinary(EMU_PS5RA_FILES + "/" + rel, p, chain);
+        try {
+          await writeBuf(p, chain, dest, mapped.base, mapped.size);
+        } finally {
+          try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+        }
+      }
+      await chmodPath(p, chain, dest);
+      ok++;
+      copied++;
+    } catch (e) {
+      log("RetroArch skip " + rel + ": " + (e && e.message ? e.message : String(e)));
+    }
+  }
+  await ensureRaDataDirs(p, chain, log);
+  await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
+  const haveCore = await pathExists(p, chain, core);
+  const haveEboot = await pathExists(p, chain, eboot);
+  const haveParam = await pathExists(p, chain, param);
+  if (!haveEboot || !haveParam || !haveCore) {
+    log("RetroArch copy incomplete (" + ok + "/" + entries.length + ")");
+    return false;
+  }
+  await chmodHomebrewTitle(p, chain, HB_RA);
+  try { await writeTextFile(p, chain, marker, EMU_PS5RA_VER); } catch (_) {}
+  log("RetroArch installed (" + copied + " new, " + ok + "/" + entries.length + ")");
+  return true;
 }
 
 async function installPs2Bios(p, chain, log) {
@@ -1476,12 +1602,14 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installRpcs3Title(p, chain, log);
   await installRpcs3Firmware(p, chain, log);
 
+  await installRaTitle(p, chain, log);
+
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RPCS3", HB_RPCS3],
+      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {

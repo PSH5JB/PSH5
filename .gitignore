@@ -25,3 +25,7 @@ payloads/emulators/PS5SX2/PPSA99203/
 
 # 3DS AES keys stay on the host; do not push to GitHub.
 payloads/emulators/PS5CEMU-HAR/aes_keys.txt
+
+# RetroArch title tree and 788MB zip stay on the host.
+payloads/emulators/PS5_RetroArch/PPSA99169/
+payloads/emulators/PS5_RetroArch/*.zip
