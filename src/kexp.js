@@ -77,19 +77,21 @@ ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN,
 ];
-// HEN and title-registration first. Large ELFs last so a 49MB blackbox
-// write cannot stall elfldr before Payload Manager binds 8084.
+// OnionHEN first, then Payload Manager / ShadowMount / helpers.
+// Large ELFs next so they cannot stall 8084. sandbox-elevator last:
+// it patches the current process and panics if it runs while kstuff
+// is still coming up, which also stops every ELF after it.
 const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   FAKE_SIGNIN_ELF,
-  "sandbox-elevator.elf",
+  PLDMGR_ELF,
+  SHADOWMOUNT_ELF,
   "PS5SXHelper.elf",
   XPSEMU_HELPER_DEST,
-  PLDMGR_ELF,
-  CHEATRUNNER_ELF,
   ANYPAD_ELF,
-  SHADOWMOUNT_ELF,
+  CHEATRUNNER_ELF,
   BLACKBOX_ELF,
+  "sandbox-elevator.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 5;
@@ -499,16 +501,16 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 5000;
-  afterMs[FAKE_SIGNIN_ELF] = 0;
-  afterMs[BLACKBOX_ELF] = 5000;
-  afterMs[PLDMGR_ELF] = 3000;
-  afterMs[CHEATRUNNER_ELF] = 2000;
-  afterMs[ANYPAD_ELF] = 2000;
+  afterMs["OnionHEN.elf"] = 8000;
+  afterMs[FAKE_SIGNIN_ELF] = 2000;
+  afterMs[PLDMGR_ELF] = 4000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
-  afterMs["sandbox-elevator.elf"] = 2000;
   afterMs["PS5SXHelper.elf"] = 3000;
   afterMs[XPSEMU_HELPER_DEST] = 2000;
+  afterMs[ANYPAD_ELF] = 2000;
+  afterMs[CHEATRUNNER_ELF] = 5000;
+  afterMs[BLACKBOX_ELF] = 8000;
+  afterMs["sandbox-elevator.elf"] = 3000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
