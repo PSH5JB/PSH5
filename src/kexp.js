@@ -1317,6 +1317,10 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5X360 — unzip (not AutoLog.elf) and fix 0600 zip permissions.
   await installZipEmu(EMU_PS5X360_ZIP, HB_X360, EMU_PS5X360_VER, p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_X360);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_X360 + "/assets");
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_X360 + "/assets/roms");
+  await chmodPath(p, chain, HOMEBREW_DIR + "/" + HB_X360 + "/assets/roms");
 
   await installZipEmu(EMU_PROSPEROEDEN_ZIP, HB_EDEN, EMU_PROSPEROEDEN_VER, p, chain, log);
   await installEdenKeys(p, chain, log);
