@@ -870,10 +870,7 @@ async function installRpcs3Title(p, chain, log) {
   await ensureDir(p, chain, HOMEBREW_DIR);
   await ensureDir(p, chain, title);
   await ensureDir(p, chain, title + "/games");
-  await ensureDir(p, chain, title + "/system");
-  await ensureDir(p, chain, title + "/system/RPCS3");
   await chmodPath(p, chain, title + "/games");
-  await chmodPath(p, chain, title + "/system/RPCS3");
   if (await pathExists(p, chain, eboot) &&
       await pathExists(p, chain, param) &&
       await pathExists(p, chain, core)) {
