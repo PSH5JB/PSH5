@@ -733,7 +733,25 @@ async function chmodHomebrewTitle(p, chain, psaId) {
     base + "/sce_module",
     base + "/sce_module/libc.prx",
   ];
+  if (psaId === HB_RA) {
+    paths.push(
+      base + "/picker",
+      base + "/picker/picker.bin",
+      base + "/picker/previews",
+      base + "/es-de",
+      base + "/es-de/es-de.bin",
+      base + "/webui",
+      base + "/webui/ps5-retroarch-webui.elf",
+      base + "/cores",
+      base + "/config",
+    );
+  }
   for (let i = 0; i < paths.length; i++) await chmodPath(p, chain, paths[i]);
+  if (psaId === HB_RA) {
+    try { await chmodTree(p, chain, base + "/picker", 0); } catch (_) {}
+    try { await chmodTree(p, chain, base + "/sce_module", 0); } catch (_) {}
+    try { await chmodTree(p, chain, base + "/cores", 0); } catch (_) {}
+  }
 }
 
 async function chmodTree(p, chain, path, depth) {
