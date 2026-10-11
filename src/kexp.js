@@ -112,7 +112,7 @@ const AUTOLOAD_NAMES = [
   BLACKBOX_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
-const ONION_WAIT_S = 8;
+const ONION_WAIT_S = 10;
 const PAYLOAD_WAIT_S = 2;
 
 const DEFAULT_KEXP = "kexp_2026_05_25.bin";
@@ -576,7 +576,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 8000;
+  afterMs["OnionHEN.elf"] = 10000;
   afterMs[PLDMGR_ELF] = 2000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs[SHADOWMOUNT_ELF] = 5000;
