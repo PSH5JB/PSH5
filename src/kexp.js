@@ -90,7 +90,8 @@ ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
-ZIP_DONE_REL[HB_RPCS3] = "cores/rpcs3_libretro.so";
+ZIP_DONE_REL[HB_RPCS3] = "webui/version.json";
+ZIP_DONE_REL[HB_RA] = "webui/version.json";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA,
 ];
@@ -490,7 +491,7 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
     total = parseInt(probe.headers.get("Content-Length") || probe.headers.get("content-length") || "0", 10) || 0;
   if (!total)
     throw new Error("kexp: " + fetchPath + " has no size (need HTTP Range)");
-  const CHUNK = 0x100000;
+  const CHUNK = 0x400000;
   let offset = 0;
   let first = true;
   const label = fetchPath.split("/").pop();
@@ -946,91 +947,14 @@ async function ensureEmuDataDirs(p, chain, log) {
 
 async function installRpcs3Title(p, chain, log) {
   const title = HOMEBREW_DIR + "/" + HB_RPCS3;
-  const eboot = title + "/eboot.bin";
-  const param = title + "/sce_sys/param.json";
-  const core = title + "/cores/rpcs3_libretro.so";
-  const marker = HOMEBREW_DIR + "/" + HB_RPCS3 + ".installed." + EMU_PS5RPCS3_VER;
   await ensureDir(p, chain, HOMEBREW_DIR);
   await ensureDir(p, chain, title);
   await ensureDir(p, chain, title + "/games");
   await chmodPath(p, chain, title + "/games");
-  if (await pathExists(p, chain, eboot) &&
-      await pathExists(p, chain, param) &&
-      await pathExists(p, chain, core)) {
-    log(HB_RPCS3 + " already on disk, skipping");
-    try { await writeTextFile(p, chain, marker, EMU_PS5RPCS3_VER); } catch (_) {}
-    await chmodHomebrewTitle(p, chain, HB_RPCS3);
-    return true;
-  }
-  log("copying RPCS3 files small-to-large...");
-  let raw = "";
-  try {
-    const resp = await fetch("payloads/" + EMU_PS5RPCS3_LIST);
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    raw = await resp.text();
-  } catch (e) {
-    log("RPCS3 list skipped: " + (e && e.message ? e.message : String(e)));
-    return false;
-  }
-  const entries = [];
-  const lines = raw.split(String.fromCharCode(10));
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const sp = line.indexOf(" ");
-    if (sp < 1) continue;
-    const size = parseInt(line.slice(0, sp), 10);
-    const rel = line.slice(sp + 1);
-    if (!rel || isNaN(size)) continue;
-    entries.push({ size: size, rel: rel });
-  }
-  entries.sort(function (a, b) { return a.size - b.size; });
-  await ensureDir(p, chain, HOMEBREW_DIR);
-  await ensureDir(p, chain, title);
-  let ok = 0;
-  let copied = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const rel = entries[i].rel;
-    const size = entries[i].size;
-    const dest = title + "/" + rel;
-    if (await pathExists(p, chain, dest)) {
-      ok++;
-      continue;
-    }
-    emitLog(log, "RPCS3 " + (i + 1) + "/" + entries.length + " " + rel, true);
-    try {
-      await ensureRelDirs(p, chain, title, rel);
-      if (size === 0) {
-        await writeTextFile(p, chain, dest, "");
-      } else if (size >= 0x80000) {
-        await fetchWriteFile(EMU_PS5RPCS3_FILES + "/" + rel, dest, p, chain, log);
-      } else {
-        const mapped = await mapBinary(EMU_PS5RPCS3_FILES + "/" + rel, p, chain);
-        try {
-          await writeBuf(p, chain, dest, mapped.base, mapped.size);
-        } finally {
-          try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-        }
-      }
-      await chmodPath(p, chain, dest);
-      ok++;
-      copied++;
-    } catch (e) {
-      log("RPCS3 skip " + rel + ": " + (e && e.message ? e.message : String(e)));
-    }
-  }
-  const haveCore = await pathExists(p, chain, core);
-  const haveEboot = await pathExists(p, chain, eboot);
-  const haveParam = await pathExists(p, chain, param);
-  if (!haveEboot || !haveParam || !haveCore) {
-    log("RPCS3 copy incomplete (" + ok + "/" + entries.length + ")");
-    return false;
-  }
-  try { await chmodTree(p, chain, title, 0); } catch (_) {}
-  await chmodHomebrewTitle(p, chain, HB_RPCS3);
-  try { await writeTextFile(p, chain, marker, EMU_PS5RPCS3_VER); } catch (_) {}
-  log("RPCS3 installed (" + copied + " new, " + ok + "/" + entries.length + ")");
-  return true;
+  const ok = await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
+  await ensureDir(p, chain, title + "/games");
+  await chmodPath(p, chain, title + "/games");
+  return ok;
 }
 
 async function installRpcs3Firmware(p, chain, log) {
@@ -1066,89 +990,12 @@ async function ensureRaDataDirs(p, chain, log) {
 
 async function installRaTitle(p, chain, log) {
   const title = HOMEBREW_DIR + "/" + HB_RA;
-  const eboot = title + "/eboot.bin";
-  const param = title + "/sce_sys/param.json";
-  const core = title + "/cores/snes9x_libretro.so";
-  const marker = HOMEBREW_DIR + "/" + HB_RA + ".installed." + EMU_PS5RA_VER;
   await ensureDir(p, chain, HOMEBREW_DIR);
   await ensureRaDataDirs(p, chain, log);
-  if (await pathExists(p, chain, eboot) &&
-      await pathExists(p, chain, param) &&
-      await pathExists(p, chain, core)) {
-    log(HB_RA + " already on disk, skipping");
-    try { await writeTextFile(p, chain, marker, EMU_PS5RA_VER); } catch (_) {}
-    await chmodHomebrewTitle(p, chain, HB_RA);
-    await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
-    return true;
-  }
-  log("copying RetroArch files small-to-large...");
-  let raw = "";
-  try {
-    const resp = await fetch("payloads/" + EMU_PS5RA_LIST);
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    raw = await resp.text();
-  } catch (e) {
-    log("RetroArch list skipped: " + (e && e.message ? e.message : String(e)));
-    return false;
-  }
-  const entries = [];
-  const lines = raw.split(String.fromCharCode(10));
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const sp = line.indexOf(" ");
-    if (sp < 1) continue;
-    const size = parseInt(line.slice(0, sp), 10);
-    const rel = line.slice(sp + 1);
-    if (!rel || isNaN(size)) continue;
-    entries.push({ size: size, rel: rel });
-  }
-  entries.sort(function (a, b) { return a.size - b.size; });
-  let ok = 0;
-  let copied = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const rel = entries[i].rel;
-    const size = entries[i].size;
-    const dest = title + "/" + rel;
-    if (await pathExists(p, chain, dest)) {
-      ok++;
-      continue;
-    }
-    emitLog(log, "RetroArch " + (i + 1) + "/" + entries.length + " " + rel, true);
-    try {
-      await ensureRelDirs(p, chain, title, rel);
-      if (size === 0) {
-        await writeTextFile(p, chain, dest, "");
-      } else if (size >= 0x80000) {
-        await fetchWriteFile(EMU_PS5RA_FILES + "/" + rel, dest, p, chain, log);
-      } else {
-        const mapped = await mapBinary(EMU_PS5RA_FILES + "/" + rel, p, chain);
-        try {
-          await writeBuf(p, chain, dest, mapped.base, mapped.size);
-        } finally {
-          try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-        }
-      }
-      await chmodPath(p, chain, dest);
-      ok++;
-      copied++;
-    } catch (e) {
-      log("RetroArch skip " + rel + ": " + (e && e.message ? e.message : String(e)));
-    }
-  }
+  const ok = await installZipEmu(EMU_PS5RA_ZIP, HB_RA, EMU_PS5RA_VER, p, chain, log);
   await ensureRaDataDirs(p, chain, log);
   await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
-  const haveCore = await pathExists(p, chain, core);
-  const haveEboot = await pathExists(p, chain, eboot);
-  const haveParam = await pathExists(p, chain, param);
-  if (!haveEboot || !haveParam || !haveCore) {
-    log("RetroArch copy incomplete (" + ok + "/" + entries.length + ")");
-    return false;
-  }
-  await chmodHomebrewTitle(p, chain, HB_RA);
-  try { await writeTextFile(p, chain, marker, EMU_PS5RA_VER); } catch (_) {}
-  log("RetroArch installed (" + copied + " new, " + ok + "/" + entries.length + ")");
-  return true;
+  return ok;
 }
 
 async function installPs2Bios(p, chain, log) {
@@ -1428,7 +1275,7 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
     const foundParam = await pathExists(p, chain, param);
     const foundExtra = !extra || (await pathExists(p, chain, extra));
     if (foundEboot && foundParam && foundExtra) {
-      await new Promise((resolve) => setTimeout(resolve, 8000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       return (await pathExists(p, chain, eboot)) &&
              (await pathExists(p, chain, param)) &&
              (!extra || (await pathExists(p, chain, extra)));
@@ -1464,7 +1311,8 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
   log("downloading " + psaId + " (" + ver + ") — please wait...");
   try {
-    if (psaId === HB_RPCS3) {
+    const largeZip = (psaId === HB_RPCS3 || psaId === HB_RA);
+    if (largeZip) {
       await fetchWriteFile(fetchPath, zipPath, p, chain, log);
     } else {
       const mapped = await mapBinary(fetchPath, p, chain);
@@ -1491,8 +1339,8 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    const zipMs = (psaId === HB_RPCS3) ? 1200000 : 300000;
-    const zipRetryMs = (psaId === HB_RPCS3) ? 600000 : 180000;
+    const zipMs = largeZip ? 1200000 : 300000;
+    const zipRetryMs = largeZip ? 600000 : 180000;
     let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + zipMs);
     if (!found) {
       log(psaId + " unzip retry...");
@@ -1505,7 +1353,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     }
     try { await unlinkPath(p, chain, zipPath); } catch (_) {}
     await chmodHomebrewTitle(p, chain, psaId);
-    if (psaId === HB_X360 || psaId === HB_RPCS3) {
+    if (psaId === HB_X360) {
       log("fixing " + psaId + " file permissions");
       try { await chmodTree(p, chain, HOMEBREW_DIR + "/" + psaId, 0); } catch (_) {}
     }
