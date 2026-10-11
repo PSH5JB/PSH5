@@ -462,6 +462,18 @@ async function writeBufFlags(p, chain, path, buf, length, flags) {
   }
 }
 
+function jsBufPtr(p, data) {
+  if (!data || !data.length) return null;
+  if (typeof p.leakval !== "function" || typeof p.read8 !== "function") return null;
+  try {
+    const ptr = p.read8(p.leakval(data).add32(0x10));
+    if (!ptr || (ptr.low >>> 0) < 0x10000) return null;
+    return ptr;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function mmapBytes(data, p, chain) {
   const size = (data.length + 0x3fff) & ~0x3fff;
   const base = await chain.syscall(SYS_MMAP, 0, size, PROT_RW, MAP_PRIVATE_ANON, -1, 0);
@@ -478,6 +490,20 @@ async function mmapBytes(data, p, chain) {
   return { base, size: data.length, mmapSize: size };
 }
 
+async function writeFetchedBuf(p, chain, dest, data, flags) {
+  const ptr = jsBufPtr(p, data);
+  if (ptr) {
+    await writeBufFlags(p, chain, dest, ptr, data.length, flags);
+    return;
+  }
+  const mapped = await mmapBytes(data, p, chain);
+  try {
+    await writeBufFlags(p, chain, dest, mapped.base, mapped.size, flags);
+  } finally {
+    try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+  }
+}
+
 async function fetchWriteFile(fetchPath, dest, p, chain, log) {
   const url = "payloads/" + fetchPath;
   const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
@@ -491,7 +517,7 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
     total = parseInt(probe.headers.get("Content-Length") || probe.headers.get("content-length") || "0", 10) || 0;
   if (!total)
     throw new Error("kexp: " + fetchPath + " has no size (need HTTP Range)");
-  const CHUNK = 0x400000;
+  const CHUNK = 0x800000;
   let offset = 0;
   let first = true;
   const label = fetchPath.split("/").pop();
@@ -502,13 +528,8 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
       throw new Error("kexp: " + fetchPath + " range HTTP " + resp.status);
     const data = new Uint8Array(await resp.arrayBuffer());
     if (!data.length) throw new Error("kexp: " + fetchPath + " empty range at " + offset);
-    const mapped = await mmapBytes(data, p, chain);
-    try {
-      await writeBufFlags(p, chain, dest, mapped.base, mapped.size,
-        first ? O_WRONLY_CREAT_TRUNC : O_WRONLY_CREAT_APPEND);
-    } finally {
-      try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-    }
+    await writeFetchedBuf(p, chain, dest, data,
+      first ? O_WRONLY_CREAT_TRUNC : O_WRONLY_CREAT_APPEND);
     offset += data.length;
     first = false;
     emitLog(log, "downloading " + label + " " + Math.floor(offset / 1048576) + "/" + Math.floor(total / 1048576) + " MB", true);
