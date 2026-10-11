@@ -342,9 +342,9 @@ update_versioned_gh("webkit-autoloader", "itsPLK/ps5-webkit-autoloader", r"webki
 update_versioned_cb("AnyPad",     "elmonomalva0/Any-Pad-ps5",    r"AnyPad-PS5-.*\.elf$",      "AnyPad-PS5-*.elf", "ANYPAD_ELF")
 
 # Emulators — zip/elf names are rewritten in kexp.js when the GitHub tag moves.
-update_fixed_gh("PS5SX2", "Swordpdf/PS5SX2", r"ps5sx2-aio\.elf$", "emulators/PS5SX2/PS5SXHelper.elf")
+update_fixed_gh("PS5SX2", "Swordpdf/PS5SX2", r"ps5sx2-bot\.elf$", "emulators/PS5SX2/PS5SXHelper.elf")
 update_emu_versioned_dir("PS5SX2_zip", "Swordpdf/PS5SX2", r"^PS5SX2-vk-.*\.zip$", "emulators/PS5SX2", "PS5SX2-vk-*.zip", "EMU_PS5SX2_ZIP", "PPSA99203")
-# Keep the SX2 app version in lockstep with the zip tag (aio SHA can stay the same).
+# Keep the SX2 app version in lockstep with the zip tag.
 if versions.get("PS5SX2_zip"):
     update_kexp_const("EMU_PS5SX2_VER", versions["PS5SX2_zip"])
     versions["PS5SX2"] = versions["PS5SX2_zip"]
