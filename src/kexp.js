@@ -771,28 +771,94 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   }
 }
 
+const ONION_DEFAULT_TITLE_IDS = [
+  "ITEM00001", "NPXS39041", "PKGI13337", "PKGI12345", "TOOL00001",
+];
+
 function onionTitleIdOk(id) {
   return /^[A-Z0-9]{9}$/.test(id);
 }
 
 function mergeOnionTitleIds(raw) {
   let ids = (raw || "").split(",").map((s) => s.trim()).filter(onionTitleIdOk);
-  for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) {
-    const id = ONION_EMU_TITLE_IDS[i];
-    if (ids.indexOf(id) < 0) ids.push(id);
+  const seed = ONION_DEFAULT_TITLE_IDS.concat(ONION_EMU_TITLE_IDS);
+  for (let i = 0; i < seed.length; i++) {
+    if (ids.indexOf(seed[i]) < 0) ids.push(seed[i]);
   }
   if (ids.length > 20) {
     const keep = {};
-    for (let i = 0; i < ONION_EMU_TITLE_IDS.length; i++) keep[ONION_EMU_TITLE_IDS[i]] = true;
+    for (let i = 0; i < seed.length; i++) keep[seed[i]] = true;
     const rest = [];
     for (let i = 0; i < ids.length; i++) {
       if (keep[ids[i]]) continue;
       rest.push(ids[i]);
     }
-    ids = ONION_EMU_TITLE_IDS.slice();
+    ids = seed.slice();
     for (let i = 0; i < rest.length && ids.length < 20; i++) ids.push(rest[i]);
+    if (ids.length > 20) ids = ids.slice(0, 20);
   }
   return ids;
+}
+
+function onionDefaultConfig(ids) {
+  return [
+    "[meta]",
+    "schema_version=1",
+    "",
+    "[toolbox]",
+    "language=system",
+    "",
+    "[startup]",
+    "open_after_load=none",
+    "",
+    "[logging]",
+    "level=info",
+    "",
+    "[home_screen]",
+    "show_title_ids=false",
+    "",
+    "[game_menu]",
+    "show_onionhen_options=true",
+    "",
+    "[rest_mode]",
+    "resume_reinject_delay_seconds=10",
+    "",
+    "[cheats]",
+    "mirror=auto",
+    "",
+    "[app_jailbreak]",
+    "enabled=true",
+    "debug_notifications=false",
+    "exact_title_ids=" + ids.join(","),
+    "title_id_prefixes=LAPY",
+    "",
+    "[cooling]",
+    "fan_control=automatic",
+    "temperature_threshold_celsius=77",
+    "",
+    "[overlay]",
+    "enabled=true",
+    "background=true",
+    "edge=top",
+    "align=center",
+    "show_cpu=true",
+    "cpu_usage_mode=average",
+    "show_gpu=true",
+    "show_fps=true",
+    "show_memory=true",
+    "show_ip_address=false",
+    "show_fan_duty=false",
+    "font_size=medium",
+    "order=fps,cpu,gpu,memory,ip,fan",
+    "",
+    "[shortcuts]",
+    "cheats_menu=off",
+    "toolbox=off",
+    "",
+    "[kstuff]",
+    "autoload=true",
+    "",
+  ].join("\n");
 }
 
 async function ensureOnionTitleIds(p, chain, log) {
@@ -804,27 +870,34 @@ async function ensureOnionTitleIds(p, chain, log) {
     const match = text.match(lineRe);
     const ids = mergeOnionTitleIds(match ? match[1] : "");
     const idLine = "exact_title_ids=" + ids.join(",");
+    const validSchema = /\[meta\]/.test(text) && /^schema_version=1$/m.test(text);
     let next = text;
-    if (match) next = next.replace(lineRe, idLine);
-    if (!/\[app_jailbreak\]/.test(next)) {
-      next += (next && !next.endsWith("\n") ? "\n" : "") +
-        "\n[app_jailbreak]\n" +
-        "enabled=true\n" +
-        idLine + "\n";
+    if (!validSchema) {
+      next = onionDefaultConfig(ids);
     } else {
-      next = next.replace(/(\[app_jailbreak\][^\[]*)/, function (block) {
-        if (/^enabled=/m.test(block))
-          return block.replace(/^enabled=.*$/m, "enabled=true");
-        return "[app_jailbreak]\nenabled=true" + block.slice("[app_jailbreak]".length);
-      });
-      if (!match) next += (next.endsWith("\n") ? "" : "\n") + idLine + "\n";
+      if (match) next = next.replace(lineRe, idLine);
+      if (!/\[app_jailbreak\]/.test(next)) {
+        next += (next && !next.endsWith("\n") ? "\n" : "") +
+          "\n[app_jailbreak]\n" +
+          "enabled=true\n" +
+          idLine + "\n";
+      } else {
+        next = next.replace(/(\[app_jailbreak\][^\[]*)/, function (block) {
+          if (/^enabled=/m.test(block))
+            return block.replace(/^enabled=.*$/m, "enabled=true");
+          return "[app_jailbreak]\nenabled=true" + block.slice("[app_jailbreak]".length);
+        });
+        if (!match) next += (next.endsWith("\n") ? "" : "\n") + idLine + "\n";
+      }
     }
     if (next === text) {
       log("OnionHEN exact_title_ids already has emulator titles");
+      await chmodPath(p, chain, ONIONHEN_CONFIG);
       return;
     }
     await writeTextFile(p, chain, ONIONHEN_CONFIG, next);
-    log("OnionHEN exact_title_ids updated (" + ids.length + ")");
+    await chmodPath(p, chain, ONIONHEN_CONFIG);
+    log("OnionHEN config.ini written (" + ids.length + " title ids)");
   } catch (error) {
     log("OnionHEN config skipped: " +
       (error && error.message ? error.message : String(error)));
