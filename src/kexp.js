@@ -1076,6 +1076,8 @@ async function ensureRaDataDirs(p, chain, log) {
     title + "/savestates",
     title + "/library",
     title + "/config",
+    title + "/cores",
+    title + "/info",
   ];
   for (let i = 0; i < dirs.length; i++) {
     await ensureDir(p, chain, dirs[i]);
@@ -1117,6 +1119,7 @@ async function writeRaLaunchFiles(p, chain, log) {
         "audio_driver = \"ps5\"",
         "audio_out_rate = \"48000\"",
         "libretro_directory = \"/app0/cores\"",
+        "libretro_info_path = \"/app0/info\"",
         "system_directory = \"/app0/system\"",
         "rgui_browser_directory = \"/app0/content\"",
         "savefile_directory = \"/app0/savefiles\"",
@@ -1135,6 +1138,72 @@ async function writeRaLaunchFiles(p, chain, log) {
   }
 }
 
+async function installRaCores(p, chain, log) {
+  const title = HOMEBREW_DIR + "/" + HB_RA;
+  await ensureDir(p, chain, title);
+  await ensureDir(p, chain, title + "/cores");
+  await ensureDir(p, chain, title + "/info");
+  await chmodPath(p, chain, title + "/cores");
+  await chmodPath(p, chain, title + "/info");
+  let names = [];
+  try {
+    const resp = await fetch("payloads/" + EMU_PS5RA_LIST);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    names = (await resp.text()).split(String.fromCharCode(10)).map(function (s) {
+      return s.trim();
+    }).filter(Boolean);
+  } catch (error) {
+    log("RetroArch cores list skipped: " +
+      (error && error.message ? error.message : String(error)));
+    return false;
+  }
+  const wanted = [];
+  for (let i = 0; i < names.length; i++) {
+    const line = names[i];
+    const sp = line.indexOf(" ");
+    if (sp < 0) continue;
+    const rel = line.slice(sp + 1);
+    const inCores = rel.indexOf("cores/") === 0;
+    const inInfo = rel.indexOf("info/") === 0;
+    const isSo = rel.slice(-3) === ".so";
+    const isInfo = rel.slice(-5) === ".info";
+    if ((inCores && (isSo || isInfo)) || (inInfo && isInfo))
+      wanted.push(rel);
+  }
+  if (!wanted.length) {
+    log("RetroArch cores list empty");
+    return false;
+  }
+  let ok = 0;
+  let copied = 0;
+  for (let i = 0; i < wanted.length; i++) {
+    const rel = wanted[i];
+    const dest = title + "/" + rel;
+    if (await pathExists(p, chain, dest)) {
+      await chmodPath(p, chain, dest);
+      ok++;
+      continue;
+    }
+    await ensureRelDirs(p, chain, title, rel);
+    emitLog(log, "RetroArch core " + (i + 1) + "/" + wanted.length + " " + rel.split("/").pop(), true);
+    try {
+      await fetchWriteFile(EMU_PS5RA_FILES + "/" + rel, dest, p, chain, log);
+      await chmodPath(p, chain, dest);
+      ok++;
+      copied++;
+    } catch (error) {
+      log("RetroArch " + rel.split("/").pop() + " skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
+  }
+  try { await chmodTree(p, chain, title + "/cores", 0); } catch (_) {}
+  try { await chmodTree(p, chain, title + "/info", 0); } catch (_) {}
+  const snes = await pathExists(p, chain, title + "/cores/snes9x_libretro.so");
+  log("RetroArch cores " + ok + "/" + wanted.length + " ready (" + copied + " new)");
+  if (!snes) log("RetroArch cores still missing snes9x_libretro.so");
+  return snes;
+}
+
 async function installRaTitle(p, chain, log) {
   const title = HOMEBREW_DIR + "/" + HB_RA;
   await ensureDir(p, chain, HOMEBREW_DIR);
@@ -1142,6 +1211,7 @@ async function installRaTitle(p, chain, log) {
   const ok = await installZipEmu(EMU_PS5RA_ZIP, HB_RA, EMU_PS5RA_VER, p, chain, log);
   await ensureRaDataDirs(p, chain, log);
   await writeRaLaunchFiles(p, chain, log);
+  await installRaCores(p, chain, log);
   await chmodHomebrewTitle(p, chain, HB_RA);
   await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
   return ok;
