@@ -748,9 +748,13 @@ async function chmodHomebrewTitle(p, chain, psaId) {
   }
   for (let i = 0; i < paths.length; i++) await chmodPath(p, chain, paths[i]);
   if (psaId === HB_RA) {
-    try { await chmodTree(p, chain, base + "/picker", 0); } catch (_) {}
-    try { await chmodTree(p, chain, base + "/sce_module", 0); } catch (_) {}
-    try { await chmodTree(p, chain, base + "/cores", 0); } catch (_) {}
+    const trees = [
+      "/picker", "/sce_module", "/cores", "/assets",
+      "/webui", "/shaders", "/filters", "/overlays", "/info", "/config",
+    ];
+    for (let t = 0; t < trees.length; t++) {
+      try { await chmodTree(p, chain, base + trees[t], 0); } catch (_) {}
+    }
   }
 }
 
@@ -1079,12 +1083,66 @@ async function ensureRaDataDirs(p, chain, log) {
   }
 }
 
+async function writeRaLaunchFiles(p, chain, log) {
+  const title = HOMEBREW_DIR + "/" + HB_RA;
+  const cfgDir = title + "/config";
+  await ensureDir(p, chain, cfgDir);
+  await chmodPath(p, chain, cfgDir);
+  try {
+    await writeTextFile(p, chain, cfgDir + "/frontend.cfg",
+      'frontend_start = "retroarch"\n');
+    await chmodPath(p, chain, cfgDir + "/frontend.cfg");
+    log("RetroArch frontend.cfg set to skip picker");
+  } catch (error) {
+    log("RetroArch frontend.cfg skipped: " +
+      (error && error.message ? error.message : String(error)));
+  }
+  const raCfg = title + "/config/retroarch.cfg";
+  if (!(await pathExists(p, chain, raCfg))) {
+    try {
+      await writeTextFile(p, chain, raCfg, [
+        "video_driver = \"vulkan\"",
+        "menu_driver = \"xmb\"",
+        "assets_directory = \"/app0/assets\"",
+        "video_fullscreen = true",
+        "video_refresh_rate = \"119.880000\"",
+        "video_swap_interval = \"0\"",
+        "pause_nonactive = false",
+        "input_driver = \"ps5\"",
+        "input_joypad_driver = \"ps5\"",
+        "log_verbosity = true",
+        "log_to_file = true",
+        "log_to_file_timestamp = false",
+        "log_dir = \"/app0\"",
+        "audio_driver = \"ps5\"",
+        "audio_out_rate = \"48000\"",
+        "libretro_directory = \"/app0/cores\"",
+        "system_directory = \"/app0/system\"",
+        "rgui_browser_directory = \"/app0/content\"",
+        "savefile_directory = \"/app0/savefiles\"",
+        "savestate_directory = \"/app0/savestates\"",
+        "video_shader_dir = \"/app0/shaders\"",
+        "video_filter_dir = \"/app0/filters\"",
+        "overlay_directory = \"/app0/overlays\"",
+        "",
+      ].join("\n"));
+      await chmodPath(p, chain, raCfg);
+      log("RetroArch retroarch.cfg seed written");
+    } catch (error) {
+      log("RetroArch retroarch.cfg skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
+  }
+}
+
 async function installRaTitle(p, chain, log) {
   const title = HOMEBREW_DIR + "/" + HB_RA;
   await ensureDir(p, chain, HOMEBREW_DIR);
   await ensureRaDataDirs(p, chain, log);
   const ok = await installZipEmu(EMU_PS5RA_ZIP, HB_RA, EMU_PS5RA_VER, p, chain, log);
   await ensureRaDataDirs(p, chain, log);
+  await writeRaLaunchFiles(p, chain, log);
+  await chmodHomebrewTitle(p, chain, HB_RA);
   await installNamedFile(EMU_PS5SX2_BIOS, title + "/system/pcsx2/bios", "SCPH-70012.BIN", p, chain, log);
   return ok;
 }
