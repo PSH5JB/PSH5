@@ -1561,9 +1561,16 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
     if (!foundEboot) bits.push("eboot");
     if (!foundParam) bits.push("param");
     if (!foundExtra) bits.push(extraLabel || "files");
-    const elapsedS = Math.floor((Date.now() - startMs) / 1000);
-    const elapsedFmt = Math.floor(elapsedS / 60) + "m " + (elapsedS % 60) + "s";
-    emitLog(log, "extracting " + psaId + " (" + bits.join("+") + ") " + elapsedFmt + "...", true);
+    const ncaCount = await countNcaFiles(p, chain, title);
+    let progressStr;
+    if (ncaCount > 0) {
+      const approxMB = Math.round(ncaCount * 1.36);
+      progressStr = "~" + approxMB + "/324 MB (" + ncaCount + "/238 NCAs)";
+    } else {
+      const elapsedS = Math.floor((Date.now() - startMs) / 1000);
+      progressStr = Math.floor(elapsedS / 60) + "m " + (elapsedS % 60) + "s (" + bits.join("+") + ")";
+    }
+    emitLog(log, "extracting " + psaId + " " + progressStr + "...", true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
   return false;
