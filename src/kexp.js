@@ -58,8 +58,6 @@ const EMU_EDEN_TITLEKEYS   = "emulators/ProsperoEden/keys/title.keys";
 const EDEN_KEYS_DIR        = "/data/prosperoeden/keys";
 const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
-const EDEN_FW_ZIP_PKG      = "emulators/ProsperoEden/firmware.zip";
-const HB_EDEN_FW           = "PS5_EDEN_FW";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-162";
@@ -1461,46 +1459,33 @@ async function installEdenFirmware(p, chain, log) {
     try { await writeTextFile(p, chain, marker, EDEN_FW_VER); } catch (_) {}
     return true;
   }
-  log("downloading Switch firmware bundle (325 MB)...");
-  const fwZipDir  = HOMEBREW_DIR + "/" + HB_EDEN_FW;
-  const fwZipPath = fwZipDir + "/" + HB_EDEN_FW + ".zip";
-  const fwEboot   = fwZipDir + "/eboot.bin";
-  const fwParam   = fwZipDir + "/sce_sys/param.json";
-  await ensureDir(p, chain, fwZipDir);
-  await ensureDir(p, chain, fwZipDir + "/sce_sys");
-  await chmodPath(p, chain, fwZipDir);
-  await fetchWriteFile(EDEN_FW_ZIP_PKG, fwZipPath, p, chain, log);
-  await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-  let fwFound = await waitForZipExtract(p, chain, log, HB_EDEN_FW, fwEboot, fwParam, null, null, Date.now() + 1200000);
-  if (!fwFound) {
-    await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    fwFound = await waitForZipExtract(p, chain, log, HB_EDEN_FW, fwEboot, fwParam, null, null, Date.now() + 600000);
-  }
-  if (!fwFound) {
-    log("firmware bundle extraction failed");
-    return false;
-  }
-  log("renaming firmware NCAs to " + EDEN_FW_DIR + "...");
+  log("copying Switch firmware " + EDEN_FW_VER + " — this takes a while...");
   let names = [];
   try {
     const resp = await fetch("payloads/" + EDEN_FW_LIST);
-    if (resp.ok) names = (await resp.text()).split(String.fromCharCode(10)).map(function (s) { return s.trim(); }).filter(Boolean);
-  } catch (_) {}
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    names = (await resp.text()).split(String.fromCharCode(10)).map(function (s) { return s.trim(); }).filter(Boolean);
+  } catch (e) {
+    log("firmware list skipped: " + (e && e.message ? e.message : String(e)));
+    return false;
+  }
   let ok = 0;
   let copied = 0;
   for (let i = 0; i < names.length; i++) {
     const name = names[i];
-    const src2  = fwZipDir + "/" + name;
-    const dest  = EDEN_FW_DIR + "/" + name;
-    if (await pathExists(p, chain, dest)) { ok++; continue; }
-    try {
-      await chain.syscall(SYS_RENAME, cstring(p, src2), cstring(p, dest));
-      ok++; copied++;
-    } catch (_) {}
-    if ((i + 1) % 25 === 0 || i === names.length - 1) log("renaming NCAs... " + (i + 1) + "/" + names.length);
+    const dest = EDEN_FW_DIR + "/" + name;
+    if (await pathExists(p, chain, dest)) {
+      ok++;
+      continue;
+    }
+    emitLog(log, "firmware " + (i + 1) + "/" + names.length + " " + name, true);
+    if (await installNamedFile("emulators/ProsperoEden/firmware/" + name, EDEN_FW_DIR, name, p, chain, log)) {
+      ok++;
+      copied++;
+    }
   }
   if (ok < 50) {
-    log("Switch firmware move incomplete (" + ok + "/" + names.length + ")");
+    log("Switch firmware copy incomplete (" + ok + "/" + names.length + ")");
     return false;
   }
   try { await writeTextFile(p, chain, marker, EDEN_FW_VER); } catch (_) {}
