@@ -504,6 +504,19 @@ async function writeFetchedBuf(p, chain, dest, data, flags) {
   }
 }
 
+async function getFileSize(p, chain, filePath) {
+  try {
+    const fd = sysRv(await chain.syscall(SYS_OPEN, cstring(p, filePath), 0, 0));
+    if (fd < 0) return -1;
+    try {
+      const rv = await chain.syscall(SYS_LSEEK, fd, 0, 2);
+      return rv.low >>> 0;
+    } finally {
+      await chain.syscall(SYS_CLOSE, fd);
+    }
+  } catch (_) { return -1; }
+}
+
 async function fetchWriteFile(fetchPath, dest, p, chain, log) {
   const url = "payloads/" + fetchPath;
   const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
@@ -534,6 +547,14 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
     first = false;
     emitLog(log, "downloading " + label + " " + Math.floor(offset / 1048576) + "/" + Math.floor(total / 1048576) + " MB", true);
   }
+  try {
+    const written = await getFileSize(p, chain, dest);
+    if (written === total) {
+      emitLog(log, label + " OK — " + Math.floor(total / 1048576) + " MB verified", true);
+    } else if (written >= 0) {
+      emitLog(log, label + " INTEGRITY FAIL — expected " + total + " B, got " + written + " B", true);
+    }
+  } catch (_) {}
 }
 
 async function writeTextFile(p, chain, path, text) {
