@@ -1497,6 +1497,7 @@ async function installEdenFirmware(p, chain, log) {
       await chain.syscall(SYS_RENAME, cstring(p, src2), cstring(p, dest));
       ok++; copied++;
     } catch (_) {}
+    if ((i + 1) % 25 === 0 || i === names.length - 1) log("renaming NCAs... " + (i + 1) + "/" + names.length);
   }
   if (ok < 50) {
     log("Switch firmware move incomplete (" + ok + "/" + names.length + ")");
@@ -1560,8 +1561,9 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
     if (!foundEboot) bits.push("eboot");
     if (!foundParam) bits.push("param");
     if (!foundExtra) bits.push(extraLabel || "files");
-    const elapsed = Math.floor((Date.now() - startMs) / 1000);
-    emitLog(log, "extracting " + psaId + " (" + bits.join("+") + ") " + elapsed + "s...", true);
+    const elapsedS = Math.floor((Date.now() - startMs) / 1000);
+    const elapsedFmt = Math.floor(elapsedS / 60) + "m " + (elapsedS % 60) + "s";
+    emitLog(log, "extracting " + psaId + " (" + bits.join("+") + ") " + elapsedFmt + "...", true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
   return false;
