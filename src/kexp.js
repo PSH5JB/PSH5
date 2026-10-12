@@ -19,7 +19,7 @@ const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
-const ANYPAD_ELF = "AnyPad-PS5-0.8.1-beta.elf";
+const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
