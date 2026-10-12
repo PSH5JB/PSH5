@@ -1507,6 +1507,7 @@ async function elfldrListening(p, chain, address) {
 async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, deadline) {
   const title = HOMEBREW_DIR + "/" + psaId;
   const sysDir = title + "/sce_sys";
+  const startMs = Date.now();
   while (Date.now() < deadline) {
     await chmodPath(p, chain, title);
     await chmodPath(p, chain, sysDir);
@@ -1524,7 +1525,8 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
     if (!foundEboot) bits.push("eboot");
     if (!foundParam) bits.push("param");
     if (!foundExtra) bits.push(extraLabel || "files");
-    emitLog(log, "waiting for " + psaId + " (" + bits.join("+") + ")...", true);
+    const elapsed = Math.floor((Date.now() - startMs) / 1000);
+    emitLog(log, "extracting " + psaId + " (" + bits.join("+") + ") " + elapsed + "s...", true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
   return false;
@@ -1549,19 +1551,9 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     }
     return true;
   }
-  log("downloading " + psaId + " (" + ver + ") — please wait...");
+  log("downloading " + psaId + " (" + ver + ")...");
   try {
-    const largeZip = (psaId === HB_RPCS3 || psaId === HB_RA);
-    if (largeZip) {
-      await fetchWriteFile(fetchPath, zipPath, p, chain, log);
-    } else {
-      const mapped = await mapBinary(fetchPath, p, chain);
-      try {
-        await writeBuf(p, chain, zipPath, mapped.base, mapped.size);
-      } finally {
-        try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-      }
-    }
+    await fetchWriteFile(fetchPath, zipPath, p, chain, log);
     await ensureDir(p, chain, HOMEBREW_DIR);
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
     await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
