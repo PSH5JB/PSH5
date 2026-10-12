@@ -1592,8 +1592,8 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
     await chmodPath(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
     log("extracting " + psaId + "...");
     await sendOneRetry(EMU_UNZIP_ELF, p, chain, log, 3);
-    const zipMs = largeZip ? 1200000 : 300000;
-    const zipRetryMs = largeZip ? 600000 : 180000;
+    const zipMs = 1200000;
+    const zipRetryMs = 600000;
     let found = await waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extraLabel, Date.now() + zipMs);
     if (!found) {
       log(psaId + " unzip retry...");
