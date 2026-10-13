@@ -21,6 +21,7 @@ const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
+const BYEPERVISOR_ELF = "byepervisor.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
@@ -617,6 +618,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   }
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
+  }
+  if (mapped.byepervisor) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
   }
   const afterMs = {};
   afterMs["OnionHEN.elf"] = 10000;
@@ -1648,6 +1652,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
 
   await ensureOnionTitleIds(p, chain, log);
 
