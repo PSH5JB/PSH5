@@ -1717,7 +1717,8 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
   // hypervisor is fully ready — not via WKAL port 9021.
-  await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
+  // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
+  // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
   await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log);
   await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log);
   await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log);
