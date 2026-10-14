@@ -23,6 +23,8 @@ const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
 const HYPERHEN_ELF = "HyperHEN.elf";
+const FTPS_ELF = "FTPS00001.elf";
+const HYPERHEN_PLUGINS_DIR = "/data/HyperHEN/plugins";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
@@ -1669,6 +1671,11 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+
+  await ensureDir(p, chain, "/data/HyperHEN");
+  await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
+  const _ftpsPresent = await pathExists(p, chain, HYPERHEN_PLUGINS_DIR + "/" + FTPS_ELF);
+  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, null, p, chain, log, _ftpsPresent);
 
 
   await ensureDir(p, chain, HOMEBREW_DIR);
