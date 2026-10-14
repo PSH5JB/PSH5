@@ -22,6 +22,7 @@ const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor.elf";
+const HYPERHEN_ELF = "HyperHEN.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
@@ -104,10 +105,8 @@ const ONION_EMU_TITLE_IDS = [
 // its own elevator and sends it itself. Large ELFs last so they
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
-  "OnionHEN.elf",
-  PLDMGR_ELF,
+  HYPERHEN_ELF,
   FAKE_SIGNIN_ELF,
-  SHADOWMOUNT_ELF,
   "PS5SXHelper.elf",
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
@@ -595,20 +594,11 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("could not create /data/ps5_autoloader");
     return false;
   }
-  if (mapped.onion) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
+  if (mapped.hyperhen) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + HYPERHEN_ELF, mapped.hyperhen.base, mapped.hyperhen.size);
   }
   if (mapped.signin) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
-  }
-  if (mapped.shadow) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
-  }
-  if (mapped.pld) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
-    for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
-      await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
-    }
   }
   if (mapped.blackbox) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BLACKBOX_ELF, mapped.blackbox.base, mapped.blackbox.size);
@@ -619,14 +609,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
-  if (mapped.byepervisor) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
-  }
   const afterMs = {};
-  afterMs["OnionHEN.elf"] = 10000;
-  afterMs[PLDMGR_ELF] = 2000;
+  afterMs[HYPERHEN_ELF] = 10000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
-  afterMs[SHADOWMOUNT_ELF] = 5000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
@@ -1645,16 +1630,12 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
+  await saveOnly(HYPERHEN_ELF,     "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
-  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
-  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
-  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
 
-  await ensureOnionTitleIds(p, chain, log);
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
