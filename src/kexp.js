@@ -1817,7 +1817,13 @@ export async function loadOptionalPayloads(p, chain, log) {
       await chmodHomebrewTitle(p, chain, _cl[_ci][1]);
   } catch (_) {}
 
-  try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
+  // Re-apply phase-specific autoload.txt after the final homebrew install pass,
+  // which may have called saveAutoloadFiles and rebuilt it with all on-disk ELFs.
+  if (isByepervisorArmed) {
+    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", HYPERHEN_ELF + "\n"); } catch (_) {}
+  } else {
+    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", BYEPERVISOR_ELF + "\n"); } catch (_) {}
+  }
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
