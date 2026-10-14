@@ -1705,15 +1705,19 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  if (!_present.has(BYEPERVISOR_ELF)) {
-    // Phase 1: Byepervisor not yet installed. Save it only — user must enter
-    // rest mode so it can intercept the sleep/wake cycle, then re-run the
-    // exploit to load HyperHEN in the armed environment.
-    await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, false, "1");
+  // ONION_READY_HYPERVISOR is set by Byepervisor when it arms and cleared on every
+  // reboot — only exists if Byepervisor is actually running this session.
+  const isByepervisorArmed = await pathExists(p, chain, "/system_tmp/hyperhen/ready/hypervisor");
+
+  if (!isByepervisorArmed) {
+    // Phase 1: Byepervisor not yet armed this session — inject it.
+    // User must enter rest mode so it intercepts the sleep/wake cycle,
+    // then re-run the exploit to load HyperHEN in the armed environment.
+    await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
     log("Byepervisor loaded! Enter rest mode, wake up, then run the exploit again to load HyperHEN.");
   } else {
-    // Phase 2: Byepervisor already armed from a previous run + rest mode cycle.
-    // Load HyperHEN only — do NOT re-inject Byepervisor (already running).
+    // Phase 2: Byepervisor armed this session — load HyperHEN only.
+    // Do NOT re-inject Byepervisor (already running).
     await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
     // Overwrite autoload.txt with HyperHEN only so WKAL doesn't re-inject Byepervisor.
     try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", HYPERHEN_ELF + "\n"); } catch (_) {}
