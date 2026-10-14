@@ -108,6 +108,7 @@ const ONION_EMU_TITLE_IDS = [
 // its own elevator and sends it itself. Large ELFs last so they
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
+  BYEPERVISOR_ELF,
   HYPERHEN_ELF,
   // Remaining payloads auto-start via HyperHEN's own pipeline after the
   // hypervisor is fully ready; they are saved to HYPERHEN_PAYLOADS_DIR.
@@ -594,6 +595,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("could not create /data/ps5_autoloader");
     return false;
   }
+  if (mapped.byepervisor) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
+  }
   if (mapped.hyperhen) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + HYPERHEN_ELF, mapped.hyperhen.base, mapped.hyperhen.size);
   }
@@ -610,6 +614,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
+  afterMs[BYEPERVISOR_ELF] = 5000;
   afterMs[HYPERHEN_ELF] = 10000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs["PS5SXHelper.elf"] = 4000;
@@ -831,7 +836,7 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   }
 }
 
-async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log) {
+async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log, delay = 0) {
   const dest = HYPERHEN_PAYLOADS_DIR + "/" + destName;
   const marker = ver ? dest + "." + ver : "";
   if (await pathExists(p, chain, dest) && (!ver || await pathExists(p, chain, marker))) {
@@ -859,10 +864,8 @@ async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log)
   }
   if (priority > 0) {
     const configPath = dest + ".json";
-    if (!(await pathExists(p, chain, configPath))) {
-      try { await writeTextFile(p, chain, configPath,
-        '{"version":1,"priority":' + priority + ',"delay_seconds":0}'); } catch (_) {}
-    }
+    try { await writeTextFile(p, chain, configPath,
+      '{"version":1,"priority":' + priority + ',"delay_seconds":' + delay + '}'); } catch (_) {}
   }
 }
 
@@ -1666,7 +1669,6 @@ async function cleanAutoloadDir(p, chain, log) {
     SHADOWMOUNT_ELF,
     PLDMGR_ELF,
     "byepervisor.elf",
-    BYEPERVISOR_ELF,
     // Moved to HYPERHEN_PAYLOADS_DIR — injected via HyperHEN autostart after hypervisor ready
     FAKE_SIGNIN_ELF,
     ANYPAD_ELF,
@@ -1703,16 +1705,12 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF, "hyperhen-v0.9.2p", p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
+  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
-
-  // Skip byepervisor + kstuff — both crash on rest mode resume on 13.60.
-  // Checked by patched launch_pipeline.c in our custom v0.9.2 build.
-  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_hypervisor", "1"); } catch (_) {}
-  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_kstuff", "1"); } catch (_) {}
 
 
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
