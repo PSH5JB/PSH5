@@ -1709,11 +1709,12 @@ export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
 
-  // Disable byepervisor arming on 13.xx — the blob crashes the kernel on
-  // rest mode resume. Writing this flag to /data (writable from WebKit context)
-  // causes the patched HyperHEN's launch_hypervisor() to skip the blob
-  // entirely without needing /system_tmp (which requires root-level access).
+  // Disable byepervisor arming — blob crashes kernel on rest mode resume.
+  // Disable kstuff — its kernel patches crash on rest mode resume without
+  // the hypervisor being actually armed. Both flags are checked by the
+  // patched HyperHEN's launch_pipeline.c before those stages run.
   try { await writeTextFile(p, chain, "/data/HyperHEN/disable_hypervisor", "1"); } catch (_) {}
+  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_kstuff", "1"); } catch (_) {}
 
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
   // hypervisor is fully ready — not via WKAL port 9021.
