@@ -609,6 +609,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
+  if (mapped.byepervisor) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
+  }
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
