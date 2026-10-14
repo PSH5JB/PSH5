@@ -1705,22 +1705,30 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
-  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
+  if (!_present.has(BYEPERVISOR_ELF)) {
+    // Phase 1: Byepervisor not yet installed. Save it only — user must enter
+    // rest mode so it can intercept the sleep/wake cycle, then re-run the
+    // exploit to load HyperHEN in the armed environment.
+    await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, false, "1");
+    log("Byepervisor loaded! Enter rest mode, wake up, then run the exploit again to load HyperHEN.");
+  } else {
+    // Phase 2: Byepervisor already armed from a previous run + rest mode cycle.
+    // Load HyperHEN only — do NOT re-inject Byepervisor (already running).
+    await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
+    // Overwrite autoload.txt with HyperHEN only so WKAL doesn't re-inject Byepervisor.
+    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", HYPERHEN_ELF + "\n"); } catch (_) {}
 
-  await ensureDir(p, chain, "/data/HyperHEN");
-  await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
-  await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
+    await ensureDir(p, chain, "/data/HyperHEN");
+    await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
+    await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
 
-
-  // Payloads injected by HyperHEN's own autostart (port 9020) after the
-  // hypervisor is fully ready — not via WKAL port 9021.
-  // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
-  // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
-  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
-  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
-  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
-  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
+    // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
+    // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
+    await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
+    await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
+    await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
+    await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
+  }
 
 
   await ensureDir(p, chain, HOMEBREW_DIR);
