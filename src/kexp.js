@@ -1703,11 +1703,16 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF, "hyperhen-v0.9.2", p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(HYPERHEN_ELF, "hyperhen-v0.9.2p", p, chain, log, _present.has(HYPERHEN_ELF));
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
+
+  // Skip byepervisor + kstuff — both crash on rest mode resume on 13.60.
+  // Checked by patched launch_pipeline.c in our custom v0.9.2 build.
+  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_hypervisor", "1"); } catch (_) {}
+  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_kstuff", "1"); } catch (_) {}
 
 
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
