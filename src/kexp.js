@@ -1674,8 +1674,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
-  const _ftpsPresent = await pathExists(p, chain, HYPERHEN_PLUGINS_DIR + "/" + FTPS_ELF);
-  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, null, p, chain, log, _ftpsPresent);
+  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
 
 
   await ensureDir(p, chain, HOMEBREW_DIR);
