@@ -25,6 +25,7 @@ const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
 const HYPERHEN_ELF = "HyperHEN.elf";
 const FTPS_ELF = "FTPS00001.elf";
 const HYPERHEN_PLUGINS_DIR = "/data/HyperHEN/plugins";
+const HYPERHEN_PAYLOADS_DIR = "/data/HyperHEN/payloads";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "v1.0.8";
@@ -108,11 +109,8 @@ const ONION_EMU_TITLE_IDS = [
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
   HYPERHEN_ELF,
-  FAKE_SIGNIN_ELF,
-  "PS5SXHelper.elf",
-  ANYPAD_ELF,
-  CHEATRUNNER_ELF,
-  BLACKBOX_ELF,
+  // Remaining payloads auto-start via HyperHEN's own pipeline after the
+  // hypervisor is fully ready; they are saved to HYPERHEN_PAYLOADS_DIR.
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 10;
@@ -830,6 +828,41 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   } catch (error) {
     log(destName + " autoloader save skipped: " +
       (error && error.message ? error.message : String(error)));
+  }
+}
+
+async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log) {
+  const dest = HYPERHEN_PAYLOADS_DIR + "/" + destName;
+  const marker = ver ? dest + "." + ver : "";
+  if (await pathExists(p, chain, dest) && (!ver || await pathExists(p, chain, marker))) {
+    log(destName + " already in HyperHEN payloads" + (ver ? " (" + ver + ")" : ""));
+  } else {
+    try {
+      const mapped = await mapElf(fetchPath, p, chain);
+      try {
+        await writeBuf(p, chain, dest, mapped.base, mapped.size);
+        if (marker) {
+          try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
+        }
+        log(destName + " saved to HyperHEN payloads");
+      } finally {
+        try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
+      }
+    } catch (error) {
+      log(destName + " HyperHEN payload save skipped: " +
+        (error && error.message ? error.message : String(error)));
+    }
+  }
+  const autoStart = dest + ".auto_start";
+  if (!(await pathExists(p, chain, autoStart))) {
+    try { await writeTextFile(p, chain, autoStart, ""); } catch (_) {}
+  }
+  if (priority > 0) {
+    const configPath = dest + ".json";
+    if (!(await pathExists(p, chain, configPath))) {
+      try { await writeTextFile(p, chain, configPath,
+        '{"version":1,"priority":' + priority + ',"delay_seconds":0}'); } catch (_) {}
+    }
   }
 }
 
@@ -1634,6 +1667,12 @@ async function cleanAutoloadDir(p, chain, log) {
     PLDMGR_ELF,
     "byepervisor.elf",
     BYEPERVISOR_ELF,
+    // Moved to HYPERHEN_PAYLOADS_DIR — injected via HyperHEN autostart after hypervisor ready
+    FAKE_SIGNIN_ELF,
+    ANYPAD_ELF,
+    CHEATRUNNER_ELF,
+    BLACKBOX_ELF,
+    "PS5SXHelper.elf",
   ];
   for (const name of superseded) {
     try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
@@ -1664,14 +1703,18 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF));
-  await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
-  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
-  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
-  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF));
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
+  await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
+
+  // Payloads injected by HyperHEN's own autostart (port 9020) after the
+  // hypervisor is fully ready — not via WKAL port 9021.
+  await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
+  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log);
+  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log);
+  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log);
   await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
 
 
@@ -1686,7 +1729,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5SX2 (PS2) — copy the title from the release zip; aio helper autoloads.
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
-  await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
+  await saveHenPayload(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, 40, p, chain, log);
   await installSx2Title(p, chain, log);
   await installPs2Bios(p, chain, log);
 
