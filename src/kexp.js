@@ -1714,6 +1714,9 @@ export async function loadOptionalPayloads(p, chain, log) {
     // User must enter rest mode so it intercepts the sleep/wake cycle,
     // then re-run the exploit to load HyperHEN in the armed environment.
     await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
+    // Force autoload.txt to only byepervisor — HyperHEN.elf may already be on
+    // disk from a previous run and saveAutoloadFiles would include it otherwise.
+    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", BYEPERVISOR_ELF + "\n"); } catch (_) {}
     log("Byepervisor loaded! Enter rest mode, wake up, then run the exploit again to load HyperHEN.");
   } else {
     // Phase 2: Byepervisor armed this session — load HyperHEN only.
