@@ -108,7 +108,6 @@ const ONION_EMU_TITLE_IDS = [
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
   HYPERHEN_ELF,
-  BYEPERVISOR_ELF,
   FAKE_SIGNIN_ELF,
   "PS5SXHelper.elf",
   ANYPAD_ELF,
@@ -609,15 +608,11 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.cheat) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + CHEATRUNNER_ELF, mapped.cheat.base, mapped.cheat.size);
   }
-  if (mapped.byepervisor) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
-  }
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
   afterMs[HYPERHEN_ELF] = 10000;
-  afterMs[BYEPERVISOR_ELF] = 3000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
@@ -1638,6 +1633,7 @@ async function cleanAutoloadDir(p, chain, log) {
     SHADOWMOUNT_ELF,
     PLDMGR_ELF,
     "byepervisor.elf",
+    BYEPERVISOR_ELF,
   ];
   for (const name of superseded) {
     try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
@@ -1669,7 +1665,6 @@ export async function loadOptionalPayloads(p, chain, log) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
   await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF));
-  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
