@@ -1703,7 +1703,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(HYPERHEN_ELF, "hyperhen3", p, chain, log, _present.has(HYPERHEN_ELF));
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
