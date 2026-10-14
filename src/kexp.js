@@ -21,7 +21,7 @@ const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
-const BYEPERVISOR_ELF = "byepervisor.elf";
+const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
 const HYPERHEN_ELF = "HyperHEN.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
@@ -106,6 +106,7 @@ const ONION_EMU_TITLE_IDS = [
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
   HYPERHEN_ELF,
+  BYEPERVISOR_ELF,
   FAKE_SIGNIN_ELF,
   "PS5SXHelper.elf",
   ANYPAD_ELF,
@@ -611,6 +612,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   }
   const afterMs = {};
   afterMs[HYPERHEN_ELF] = 10000;
+  afterMs[BYEPERVISOR_ELF] = 3000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
@@ -1630,8 +1632,7 @@ async function cleanAutoloadDir(p, chain, log) {
     "OnionHEN.elf",
     SHADOWMOUNT_ELF,
     PLDMGR_ELF,
-    BYEPERVISOR_ELF,
-    "byepervisor_reborn.elf",
+    "byepervisor.elf",
   ];
   for (const name of superseded) {
     try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
@@ -1662,7 +1663,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF,     "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
