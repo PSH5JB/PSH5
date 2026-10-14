@@ -1709,6 +1709,14 @@ export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
 
+  // Pre-set ONION_READY_HYPERVISOR so HyperHEN skips arming byepervisor.
+  // On 13.60 the hypervisor blob crashes the kernel on resume from rest mode;
+  // pre-setting this marker causes launch_hypervisor() to return immediately
+  // without injecting the blob, so rest mode is never needed and never panics.
+  await ensureDir(p, chain, "/system_tmp/hyperhen");
+  await ensureDir(p, chain, "/system_tmp/hyperhen/ready");
+  try { await writeTextFile(p, chain, "/system_tmp/hyperhen/ready/hypervisor", "1"); } catch (_) {}
+
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
   // hypervisor is fully ready — not via WKAL port 9021.
   await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
