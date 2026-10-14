@@ -698,6 +698,13 @@ async function saveOnly(name, key, p, chain, log, isPresent, ver) {
     if (filePresent) {
       log(name + " outdated, replacing with " + ver);
       try { await chain.syscall(SYS_UNLINK, cstring(p, AUTOLOADER_DIR + "/" + name)); } catch (_) {}
+      try {
+        const _stale = await listDir(p, chain, AUTOLOADER_DIR);
+        for (const { name: _f } of _stale) {
+          if (_f !== name && _f.startsWith(name + "."))
+            try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + _f); } catch (_) {}
+        }
+      } catch (_) {}
     }
   } else {
     if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
@@ -1630,21 +1637,10 @@ async function cleanAutoloadDir(p, chain, log) {
     try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
   }
 
-  // Scan dir: delete stale version markers (name.elf.oldver) and old-named AnyPad ELFs
-  const currentMarkers = new Set([
-    BLACKBOX_ELF + "." + BLACKBOX_VER,
-    CHEATRUNNER_ELF + "." + CHEATRUNNER_VER,
-    SHADOWMOUNT_ELF + "." + SHADOWMOUNT_VER,
-  ]);
+  // Old AnyPad filename — changes with each release since the version is in the filename
   let entries;
   try { entries = await listDir(p, chain, AUTOLOADER_DIR); } catch (_) { return; }
   for (const { name } of entries) {
-    // stale version marker: contains ".elf." and not in current set
-    if (name.indexOf(".elf.") !== -1 && !currentMarkers.has(name)) {
-      try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed stale " + name); } catch (_) {}
-      continue;
-    }
-    // old AnyPad filename (changes with each release)
     if (name.startsWith("AnyPad-PS5-") && name !== ANYPAD_ELF) {
       try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed old " + name); } catch (_) {}
     }
