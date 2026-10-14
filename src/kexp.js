@@ -1616,8 +1616,44 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
 }
 
+
+async function cleanAutoloadDir(p, chain, log) {
+  // ELFs superseded by HyperHEN — no longer in AUTOLOAD_NAMES
+  const superseded = [
+    "OnionHEN.elf",
+    SHADOWMOUNT_ELF,
+    PLDMGR_ELF,
+    BYEPERVISOR_ELF,
+    "byepervisor_reborn.elf",
+  ];
+  for (const name of superseded) {
+    try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
+  }
+
+  // Scan dir: delete stale version markers (name.elf.oldver) and old-named AnyPad ELFs
+  const currentMarkers = new Set([
+    BLACKBOX_ELF + "." + BLACKBOX_VER,
+    CHEATRUNNER_ELF + "." + CHEATRUNNER_VER,
+    SHADOWMOUNT_ELF + "." + SHADOWMOUNT_VER,
+  ]);
+  let entries;
+  try { entries = await listDir(p, chain, AUTOLOADER_DIR); } catch (_) { return; }
+  for (const { name } of entries) {
+    // stale version marker: contains ".elf." and not in current set
+    if (name.indexOf(".elf.") !== -1 && !currentMarkers.has(name)) {
+      try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed stale " + name); } catch (_) {}
+      continue;
+    }
+    // old AnyPad filename (changes with each release)
+    if (name.startsWith("AnyPad-PS5-") && name !== ANYPAD_ELF) {
+      try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed old " + name); } catch (_) {}
+    }
+  }
+}
+
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
+  await cleanAutoloadDir(p, chain, log);
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
