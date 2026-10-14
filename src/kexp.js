@@ -1703,18 +1703,12 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly(HYPERHEN_ELF, "hyperhen3", p, chain, log, _present.has(HYPERHEN_ELF));
+  await saveOnly(HYPERHEN_ELF, "hyperhen-v0.9.2", p, chain, log, _present.has(HYPERHEN_ELF));
 
   await ensureDir(p, chain, "/data/HyperHEN");
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
 
-  // Disable byepervisor arming — blob crashes kernel on rest mode resume.
-  // Disable kstuff — its kernel patches crash on rest mode resume without
-  // the hypervisor being actually armed. Both flags are checked by the
-  // patched HyperHEN's launch_pipeline.c before those stages run.
-  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_hypervisor", "1"); } catch (_) {}
-  try { await writeTextFile(p, chain, "/data/HyperHEN/disable_kstuff", "1"); } catch (_) {}
 
   // Payloads injected by HyperHEN's own autostart (port 9020) after the
   // hypervisor is fully ready — not via WKAL port 9021.
