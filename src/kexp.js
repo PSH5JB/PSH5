@@ -1717,9 +1717,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   // hypervisor is fully ready — not via WKAL port 9021.
   // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
   // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
-  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log);
-  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log);
-  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log);
+  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
+  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
+  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
   await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
 
 
