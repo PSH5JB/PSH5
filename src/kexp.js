@@ -81,6 +81,9 @@ const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1
 const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
 const EMU_PS5RA_VER        = "v1.0.0-beta.1";
+const EMU_RPCS3_5_ZIP      = "emulators/RPCS3-5/RPCS3-5-PPSA99303.zip";
+const EMU_RPCS3_5_KEYS     = "emulators/RPCS3-5/RPCS3-5-redump-keys.zip";
+const EMU_RPCS3_5_VER      = "v0.1.0-alpha";
 const HB_SX2 = "PPSA99203";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
@@ -90,6 +93,7 @@ const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
 const HB_RPCS3 = "PPSA42674";
 const HB_RA = "PPSA99169";
+const HB_RPCS3_5 = "PPSA99303";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
@@ -97,8 +101,9 @@ ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RPCS3] = "webui/version.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
+ZIP_DONE_REL[HB_RPCS3_5] = "rpcs3ps5-text.bin";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA,
+  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA, HB_RPCS3_5,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -1805,12 +1810,15 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await installRaTitle(p, chain, log);
 
+  // RPCS3-5 — PS3 emulator (PPSA99303), zip-based install via ps5-unzip
+  await installZipEmu(EMU_RPCS3_5_ZIP, HB_RPCS3_5, EMU_RPCS3_5_VER, p, chain, log);
+
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA],
+      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
