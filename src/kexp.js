@@ -1723,6 +1723,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
 
   await ensureDir(p, chain, "/data/HyperHEN");
+  try { await unlinkPath(p, chain, "/data/HyperHEN/disable_hypervisor"); } catch (_) {}
   await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
   await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
 
