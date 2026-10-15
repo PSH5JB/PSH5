@@ -1690,6 +1690,17 @@ async function cleanAutoloadDir(p, chain, log) {
   }
 }
 
+const HV_READY_FLAG = "/system_tmp/hyperhen/ready/hypervisor";
+const HYPERHEN_AFTER_WAKE_MS = 20000;
+
+function autoloadScript(armed) {
+  if (armed) return HYPERHEN_ELF + "\n";
+  return BYEPERVISOR_ELF + "\n"
+    + "@wait " + HV_READY_FLAG + "\n"
+    + "!" + HYPERHEN_AFTER_WAKE_MS + "\n"
+    + HYPERHEN_ELF + "\n";
+}
+
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
   await cleanAutoloadDir(p, chain, log);
@@ -1705,38 +1716,31 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  // ONION_READY_HYPERVISOR is set by Byepervisor when it arms and cleared on every
-  // reboot — only exists if Byepervisor is actually running this session.
-  const isByepervisorArmed = await pathExists(p, chain, "/system_tmp/hyperhen/ready/hypervisor");
+  // Flag is set by Byepervisor when the hypervisor is hacked on wake, and cleared on reboot.
+  let isByepervisorArmed = await pathExists(p, chain, HV_READY_FLAG);
 
-  if (!isByepervisorArmed) {
-    // Phase 1: Byepervisor not yet armed this session — inject it.
-    // User must enter rest mode so it intercepts the sleep/wake cycle,
-    // then re-run the exploit to load HyperHEN in the armed environment.
-    await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
-    // Force autoload.txt to only byepervisor — HyperHEN.elf may already be on
-    // disk from a previous run and saveAutoloadFiles would include it otherwise.
-    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", BYEPERVISOR_ELF + "\n"); } catch (_) {}
-    log("Byepervisor loaded! Enter rest mode, wake up, then run the exploit again to load HyperHEN.");
+  await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
+  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
+
+  await ensureDir(p, chain, "/data/HyperHEN");
+  await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
+  await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
+
+  // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
+  // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
+  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
+  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
+  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
+  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
+
+  try {
+    await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed));
+  } catch (_) {}
+  if (isByepervisorArmed) {
+    log("Hypervisor is ready. The WebKit Autoloader will send HyperHEN only.");
   } else {
-    // Phase 2: Byepervisor armed this session — load HyperHEN only.
-    // Do NOT re-inject Byepervisor (already running).
-    await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
-    // Overwrite autoload.txt with HyperHEN only so WKAL doesn't re-inject Byepervisor.
-    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", HYPERHEN_ELF + "\n"); } catch (_) {}
-
-    await ensureDir(p, chain, "/data/HyperHEN");
-    await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
-    await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
-
-    // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
-    // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
-    await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
-    await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
-    await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
-    await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
+    log("Open the WebKit Autoloader and leave it open. It sends Byepervisor, waits for the wake, waits 20 seconds, then sends HyperHEN.");
   }
-
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
@@ -1819,11 +1823,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // Re-apply phase-specific autoload.txt after the final homebrew install pass,
   // which may have called saveAutoloadFiles and rebuilt it with all on-disk ELFs.
-  if (isByepervisorArmed) {
-    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", HYPERHEN_ELF + "\n"); } catch (_) {}
-  } else {
-    try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", BYEPERVISOR_ELF + "\n"); } catch (_) {}
-  }
+  try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed)); } catch (_) {}
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
