@@ -8,7 +8,6 @@ VERSIONS_FILE = ".github/payload-versions.json"
 VER_CONSTS = {
     "blackbox": "BLACKBOX_VER",
     "CheatRunner": "CHEATRUNNER_VER",
-    "ShadowMountPlus": "SHADOWMOUNT_VER",
     "PS5SX2": "EMU_PS5SX2_VER",
     "snes9x": "EMU_SNES9X_VER",
     "XPSemu": "EMU_XPSEMU_VER",
@@ -16,7 +15,6 @@ VER_CONSTS = {
     "Porpoise": "EMU_PORPOISE_VER",
     "PS5CEMU-HAR": "EMU_PS5CEMU_VER",
     "ProsperoEden": "EMU_PROSPEROEDEN_VER",
-    "PS5_RPCS3": "EMU_PS5RPCS3_VER",
     "PS5_RetroArch": "EMU_PS5RA_VER",
 }
 
@@ -319,25 +317,6 @@ update_fixed_gh("np-fake-signin", "earthonion/np-fake-signin",  r"np-fake-signin
 update_fixed_gh("CheatRunner",    "notmaj0r/CheatRunner",        r"CheatRunner\.elf$",         "CheatRunner.elf")
 update_fixed_gh("blackbox",       "D3ATHLY/blackbox",            r"^blackbox\.elf$",           "blackbox.elf")
 update_fixed_gh("blackbox_ffpkg", "D3ATHLY/blackbox",            r"^PPSA01453\.ffpkg$",        "PPSA01453.ffpkg")
-# Prefer the direct ELF; fall back to the zip if a release only ships a zip.
-print("\n--- shadowmountplus.elf")
-try:
-    sm = gh_release("drakmor/ShadowMountPlus")
-    sm_tag = sm.get("tag_name", "unknown")
-    if versions.get("ShadowMountPlus") == sm_tag:
-        print(f"  up to date ({sm_tag})")
-    else:
-        url, name = find_asset(sm, r"^shadowmountplus\.elf$")
-        if url:
-            print(f"  downloading {name} ({sm_tag})")
-            download(url, f"{PAYLOADS}/shadowmountplus.elf")
-            versions["ShadowMountPlus"] = sm_tag
-            update_kexp_const("SHADOWMOUNT_VER", sm_tag)
-            changed[0] = True
-        else:
-            update_fixed_zip_gh("ShadowMountPlus", "drakmor/ShadowMountPlus", r"ShadowMountPlus.*\.zip$", "shadowmountplus.elf", "shadowmountplus.elf")
-except Exception as e:
-    print(f"  skipped: {e}")
 update_versioned_gh("webkit-autoloader", "itsPLK/ps5-webkit-autoloader", r"webkit-autoloader-installer_v.*.elf$", "webkit-autoloader-installer_v*.elf", "AUTOLOADER_ELF")
 update_versioned_cb("AnyPad",     "elmonomalva0/Any-Pad-ps5",    r"AnyPad-PS5-.*\.elf$",      "AnyPad-PS5-*.elf", "ANYPAD_ELF")
 
@@ -356,7 +335,6 @@ update_emu_versioned_dir("PS5X360", "BrinooTk/PS5X360", r"^PPSA50011\.zip$", "em
 update_emu_versioned_dir("Porpoise", "elripalda/Porpoise-Dolphin-Emulator-for-PS5", r"^Porpoise-.*\.zip$", "emulators/Porpoise", "Porpoise-*.zip", "EMU_PORPOISE_ZIP")
 update_emu_versioned_dir("PS5CEMU-HAR", "premohq/PS5CEMU-HAR", r"^PS5CEMU-HAR-v.*\.zip$", "emulators/PS5CEMU-HAR", "PS5CEMU-HAR-v*.zip", "EMU_PS5CEMU_ZIP")
 update_emu_versioned_dir("ProsperoEden", "blackbearreloaded/ProsperoEden", r"^ProsperoEden-v.*\.zip$", "emulators/ProsperoEden", "ProsperoEden-v*.zip", "EMU_PROSPEROEDEN_ZIP")
-update_emu_asset("PS5_RPCS3", "dmzebro/PS5_RPCS3", r"^PPSA42674\.zip$", "emulators/PS5_RPCS3/PPSA42674.zip", skip_download=True)
 update_emu_asset("PS5_RetroArch", "mihawk-99/PS5_RetroArch", r"^PS5_RetroArch-.*\.zip$", "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip", path_const="EMU_PS5RA_ZIP", skip_download=True)
 
 # ── save & output ─────────────────────────────────────────────────────────────
