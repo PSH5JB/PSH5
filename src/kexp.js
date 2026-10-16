@@ -94,6 +94,9 @@ const HB_EDEN = "PPSA99008";
 const HB_RPCS3 = "PPSA42674";
 const HB_RA = "PPSA99169";
 const HB_RPCS3_5 = "PPSA99303";
+const HB_PSBOX   = "PPSA99810";
+const EMU_PSBOX_ZIP = "emulators/PSBox/PSBox-v0.9.8.zip";
+const EMU_PSBOX_VER = "v0.9.8";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
@@ -102,8 +105,10 @@ ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RPCS3] = "webui/version.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
 ZIP_DONE_REL[HB_RPCS3_5] = "rpcs3ps5-text.bin";
+ZIP_DONE_REL[HB_PSBOX]   = "README.txt";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA, HB_RPCS3_5,
+  HB_PSBOX,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -1812,13 +1817,15 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // RPCS3-5 — PS3 emulator (PPSA99303), zip-based install via ps5-unzip
   await installZipEmu(EMU_RPCS3_5_ZIP, HB_RPCS3_5, EMU_RPCS3_5_VER, p, chain, log);
+  // PSBox Cloud Gaming — xCloud client (PPSA99810), zip-based install via ps5-unzip
+  await installZipEmu(EMU_PSBOX_ZIP, HB_PSBOX, EMU_PSBOX_VER, p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5],
+      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
