@@ -1,0 +1,9 @@
+# Grand Theft Auto IV (NPEB00882). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them; a configuration file you made yourself is never replaced.
+# From the settings used on the test console for the EU disc (NPEB00882, update 1.09), where the game holds 30 fps.
+Video:
+  Resolution Scale: 300
+  Output Scaling Mode: "FidelityFX Super Resolution"
+  Frame limit: "30"
+Core:
+  RSX FIFO Fetch Accuracy: "Fast"

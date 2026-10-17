@@ -11,10 +11,10 @@ const NOTIFY_SIZE = 0xc30;
 const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
+const HYPERHEN_DIR = "/data/HyperHEN";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.6.1.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
-const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
@@ -23,14 +23,12 @@ const ANYPAD_ELF = "AnyPad-PS5-0.9.5-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
 const HYPERHEN_ELF = "HyperHEN.elf";
-const FTPS_ELF = "FTPS00001.elf";
-const HYPERHEN_PLUGINS_DIR = "/data/HyperHEN/plugins";
-const HYPERHEN_PAYLOADS_DIR = "/data/HyperHEN/payloads";
+const BYEPERVISOR_VER = "v1";
+const HYPERHEN_VER = "v0.9.2w";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
-const BLACKBOX_VER = "1.11.0";
+const BLACKBOX_VER = "v1.11.0";
 const CHEATRUNNER_VER = "v0.18";
-const SHADOWMOUNT_VER = "1.7-beta5fix1";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
 const ONIONHEN_CONFIG = "/data/OnionHEN/config.ini";
@@ -38,7 +36,7 @@ const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
-const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-162.zip";
+const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-177.zip";
 const EMU_PS5SX2_FILES     = "emulators/PS5SX2/PPSA99203";
 const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
 const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
@@ -65,7 +63,7 @@ const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
-const EMU_PS5SX2_VER       = "vk-285-162";
+const EMU_PS5SX2_VER       = "vk-285-177";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
@@ -85,15 +83,22 @@ const EMU_RPCS3_5_ZIP      = "emulators/RPCS3-5/RPCS3-5-v1.2.0-beta.zip";
 const EMU_RPCS3_5_KEYS     = "emulators/RPCS3-5/RPCS3-5-v1.2.0-beta-redump-keys.zip";
 const EMU_RPCS3_5_VER      = "v1.2.0-beta";
 const HB_SX2 = "PPSA99203";
+const HB_SX2_DISCTILE = "PPSA99230";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
 const HB_X360 = "PPSA50011";
 const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
-const HB_RPCS3 = "PPSA42674";
 const HB_RA = "PPSA99169";
+const HB_RPCS3 = "PPSA42674";
 const HB_RPCS3_5 = "PPSA99303";
+const EMU_RPS5S3_ZIP = "emulators/RPS5S3/PS5SX3-TB6.zip";
+const EMU_RPS5S3_VER = "TB6";
+const EMU_RPS5S3_EBOOT    = "emulators/RPS5S3/eboot.bin";
+const EMU_RPS5S3_META_ZIP = "emulators/RPS5S3/PS5SX3-TB4-meta.zip";
+const EMU_RPS5S3_PARAM    = "emulators/RPS5S3/param.json";
+const EMU_RPS5S3_HELPER   = "emulators/RPS5S3/PS5SX3Helper.elf";
 const HB_PSBOX   = "PPSA99810";
 const EMU_PSBOX_ZIP = "emulators/PSBox/PSBox-v0.9.8.zip";
 const EMU_PSBOX_VER = "v0.9.8";
@@ -102,26 +107,31 @@ ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
-ZIP_DONE_REL[HB_RPCS3] = "webui/version.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
+ZIP_DONE_REL[HB_RPCS3] = "rpcs3ps5-text.bin";
 ZIP_DONE_REL[HB_RPCS3_5] = "rpcs3ps5-text.bin";
 ZIP_DONE_REL[HB_PSBOX]   = "README.txt";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA, HB_RPCS3_5,
-  HB_PSBOX,
+  HB_SX2, HB_SX2_DISCTILE, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA, HB_RPCS3_5, HB_PSBOX,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
-// (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
+// (PS5SXHelper aio) after HEN/pldmgr. Do not autoload
 // xpsemu-helper or sandbox-elevator: both also grab elfldr 9021, so
 // the next emu cannot elevate after you close the first. Those ELFs
 // still save to /data/ps5_autoloader for Payload Manager. CEMU ships
 // its own elevator and sends it itself. Large ELFs last so they
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
+  "OnionHEN.elf",
+  PLDMGR_ELF,
+  FAKE_SIGNIN_ELF,
+  "PS5SXHelper.elf",
+  "PS5SX3Helper.elf",
+  ANYPAD_ELF,
+  CHEATRUNNER_ELF,
+  BLACKBOX_ELF,
   BYEPERVISOR_ELF,
   HYPERHEN_ELF,
-  // Remaining payloads auto-start via HyperHEN's own pipeline after the
-  // hypervisor is fully ready; they are saved to HYPERHEN_PAYLOADS_DIR.
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 10;
@@ -533,6 +543,8 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
   const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
   if (!probe.ok && probe.status !== 206)
     throw new Error("kexp: " + fetchPath + " returned HTTP " + probe.status);
+  if (/html/i.test(probe.headers.get("content-type") || ""))
+    throw new Error("kexp: " + fetchPath + " not found (server returned HTML)");
   const cr = probe.headers.get("Content-Range") || probe.headers.get("content-range") || "";
   let total = 0;
   const slash = cr.lastIndexOf("/");
@@ -605,14 +617,17 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("could not create /data/ps5_autoloader");
     return false;
   }
-  if (mapped.byepervisor) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
-  }
-  if (mapped.hyperhen) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + HYPERHEN_ELF, mapped.hyperhen.base, mapped.hyperhen.size);
+  if (mapped.onion) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
   }
   if (mapped.signin) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
+  }
+  if (mapped.pld) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
+    for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
+      await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
+    }
   }
   if (mapped.blackbox) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BLACKBOX_ELF, mapped.blackbox.base, mapped.blackbox.size);
@@ -624,13 +639,14 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
   const afterMs = {};
-  afterMs[BYEPERVISOR_ELF] = 5000;
-  afterMs[HYPERHEN_ELF] = 10000;
+  afterMs["OnionHEN.elf"] = 10000;
+  afterMs[PLDMGR_ELF] = 2000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
   afterMs[BLACKBOX_ELF] = 8000;
+  afterMs[BYEPERVISOR_ELF] = 20000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -713,13 +729,6 @@ async function saveOnly(name, key, p, chain, log, isPresent, ver) {
     if (filePresent) {
       log(name + " outdated, replacing with " + ver);
       try { await chain.syscall(SYS_UNLINK, cstring(p, AUTOLOADER_DIR + "/" + name)); } catch (_) {}
-      try {
-        const _stale = await listDir(p, chain, AUTOLOADER_DIR);
-        for (const { name: _f } of _stale) {
-          if (_f !== name && _f.startsWith(name + "."))
-            try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + _f); } catch (_) {}
-        }
-      } catch (_) {}
     }
   } else {
     if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
@@ -846,39 +855,6 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   }
 }
 
-async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log, delay = 0) {
-  const dest = HYPERHEN_PAYLOADS_DIR + "/" + destName;
-  const marker = ver ? dest + "." + ver : "";
-  if (await pathExists(p, chain, dest) && (!ver || await pathExists(p, chain, marker))) {
-    log(destName + " already in HyperHEN payloads" + (ver ? " (" + ver + ")" : ""));
-  } else {
-    try {
-      const mapped = await mapElf(fetchPath, p, chain);
-      try {
-        await writeBuf(p, chain, dest, mapped.base, mapped.size);
-        if (marker) {
-          try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
-        }
-        log(destName + " saved to HyperHEN payloads");
-      } finally {
-        try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-      }
-    } catch (error) {
-      log(destName + " HyperHEN payload save skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-  }
-  const autoStart = dest + ".auto_start";
-  if (!(await pathExists(p, chain, autoStart))) {
-    try { await writeTextFile(p, chain, autoStart, ""); } catch (_) {}
-  }
-  if (priority > 0) {
-    const configPath = dest + ".json";
-    try { await writeTextFile(p, chain, configPath,
-      '{"version":1,"priority":' + priority + ',"delay_seconds":' + delay + '}'); } catch (_) {}
-  }
-}
-
 const ONION_DEFAULT_TITLE_IDS = [
   "ITEM00001", "NPXS39041", "PKGI13337", "PKGI12345", "TOOL00001",
 ];
@@ -969,6 +945,36 @@ function onionDefaultConfig(ids) {
   ].join("\n");
 }
 
+async function ensureShadowmountConfig(p, chain, log) {
+  try {
+    const cfg = "/data/shadowmount/config.ini";
+    let text = await readTextFile(p, chain, cfg, 0x10000);
+    if (text != null && /^scanpath=\/data\/homebrew$/m.test(text)) {
+      log("shadowmount config already has correct scanpath");
+      return;
+    }
+    const next = [
+      "api_bind_address=0.0.0.0",
+      "scan_depth=1",
+      "scanpath=/data/homebrew",
+      "",
+    ].join("\n");
+    await ensureDir(p, chain, "/data/shadowmount");
+    await writeTextFile(p, chain, cfg, next);
+    log("shadowmount config.ini written (scanpath=/data/homebrew)");
+  } catch (error) {
+    log("shadowmount config skipped: " + (error && error.message ? error.message : String(error)));
+  }
+}
+async function ensureHyperHENDir(p, chain, log) {
+  try {
+    await ensureDir(p, chain, HYPERHEN_DIR);
+    log("HyperHEN dir ready");
+  } catch (error) {
+    log("HyperHEN dir skipped: " + (error && error.message ? error.message : String(error)));
+  }
+}
+
 async function ensureOnionTitleIds(p, chain, log) {
   try {
     await ensureDir(p, chain, ONIONHEN_DIR);
@@ -976,7 +982,16 @@ async function ensureOnionTitleIds(p, chain, log) {
     if (text == null) text = "";
     const lineRe = /^exact_title_ids=(.*)$/m;
     const match = text.match(lineRe);
-    const ids = mergeOnionTitleIds(match ? match[1] : "");
+    // Auto-detect any PPSA* title dirs the user has installed under /data/homebrew
+    const hbEntries = await listDir(p, chain, HOMEBREW_DIR);
+    const hbIds = hbEntries
+      .filter((e) => e.type === DT_DIR && onionTitleIdOk(e.name))
+      .map((e) => e.name);
+    const existingRaw = match ? match[1] : "";
+    const combinedRaw = hbIds.length
+      ? existingRaw + (existingRaw ? "," : "") + hbIds.join(",")
+      : existingRaw;
+    const ids = mergeOnionTitleIds(combinedRaw);
     const idLine = "exact_title_ids=" + ids.join(",");
     const validSchema = /\[meta\]/.test(text) && /^schema_version=1$/m.test(text);
     let next = text;
@@ -1098,8 +1113,6 @@ async function ensureEmuDataDirs(p, chain, log) {
     HOMEBREW_DIR + "/" + HB_X360,
     HOMEBREW_DIR + "/" + HB_X360 + "/assets",
     HOMEBREW_DIR + "/" + HB_X360 + "/assets/roms",
-    HOMEBREW_DIR + "/" + HB_RPCS3,
-    HOMEBREW_DIR + "/" + HB_RPCS3 + "/games",
     HOMEBREW_DIR + "/" + HB_RA,
     HOMEBREW_DIR + "/" + HB_RA + "/content",
     HOMEBREW_DIR + "/" + HB_RA + "/content/Saturn",
@@ -1124,27 +1137,6 @@ async function ensureEmuDataDirs(p, chain, log) {
     }
   }
   log("emu folders ready (" + ok + "/" + dirs.length + ")");
-}
-
-async function installRpcs3Title(p, chain, log) {
-  const title = HOMEBREW_DIR + "/" + HB_RPCS3;
-  await ensureDir(p, chain, HOMEBREW_DIR);
-  await ensureDir(p, chain, title);
-  await ensureDir(p, chain, title + "/games");
-  await chmodPath(p, chain, title + "/games");
-  const ok = await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
-  await ensureDir(p, chain, title + "/games");
-  await chmodPath(p, chain, title + "/games");
-  return ok;
-}
-
-async function installRpcs3Firmware(p, chain, log) {
-  const dir = HOMEBREW_DIR + "/" + HB_RPCS3 + "/system/RPCS3";
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3 + "/system");
-  await ensureDir(p, chain, dir);
-  await chmodPath(p, chain, dir);
-  await installNamedFile(EMU_PS5RPCS3_PUP, dir, "PS3UPDAT.PUP", p, chain, log);
 }
 
 async function ensureRaDataDirs(p, chain, log) {
@@ -1605,6 +1597,180 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
   return false;
 }
 
+async function installPS5SX3(p, chain, log) {
+  const psaId = HB_RPCS3_5;
+  const ver = EMU_RPS5S3_VER;
+  const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
+  const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
+  const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(psaId + " already installed (" + ver + "), skipping");
+    await chmodHomebrewTitle(p, chain, psaId);
+    return true;
+  }
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_module");
+  if (!(await pathExists(p, chain, eboot))) {
+    log("downloading " + psaId + " eboot.bin...");
+    await fetchWriteFile(EMU_RPS5S3_EBOOT, eboot, p, chain, log);
+    await chmodPath(p, chain, eboot);
+  }
+  if (!(await pathExists(p, chain, param))) {
+    log("downloading " + psaId + " param.json...");
+    await fetchWriteFile(EMU_RPS5S3_PARAM, param, p, chain, log);
+    await chmodPath(p, chain, param);
+  }
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BCUS98116.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BCUS98116.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES00229.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES00229.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES01128.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES01128.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES01807.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES01807.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLUS30127.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLUS30127.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLUS30682.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLUS30682.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_NPEB00882.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_NPEB00882.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_NPUB30702.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_NPUB30702.yml", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/Icons");
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/circle.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/circle.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/cross.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/cross.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_down.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_down.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_left.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_left.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_right.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_right.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_up.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_up.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/fade_bottom.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/fade_bottom.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/fade_top.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/fade_top.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/Icons/ui/home");
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/bug-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/bug-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/circle-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/circle-left-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/display-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/display-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/floppy-disk-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/floppy-disk-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/gamepad-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/gamepad-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/gauge-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/gauge-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/headphones-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/headphones-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/home.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/home.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/maximize-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/maximize-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/play-button-arrowhead.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/play-button-arrowhead.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/power-off-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/power-off-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/rotate-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/rotate-left-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/screenshot.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/screenshot.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/settings.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/settings.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/sliders-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/sliders-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/trophy-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/trophy-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/user-group-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/user-group-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/video-camera.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/video-camera.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/bug-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/bug-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/circle-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/circle-left-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/display-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/display-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/floppy-disk-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/floppy-disk-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/gamepad-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/gamepad-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/gauge-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/gauge-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/headphones-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/headphones-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/home.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/home.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/maximize-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/maximize-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/play-button-arrowhead.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/play-button-arrowhead.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/power-off-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/power-off-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/rotate-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/rotate-left-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/screenshot.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/screenshot.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/settings.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/settings.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/sliders-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/sliders-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/trophy-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/trophy-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/user-group-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/user-group-solid.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/video-camera.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/video-camera.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/L1.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/L1.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/L2.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/L2.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/left_stick.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/left_stick.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/loading.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/loading.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/new.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/new.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/R1.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/R1.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/R2.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/R2.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/right_stick.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/right_stick.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/save.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/save.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/select.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/select.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/spinner-24.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/spinner-24.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/square.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/square.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/start.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/start.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/triangle.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/triangle.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_module");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_module/libc.prx", HOMEBREW_DIR + "/" + psaId + "/" + "sce_module/libc.prx", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_sys/icon0.png", HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys/icon0.png", p, chain, log);
+  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys");
+  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_sys/pic0.dds", HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys/pic0.dds", p, chain, log);
+  try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
+  await chmodHomebrewTitle(p, chain, psaId);
+  log(psaId + " installed");
+  return true;
+}
+
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
   const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
@@ -1671,49 +1837,21 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
 }
 
-
-async function cleanAutoloadDir(p, chain, log) {
-  // ELFs superseded by HyperHEN — no longer in AUTOLOAD_NAMES
-  const superseded = [
-    "OnionHEN.elf",
-    SHADOWMOUNT_ELF,
-    PLDMGR_ELF,
-    "byepervisor.elf",
-    // Moved to HYPERHEN_PAYLOADS_DIR — injected via HyperHEN autostart after hypervisor ready
-    FAKE_SIGNIN_ELF,
-    ANYPAD_ELF,
-    CHEATRUNNER_ELF,
-    BLACKBOX_ELF,
-    "PS5SXHelper.elf",
-  ];
-  for (const name of superseded) {
-    try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
-  }
-
-  // Old AnyPad filename — changes with each release since the version is in the filename
-  let entries;
-  try { entries = await listDir(p, chain, AUTOLOADER_DIR); } catch (_) { return; }
-  for (const { name } of entries) {
-    if (name.startsWith("AnyPad-PS5-") && name !== ANYPAD_ELF) {
-      try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed old " + name); } catch (_) {}
-    }
+async function onionVersion() {
+  try {
+    const response = await fetch("payloads/OnionHEN.elf", { method: "HEAD", cache: "no-store" });
+    if (!response.ok) return undefined;
+    if (/html/i.test(response.headers.get("content-type") || "")) return undefined;
+    const length = response.headers.get("content-length");
+    if (!length) return undefined;
+    const modified = Date.parse(response.headers.get("last-modified") || "");
+    return length + (isNaN(modified) ? "" : "-" + Math.floor(modified / 1000));
+  } catch (_) {
+    return undefined;
   }
 }
-
-const HV_READY_FLAG = "/system_tmp/hyperhen/ready/hypervisor";
-const HYPERHEN_AFTER_WAKE_MS = 20000;
-
-function autoloadScript(armed) {
-  if (armed) return HYPERHEN_ELF + "\n";
-  return BYEPERVISOR_ELF + "\n"
-    + "@wait " + HV_READY_FLAG + "\n"
-    + "!" + HYPERHEN_AFTER_WAKE_MS + "\n"
-    + HYPERHEN_ELF + "\n";
-}
-
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
-  await cleanAutoloadDir(p, chain, log);
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
@@ -1726,32 +1864,18 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  // Flag is set by Byepervisor when the hypervisor is hacked on wake, and cleared on reboot.
-  let isByepervisorArmed = await pathExists(p, chain, HV_READY_FLAG);
+  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"), await onionVersion());
+  await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
+  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
+  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
+  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), BYEPERVISOR_VER);
+  await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF),     HYPERHEN_VER);
 
-  await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
-  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
-
-  await ensureDir(p, chain, "/data/HyperHEN");
-  try { await unlinkPath(p, chain, "/data/HyperHEN/disable_hypervisor"); } catch (_) {}
-  await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
-  await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
-
-  // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
-  // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
-  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
-  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
-  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
-  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
-
-  try {
-    await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed));
-  } catch (_) {}
-  if (isByepervisorArmed) {
-    log("Hypervisor is ready. The WebKit Autoloader will send HyperHEN only.");
-  } else {
-    log("Open the WebKit Autoloader and leave it open. It sends Byepervisor, waits for the wake, waits 20 seconds, then sends HyperHEN.");
-  }
+  await ensureOnionTitleIds(p, chain, log);
+  await ensureShadowmountConfig(p, chain, log);
+  await ensureHyperHENDir(p, chain, log);
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
@@ -1764,7 +1888,7 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5SX2 (PS2) — copy the title from the release zip; aio helper autoloads.
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
-  await saveHenPayload(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, 40, p, chain, log);
+  await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await installSx2Title(p, chain, log);
   await installPs2Bios(p, chain, log);
 
@@ -1810,11 +1934,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenKeys(p, chain, log);
   await installEdenFirmware(p, chain, log);
 
-  await installRpcs3Title(p, chain, log);
-  await installRpcs3Firmware(p, chain, log);
 
   await installRaTitle(p, chain, log);
-
+  await saveAutoloadElf(EMU_RPS5S3_HELPER, "PS5SX3Helper.elf", EMU_RPS5S3_VER, p, chain, log);
   // RPCS3-5 — PS3 emulator (PPSA99303), zip-based install via ps5-unzip
   await installZipEmu(EMU_RPCS3_5_ZIP, HB_RPCS3_5, EMU_RPCS3_5_VER, p, chain, log);
   // PSBox Cloud Gaming — xCloud client (PPSA99810), zip-based install via ps5-unzip
@@ -1825,7 +1947,7 @@ export async function loadOptionalPayloads(p, chain, log) {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
+      ["RetroArch", HB_RA], ["RPCS3", HB_RPCS3], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
@@ -1837,9 +1959,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       await chmodHomebrewTitle(p, chain, _cl[_ci][1]);
   } catch (_) {}
 
-  // Re-apply phase-specific autoload.txt after the final homebrew install pass,
-  // which may have called saveAutoloadFiles and rebuilt it with all on-disk ELFs.
-  try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed)); } catch (_) {}
+  try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.

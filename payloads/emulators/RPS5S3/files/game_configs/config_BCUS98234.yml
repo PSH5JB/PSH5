@@ -1,0 +1,15 @@
+# Killzone 3 (BCUS98234), 01.00 and 01.14, with RPCS3's "Disable MLAA (Post-processing on SPU)" patch on (the next build's
+# game_patches/patch_defaults.tsv turns it on for BCUS98234 and BCES01007, 01.00 and 01.14). Shipped settings win over the wiki's
+# (game_configs_wiki/config_BCUS98234.yml has Write Color Buffers: true, which the MLAA on the SPUs needs).
+# Ship this file only together with the patch: without it the MLAA reads stale colour buffers.
+Video:
+  # The patch's notes: "Write Color Buffers is no longer required" and it "improves performance".
+  # Tester run 2026-10-17 00:30 (TB4, WCB on, no patch): after ~6 min the game fell from 29.9 to 3-7 fps with 40+ guest-memory
+  # access faults on colour-buffer pages, SPU kernels waiting in VKGSRender::on_access_violation for the RSX thread, then a
+  # freeze and a deadlock on exit. The channel's KZ3 crash (TB4, SPU thread fault in vm::range_lock_internal during an SPU DMA,
+  # on a page with no access = an RSX-protected page) is the same path. With WCB off the colour buffers are not protected.
+  Write Color Buffers: false
+Core:
+  # SPU cache build at boot: 3991 functions at ~116 a second with 4 compile threads, compile screen at 31 fps; the auto (16)
+  # run was closed by the tester 15 s in. Unmeasured: the first boot's PPU compile with 4.
+  Max LLVM Compile Threads: 4

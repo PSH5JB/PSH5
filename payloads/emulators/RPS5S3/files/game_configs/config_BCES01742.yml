@@ -1,0 +1,9 @@
+# God of War: Ascension (BCES01742). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them (a configuration file the person wrote themselves replaces all of it).
+# Each frame, RSX waits (NV406E semaphore acquire) on GCM labels 81 and 82 (0x50300510, 0x50300520) that the game's SPU MLAA job sets.
+# On the console that wait often runs past RPCS3's 1 s Driver Recovery Timeout; RSX then skips it, the frame handshake falls out of step
+# and no frame is flipped again: 337 of 361 hang reports without the MLAA patch show the time-out, and 89% of the time-outs never recover
+# (upstream RPCS3 #3986 shows the same two labels; #17179 is the open race). The longest time-out (30 s) lets a late label still arrive.
+# RPCS3's "Disable MLAA" patch (PPU 1.04/1.12) removes the wait itself.
+Video:
+  Driver Recovery Timeout: 30000000

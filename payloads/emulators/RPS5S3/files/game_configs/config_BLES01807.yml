@@ -1,0 +1,7 @@
+# Grand Theft Auto V (BLES01807 1.00), for RPCS3's "60 FPS" patch (patch.yml, on in patch_config.yml). Shipped with the title:
+# the launcher writes these into the game's custom configuration, with the options chosen for the game over them.
+# docs/PS5_GTA5.md says what the game does with them.
+Video:
+  # The patch runs the game at half the VBlank rate.
+  Vblank Rate: 120
+  Frame limit: "Off"

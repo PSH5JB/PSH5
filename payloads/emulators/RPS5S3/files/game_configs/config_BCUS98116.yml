@@ -1,0 +1,10 @@
+# Killzone 2 (BCUS98116), for its 1.29 update with RPCS3's "Disable Post Processing on SPU" patch (patch.yml, on in
+# patch_config.yml). Shipped with the title: the launcher writes these into the game's custom configuration, with the options
+# chosen for the game over them. docs/PS5_KILLZONE2.md says how each was found.
+Video:
+  # Not needed with the patch (RPCS3's patch notes); on, the game stutters: frames of 40 to 860 ms.
+  Write Color Buffers: false
+  # The menus' text is missing without it; it costs a little smoothness, much less than Write Color Buffers.
+  Read Color Buffers: true
+  # Text drawn through small surfaces disappears when they are scaled; the 1280x720 frame itself is still scaled.
+  Minimum Scalable Dimension: 512

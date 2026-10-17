@@ -29,3 +29,6 @@ payloads/emulators/PS5CEMU-HAR/aes_keys.txt
 # RetroArch title tree and 788MB zip stay on the host.
 payloads/emulators/PS5_RetroArch/PPSA99169/
 payloads/emulators/PS5_RetroArch/*.zip
+
+# RPS5S3/PS5SX3 eboot.bin is large (>100MB); stays on host only.
+payloads/emulators/RPS5S3/eboot.bin
