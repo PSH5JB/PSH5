@@ -1,9 +1,22 @@
 # Grand Theft Auto IV (BLUS30682). Shipped with the title: the launcher writes these into the game's custom configuration, with the
 # options chosen for the game over them; a configuration file you made yourself is never replaced.
-# From the settings used on the test console for the EU disc (NPEB00882, update 1.09), where the game holds 30 fps.
+# From the settings used on the test console for the EU disc (NPEB00882, update 1.09). The SPU and audio settings are the GTA IV fix of
+# github.com/Lucidic15/ps5sx3-gta4-fix (2026-10-14, tested on a PS5): no stuttering audio, no falling through the map at spawn.
+# No Frame limit: the recommended "Unlock FPS" patch sets it when it is applied (game_patches/patch_defaults.tsv), and the options
+# sheet's Frame rate limit wins over both.
 Video:
   Resolution Scale: 300
   Output Scaling Mode: "FidelityFX Super Resolution"
-  Frame limit: "30"
 Core:
   RSX FIFO Fetch Accuracy: "Fast"
+  # Approximate: on Accurate (the RPCS3 wiki's choice, game_configs_wiki) the SPUs fall behind on the PS5 and the audio stutters in
+  # gameplay (RPCS3 issue #11644). It needs ARMSX3's collision patch (game_patches/ps5sx3_patches.yml, on with the recommended
+  # settings), or the player falls through the map at spawn; the patch covers BLUS30682 v01.02 and BLUS30127 / NPUB30702 v01.08,
+  # the updates the launcher installs.
+  SPU XFloat Accuracy: "Approximate"
+Audio:
+  # Time stretching slows the sound a little instead of breaking it up when the game falls behind, and a 150 ms buffer (RPCS3's
+  # default: 34 ms) gives it room, for about 0.1 s more delay. Both need buffering, on by default.
+  Enable Buffering: true
+  Desired Audio Buffer Duration: 150
+  Enable Time Stretching: true

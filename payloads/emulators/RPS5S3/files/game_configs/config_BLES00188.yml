@@ -1,0 +1,9 @@
+# FIFA Street 3 (BLES00188). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them; a configuration file you made yourself is never replaced.
+# Every run so far (TB1-TB4, 10 of 10) stopped with "SPU Interrupts not implemented (mask=0x20)": the game enables SPU interrupts,
+# which only RPCS3's SPU interpreters handle (SPUThread.cpp set_interrupt_status). RPCS3's own config database sets the same for this
+# serial (api.rpcs3.net/config: "SPU Decoder: Interpreter (static)"); make-wiki-configs.py leaves decoders out, so it never reached
+# game_configs_wiki. The static interpreter needs no LLVM (old_interpreter through the asmjit trampolines LLVM mode already uses).
+# Expect it to run slower than with the recompiler.
+Core:
+  SPU Decoder: "Interpreter (static)"

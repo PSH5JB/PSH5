@@ -1,0 +1,43 @@
+Version: 1.2
+
+# PS5SX3's own patches: the ones RPCS3's patch database (patch.yml next to this file, shipped byte for byte) does not have. The title loads
+# this file after the database (ps5/platform/ps5_patch_defaults.cpp, ps5_append_shipped_patches), and the patches that are on by default
+# are in ps5sx3_patch_defaults.tsv, under the person's own config/patch_config.yml as the database's are. A patch of the same name in
+# one of the person's own patch files wins over this one, as over the database's (RPCS3 keeps the higher patch version, the person's
+# when they are equal).
+
+# Grand Theft Auto IV (BLUS30127, BLUS30682, NPUB30702): lets the game run on SPU XFloat Accuracy "Approximate" (its shipped settings,
+# game_configs) without falling through the world. ARMSX3's "Approximate collision fix" by jpolo1224 (github.com/ARMSX2/ARMSX3,
+# canary_patches.yml, GPL-2.0), as Lucidic15's GTA IV fix ships it (github.com/Lucidic15/ps5sx3-gta4-fix, 2026-10-14), unchanged.
+#
+# The collision job SpuCollide_psn_final.task.elf starts its searches with 0x7FFFFFFF, the SPU's largest float. On Approximate that
+# value is a NaN, so the search stops before it finds the ground. These 14 lines load 0x7F7FFFFF (FLT_MAX) instead, a number on both
+# settings, so the patch is harmless on Accurate. Offsets are SPU local storage addresses.
+#
+# Made for the executable of BLUS30682 v01.02 and BLUS30127 / NPUB30702 v01.08. The hash names that one collision program, so on any
+# other version nothing is patched: RPCS3.log then shows SpuCollide's "SPU executable hash" without "(<- 14)".
+SPU-d0a1508208613e2184fbd64906d34d5f07890033:
+  "ARMSX3 Approximate collision fix":
+    Games:
+      "Grand Theft Auto IV":
+        BLUS30127: [ All ]
+        BLUS30682: [ All ]
+        NPUB30702: [ All ]
+    Author: "jpolo1224 (ARMSX3)"
+    Notes: "Lets the game run with SPU XFloat Accuracy on Approximate without falling through the world."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0c4f4, 0x413fbfd4 ] # ilhu r84,0x7f7f (was 0x413fffd4): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x0e3b0, 0x413fbf90 ] # ilhu r16,0x7f7f (was 0x413fff90): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x0eca0, 0x413fbfa3 ] # ilhu r35,0x7f7f (was 0x413fffa3): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x0f630, 0x413fbf82 ] # ilhu r2,0x7f7f (was 0x413fff82): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x0fa38, 0x413fbf91 ] # ilhu r17,0x7f7f (was 0x413fff91): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x10e30, 0x413fbf9b ] # ilhu r27,0x7f7f (was 0x413fff9b): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x11470, 0x413fbfde ] # ilhu r94,0x7f7f (was 0x413fffde): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x11508, 0x413fbfc4 ] # ilhu r68,0x7f7f (was 0x413fffc4): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x154b0, 0x413fbfbc ] # ilhu r60,0x7f7f (was 0x413fffbc): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x15528, 0x413fbfb2 ] # ilhu r50,0x7f7f (was 0x413fffb2): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x157a0, 0x413fbfcb ] # ilhu r75,0x7f7f (was 0x413fffcb): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x158d8, 0x413fbfa0 ] # ilhu r32,0x7f7f (was 0x413fffa0): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x17098, 0x413fbfbd ] # ilhu r61,0x7f7f (was 0x413fffbd): FLT_MAX instead of the SPU's largest float
+      - [ be32, 0x175f8, 0x413fbfcf ] # ilhu r79,0x7f7f (was 0x413fffcf): FLT_MAX instead of the SPU's largest float

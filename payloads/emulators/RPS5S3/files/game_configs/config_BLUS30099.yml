@@ -1,0 +1,6 @@
+# FIFA Street 3 (BLUS30099, the US release of BLES00188). Shipped with the title: the launcher writes these into the game's custom
+# configuration, with the options chosen for the game over them; a configuration file you made yourself is never replaced.
+# The game enables SPU interrupts, which only RPCS3's SPU interpreters handle: every BLES00188/BLUS30099 report (TB1-TB4) stopped with
+# "SPU Interrupts not implemented (mask=0x20)". RPCS3's config database sets the static interpreter for BLES00188. Expect it to run slower.
+Core:
+  SPU Decoder: "Interpreter (static)"

@@ -1,0 +1,10 @@
+# NPJB90113: the settings the RPCS3 wiki recommends for this game (RPCS3's config database, api.rpcs3.net/config, version 1791404308),
+# limited to the ones that mean the same on any GPU (tools/ps5/make-wiki-configs.py). Shipped settings and the launcher's options win over them.
+Video:
+  Write Color Buffers: true
+  Accurate ZCULL stats: false
+  Relaxed ZCULL Sync: true
+Core:
+  Accurate RSX reservation access: true
+  Libraries Control:
+    - libvdec.sprx:lle

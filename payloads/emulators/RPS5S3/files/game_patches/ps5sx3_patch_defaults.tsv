@@ -1,0 +1,6 @@
+# PS5SX3's own patches that are on by default (ps5sx3_patches.yml next to this file), in the form of patch_defaults.tsv: hash, patch, game
+# title, serial, app version (the keys of RPCS3's patch_config.yml), the kind, and the settings a frame-rate patch needs ('-': none). Written
+# by hand: patch_defaults.tsv is generated from RPCS3's database, this file is not (tools/ps5/tests/patch_defaults_test.py checks it).
+SPU-d0a1508208613e2184fbd64906d34d5f07890033	ARMSX3 Approximate collision fix	Grand Theft Auto IV	BLUS30127	All	fix	-
+SPU-d0a1508208613e2184fbd64906d34d5f07890033	ARMSX3 Approximate collision fix	Grand Theft Auto IV	BLUS30682	All	fix	-
+SPU-d0a1508208613e2184fbd64906d34d5f07890033	ARMSX3 Approximate collision fix	Grand Theft Auto IV	NPUB30702	All	fix	-

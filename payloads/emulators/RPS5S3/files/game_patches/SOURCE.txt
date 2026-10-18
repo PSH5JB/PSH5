@@ -1,0 +1,11 @@
+RPCS3's patch database, as RPCS3 distributes it: game_patches/patch.yml is that file, unchanged (the credits of every patch's author are inside it).
+
+url       https://rpcs3.net/compatibility?patch&api=v1&v=1.2   (the call RPCS3's Patch Manager makes: format version 1.2)
+retrieved 2026-10-16
+format    Version: 1.2
+bytes     1176148 (34838 lines)
+sha256    7a23a452f468a3d06c74803005b460ce65658b3f1d523cb6877c4b197c90f561
+
+Use it: put a newer download over it and run  python3 tools/ps5/make-patch-defaults.py --import <the new file> --url <url> --date <date>
+(the patch list in patch_defaults.tsv is made again from it; tools/ps5/check-patch-db.sh checks both). Nothing else in the title reads the network.
+The file is not changed by any tool of this project.

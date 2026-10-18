@@ -5,5 +5,10 @@
 # and no frame is flipped again: 337 of 361 hang reports without the MLAA patch show the time-out, and 89% of the time-outs never recover
 # (upstream RPCS3 #3986 shows the same two labels; #17179 is the open race). The longest time-out (30 s) lets a late label still arrive.
 # RPCS3's "Disable MLAA" patch (PPU 1.04/1.12) removes the wait itself.
+# TB6: with the MLAA patch on, the game now runs long enough to fill the console's memory at 300% (ps5.yml's common value): TB5 runs of
+# BCES01741/BCUS98232/NPUA80918 at 300% reached 10-12 GB of the 12 GB of direct memory in 5-15 minutes and ended in
+# VK_ERROR_OUT_OF_DEVICE_MEMORY, RSX ensure failures or a hang (one at 250% after 2 hours); at 100-150% the same game stayed at
+# 4-6 GB. 150% (1080p) is the highest scale the reports show to be safe. The options chosen for the game still win.
 Video:
   Driver Recovery Timeout: 30000000
+  Resolution Scale: 150

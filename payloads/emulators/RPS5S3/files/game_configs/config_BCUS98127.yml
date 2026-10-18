@@ -1,0 +1,8 @@
+# Ratchet & Clank Future: Tools of Destruction (BCUS98127). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them; a configuration file you made yourself is never replaced.
+# Resolution Scale 100 %: above it, with Write Color Buffers and Write Depth Buffer off (RPCS3's defaults), the RSX thread stops
+# on "Verification failed" in vk::calculate_upload_pitch (upstream RPCS3 #19466, open: a resolution-scaled deferred texture is
+# loaded with the game's own pitch; the draft fix #19469 is not merged). A higher scale can still be chosen in Game Settings.
+# TB5: 3 crashes of Tools of Destruction on 2 consoles at 300 %, 2 to 46 minutes in (BCES00052, NPEA00452).
+Video:
+  Resolution Scale: 100

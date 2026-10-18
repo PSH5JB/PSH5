@@ -1,6 +1,9 @@
 # Killzone 2 (BCUS98116), for its 1.29 update with RPCS3's "Disable Post Processing on SPU" patch (patch.yml, on in
 # patch_config.yml). Shipped with the title: the launcher writes these into the game's custom configuration, with the options
 # chosen for the game over them. docs/PS5_KILLZONE2.md says how each was found.
+# NOTE (tb5 investigation, 2026-10-17): Write Color Buffers false is only right while the patch is applied. TB4 ships no patch
+# database, and no TB4 Killzone 2 log (tester's or the Discord channel's) has a "PAT: Applied patch" line; the next build's
+# game_patches/patch_defaults.tsv turns the patch on for BCUS98116 and BCES00081 01.29. Ship this file only with that.
 Video:
   # Not needed with the patch (RPCS3's patch notes); on, the game stutters: frames of 40 to 860 ms.
   Write Color Buffers: false
@@ -8,3 +11,8 @@ Video:
   Read Color Buffers: true
   # Text drawn through small surfaces disappears when they are scaled; the 1280x720 frame itself is still scaled.
   Minimum Scalable Dimension: 512
+Core:
+  # The SPU cache build at boot (2010 functions here) ran at the same ~100 functions a second with 4 compile threads as with 16
+  # (0 = all), but with 16 the compile screen fell to 0.5-5 fps and the tester closed the game twice, seconds before it was done
+  # (tester logs 2026-10-16/17); with 4 the screen stayed at 23-31 fps. Unmeasured: the first boot's PPU compile with 4.
+  Max LLVM Compile Threads: 4

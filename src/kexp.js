@@ -94,7 +94,7 @@ const HB_RA = "PPSA99169";
 const HB_RPCS3 = "PPSA42674";
 const HB_RPCS3_5 = "PPSA99303";
 const EMU_RPS5S3_ZIP = "emulators/RPS5S3/PS5SX3-TB6.zip";
-const EMU_RPS5S3_VER = "TB6";
+const EMU_RPS5S3_VER = "TB7";
 const EMU_RPS5S3_EBOOT    = "emulators/RPS5S3/eboot.bin";
 const EMU_RPS5S3_META_ZIP = "emulators/RPS5S3/PS5SX3-TB4-meta.zip";
 const EMU_RPS5S3_PARAM    = "emulators/RPS5S3/param.json";
@@ -1623,148 +1623,119 @@ async function installPS5SX3(p, chain, log) {
     await fetchWriteFile(EMU_RPS5S3_PARAM, param, p, chain, log);
     await chmodPath(p, chain, param);
   }
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BCUS98116.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BCUS98116.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES00229.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES00229.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES01128.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES01128.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLES01807.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLES01807.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLUS30127.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLUS30127.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_BLUS30682.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_BLUS30682.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_NPEB00882.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_NPEB00882.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "game_configs");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "game_configs/config_NPUB30702.yml", HOMEBREW_DIR + "/" + psaId + "/" + "game_configs/config_NPUB30702.yml", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/Icons");
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/circle.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/circle.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/cross.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/cross.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_down.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_down.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_left.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_left.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_right.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_right.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/dpad_up.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/dpad_up.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/fade_bottom.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/fade_bottom.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/fade_top.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/fade_top.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/Icons/ui/home");
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/bug-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/bug-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/circle-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/circle-left-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/display-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/display-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/floppy-disk-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/floppy-disk-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/gamepad-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/gamepad-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/gauge-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/gauge-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/headphones-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/headphones-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/home.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/home.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/maximize-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/maximize-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/play-button-arrowhead.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/play-button-arrowhead.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/power-off-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/power-off-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/rotate-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/rotate-left-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/screenshot.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/screenshot.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/settings.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/settings.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/sliders-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/sliders-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/trophy-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/trophy-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/user-group-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/user-group-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/256/video-camera.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/256/video-camera.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/bug-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/bug-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/circle-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/circle-left-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/display-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/display-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/floppy-disk-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/floppy-disk-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/gamepad-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/gamepad-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/gauge-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/gauge-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/headphones-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/headphones-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/home.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/home.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/maximize-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/maximize-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/play-button-arrowhead.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/play-button-arrowhead.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/power-off-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/power-off-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/rotate-left-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/rotate-left-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/screenshot.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/screenshot.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/settings.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/settings.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/sliders-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/sliders-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/trophy-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/trophy-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/user-group-solid.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/user-group-solid.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/home/32/video-camera.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/home/32/video-camera.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/L1.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/L1.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/L2.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/L2.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/left_stick.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/left_stick.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/loading.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/loading.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/new.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/new.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/R1.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/R1.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/R2.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/R2.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/right_stick.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/right_stick.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/save.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/save.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/select.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/select.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/spinner-24.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/spinner-24.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/square.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/square.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/start.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/start.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "Icons/ui/triangle.png", HOMEBREW_DIR + "/" + psaId + "/" + "Icons/ui/triangle.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_module");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_module/libc.prx", HOMEBREW_DIR + "/" + psaId + "/" + "sce_module/libc.prx", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_sys/icon0.png", HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys/icon0.png", p, chain, log);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys");
-  await fetchWriteFile("emulators/RPS5S3/files/" + "sce_sys/pic0.dds", HOMEBREW_DIR + "/" + psaId + "/" + "sce_sys/pic0.dds", p, chain, log);
+  const _base = "emulators/RPS5S3/files/";
+  const _files = [
+    "game_configs/config_BCAS25016.yml",
+    "game_configs/config_BCES00052.yml",
+    "game_configs/config_BCES00081.yml",
+    "game_configs/config_BCES00511.yml",
+    "game_configs/config_BCES00748.yml",
+    "game_configs/config_BCES01007.yml",
+    "game_configs/config_BCES01741.yml",
+    "game_configs/config_BCES01742.yml",
+    "game_configs/config_BCJS30014.yml",
+    "game_configs/config_BCJS37008.yml",
+    "game_configs/config_BCUS98116.yml",
+    "game_configs/config_BCUS98124.yml",
+    "game_configs/config_BCUS98127.yml",
+    "game_configs/config_BCUS98232.yml",
+    "game_configs/config_BCUS98234.yml",
+    "game_configs/config_BLES00038.yml",
+    "game_configs/config_BLES00188.yml",
+    "game_configs/config_BLES00229.yml",
+    "game_configs/config_BLES00875.yml",
+    "game_configs/config_BLES01128.yml",
+    "game_configs/config_BLES01807.yml",
+    "game_configs/config_BLUS30099.yml",
+    "game_configs/config_BLUS30127.yml",
+    "game_configs/config_BLUS30490.yml",
+    "game_configs/config_BLUS30682.yml",
+    "game_configs/config_NPEA00445.yml",
+    "game_configs/config_NPEA00452.yml",
+    "game_configs/config_NPEA00453.yml",
+    "game_configs/config_NPEB00882.yml",
+    "game_configs/config_NPUA80918.yml",
+    "game_configs/config_NPUA80965.yml",
+    "game_configs/config_NPUA80966.yml",
+    "game_configs/config_NPUB30702.yml",
+    "game_patches/patch.yml",
+    "game_patches/patch_defaults.tsv",
+    "game_patches/ps5sx3_patches.yml",
+    "game_patches/ps5sx3_patch_defaults.tsv",
+    "game_patches/SOURCE.txt",
+    "Icons/ui/circle.png",
+    "Icons/ui/cross.png",
+    "Icons/ui/dpad.png",
+    "Icons/ui/dpad_down.png",
+    "Icons/ui/dpad_left.png",
+    "Icons/ui/dpad_right.png",
+    "Icons/ui/dpad_up.png",
+    "Icons/ui/fade_bottom.png",
+    "Icons/ui/fade_top.png",
+    "Icons/ui/home/256/bug-solid.png",
+    "Icons/ui/home/256/circle-left-solid.png",
+    "Icons/ui/home/256/display-solid.png",
+    "Icons/ui/home/256/floppy-disk-solid.png",
+    "Icons/ui/home/256/gamepad-solid.png",
+    "Icons/ui/home/256/gauge-solid.png",
+    "Icons/ui/home/256/headphones-solid.png",
+    "Icons/ui/home/256/home.png",
+    "Icons/ui/home/256/maximize-solid.png",
+    "Icons/ui/home/256/play-button-arrowhead.png",
+    "Icons/ui/home/256/power-off-solid.png",
+    "Icons/ui/home/256/rotate-left-solid.png",
+    "Icons/ui/home/256/screenshot.png",
+    "Icons/ui/home/256/settings.png",
+    "Icons/ui/home/256/sliders-solid.png",
+    "Icons/ui/home/256/trophy-solid.png",
+    "Icons/ui/home/256/user-group-solid.png",
+    "Icons/ui/home/256/video-camera.png",
+    "Icons/ui/home/32/bug-solid.png",
+    "Icons/ui/home/32/circle-left-solid.png",
+    "Icons/ui/home/32/display-solid.png",
+    "Icons/ui/home/32/floppy-disk-solid.png",
+    "Icons/ui/home/32/gamepad-solid.png",
+    "Icons/ui/home/32/gauge-solid.png",
+    "Icons/ui/home/32/headphones-solid.png",
+    "Icons/ui/home/32/home.png",
+    "Icons/ui/home/32/maximize-solid.png",
+    "Icons/ui/home/32/play-button-arrowhead.png",
+    "Icons/ui/home/32/power-off-solid.png",
+    "Icons/ui/home/32/rotate-left-solid.png",
+    "Icons/ui/home/32/screenshot.png",
+    "Icons/ui/home/32/settings.png",
+    "Icons/ui/home/32/sliders-solid.png",
+    "Icons/ui/home/32/trophy-solid.png",
+    "Icons/ui/home/32/user-group-solid.png",
+    "Icons/ui/home/32/video-camera.png",
+    "Icons/ui/L1.png",
+    "Icons/ui/L2.png",
+    "Icons/ui/left_stick.png",
+    "Icons/ui/loading.png",
+    "Icons/ui/new.png",
+    "Icons/ui/R1.png",
+    "Icons/ui/R2.png",
+    "Icons/ui/right_stick.png",
+    "Icons/ui/save.png",
+    "Icons/ui/select.png",
+    "Icons/ui/spinner-24.png",
+    "Icons/ui/square.png",
+    "Icons/ui/start.png",
+    "Icons/ui/triangle.png",
+    "sce_module/libc.prx",
+    "sce_sys/icon0.png",
+  ];
+  const _seenDirs = {};
+  for (let _fi = 0; _fi < _files.length; _fi++) {
+    const _f = _files[_fi];
+    const _sl = _f.lastIndexOf("/");
+    const _d = _sl > 0 ? _f.slice(0, _sl) : "";
+    if (_d && !_seenDirs[_d]) {
+      await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + _d);
+      _seenDirs[_d] = true;
+    }
+    await fetchWriteFile(_base + _f, HOMEBREW_DIR + "/" + psaId + "/" + _f, p, chain, log);
+  }
   try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
   await chmodHomebrewTitle(p, chain, psaId);
   log(psaId + " installed");
@@ -1937,8 +1908,8 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   await installRaTitle(p, chain, log);
   await saveAutoloadElf(EMU_RPS5S3_HELPER, "PS5SX3Helper.elf", EMU_RPS5S3_VER, p, chain, log);
-  // RPCS3-5 — PS3 emulator (PPSA99303), zip-based install via ps5-unzip
-  await installZipEmu(EMU_RPCS3_5_ZIP, HB_RPCS3_5, EMU_RPCS3_5_VER, p, chain, log);
+  // PS5SX3 (PPSA99303) — PS3 emulator, direct file install
+  await installPS5SX3(p, chain, log);
   // PSBox Cloud Gaming — xCloud client (PPSA99810), zip-based install via ps5-unzip
   await installZipEmu(EMU_PSBOX_ZIP, HB_PSBOX, EMU_PSBOX_VER, p, chain, log);
 

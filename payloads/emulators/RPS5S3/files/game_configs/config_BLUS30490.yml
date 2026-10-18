@@ -1,0 +1,9 @@
+# 3D Dot Game Heroes (BLUS30490). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them; a configuration file you made yourself is never replaced.
+# PPU Event Wake-Up Delay (upstream RPCS3 #19824, merged 2026-10-14, ported for TB7): the game's PPU can wake up and free a SPURS task
+# context before the SPU has finished saving it; the late save corrupts the heap and the game freezes or crashes later (upstream #4433,
+# which #19824 closed). The delay makes the PPU wait that long after an event an SPU sent it (about 19 us on real hardware). Upstream
+# uses 25 us on a desktop CPU and says the value depends on the CPU's speed; the PS5's cores are slower, so 60 here.
+# The same setting as the European version (BLES00875), whose TB6 crash ("Unknown STOP code: 0x0" in its SPURS kernel) led here.
+Core:
+  PPU Event Wake-Up Delay: 60

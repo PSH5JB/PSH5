@@ -1,0 +1,8 @@
+# Street Homecourt (BLES00038). Shipped with the title: the launcher writes these into the game's custom configuration, with the
+# options chosen for the game over them; a configuration file you made yourself is never replaced.
+# Both TB5 runs (one console, 2026-10-17) stopped with "SPU Interrupts not implemented (mask=0x20)" on its SPU_KERNEL threads, 4 s and
+# 157 s in: the game enables SPU interrupts, which only RPCS3's SPU interpreters handle (the same engine and error as FIFA Street 3,
+# BLES00188/BLUS30099). RPCS3's config database sets the same for this serial (api.rpcs3.net/config: "SPU Decoder: Interpreter (static)").
+# Expect it to run slower than with the recompiler.
+Core:
+  SPU Decoder: "Interpreter (static)"
