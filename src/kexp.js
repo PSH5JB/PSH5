@@ -70,11 +70,6 @@ const EMU_PS5X360_VER      = "v0.6.0";
 const EMU_PORPOISE_VER     = "v3.0";
 const EMU_PS5CEMU_VER      = "v3.5.0";
 const EMU_PROSPEROEDEN_VER = "v1.004.000";
-const EMU_PS5RPCS3_ZIP     = "emulators/PS5_RPCS3/PPSA42674.zip";
-const EMU_PS5RPCS3_FILES   = "emulators/PS5_RPCS3/PPSA42674";
-const EMU_PS5RPCS3_LIST    = "emulators/PS5_RPCS3/list.txt";
-const EMU_PS5RPCS3_PUP     = "emulators/PS5_RPCS3/PS3UPDAT.PUP";
-const EMU_PS5RPCS3_VER     = "v1.0";
 const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip";
 const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
@@ -91,7 +86,6 @@ const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
 const HB_RA = "PPSA99169";
-const HB_RPCS3 = "PPSA42674";
 const HB_RPCS3_5 = "PPSA99303";
 const EMU_RPS5S3_ZIP = "emulators/RPS5S3/PS5SX3-TB6.zip";
 const EMU_RPS5S3_VER = "TB7";
@@ -108,11 +102,10 @@ ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
-ZIP_DONE_REL[HB_RPCS3] = "rpcs3ps5-text.bin";
 ZIP_DONE_REL[HB_RPCS3_5] = "rpcs3ps5-text.bin";
 ZIP_DONE_REL[HB_PSBOX]   = "README.txt";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SX2_DISCTILE, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA, HB_RPCS3_5, HB_PSBOX,
+  HB_SX2, HB_SX2_DISCTILE, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA, HB_RPCS3_5, HB_PSBOX,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr. Do not autoload
@@ -1918,7 +1911,7 @@ export async function loadOptionalPayloads(p, chain, log) {
     const _cl = [
       ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RetroArch", HB_RA], ["RPCS3", HB_RPCS3], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
+      ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
