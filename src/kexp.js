@@ -88,7 +88,8 @@ const HB_EDEN = "PPSA99008";
 const HB_RA = "PPSA99169";
 const HB_RPCS3_5 = "PPSA99303";
 const EMU_RPS5S3_ZIP = "emulators/RPS5S3/PS5SX3-TB6.zip";
-const EMU_RPS5S3_VER = "TB7";
+const EMU_RPS5S3_VER = "TB8";
+const EMU_RPS5S3_WIKI_LIST = "emulators/RPS5S3/game_configs_wiki_list.json";
 const EMU_RPS5S3_EBOOT    = "emulators/RPS5S3/eboot.bin";
 const EMU_RPS5S3_META_ZIP = "emulators/RPS5S3/PS5SX3-TB4-meta.zip";
 const EMU_RPS5S3_PARAM    = "emulators/RPS5S3/param.json";
@@ -1716,6 +1717,10 @@ async function installPS5SX3(p, chain, log) {
     "Icons/ui/start.png",
     "Icons/ui/triangle.png",
     "sce_module/libc.prx",
+    "cheats/Grand Theft Auto IV BLES00229 01.08 PS5SX3.ncl",
+    "cheats/Grand Theft Auto IV NPEB00882 01.09 PS5SX3.ncl",
+    "cheats/on_by_default.tsv",
+    "ps5-defaults.yml",
     "sce_sys/icon0.png",
   ];
   const _seenDirs = {};
@@ -1728,6 +1733,17 @@ async function installPS5SX3(p, chain, log) {
       _seenDirs[_d] = true;
     }
     await fetchWriteFile(_base + _f, HOMEBREW_DIR + "/" + psaId + "/" + _f, p, chain, log);
+  }
+  const _wikiDir = HOMEBREW_DIR + "/" + psaId + "/game_configs_wiki";
+  const _wikiSentinel = _wikiDir + "/config_BCAS25016.yml";
+  if (!(await pathExists(p, chain, _wikiSentinel))) {
+    log("downloading game_configs_wiki...");
+    const _wikiListText = await (await fetch("payloads/" + EMU_RPS5S3_WIKI_LIST)).text();
+    const _wikiNames = JSON.parse(_wikiListText);
+    await ensureDir(p, chain, _wikiDir);
+    for (let _wi = 0; _wi < _wikiNames.length; _wi++) {
+      await fetchWriteFile("emulators/RPS5S3/files/game_configs_wiki/" + _wikiNames[_wi], _wikiDir + "/" + _wikiNames[_wi], p, chain, log);
+    }
   }
   try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
   await chmodHomebrewTitle(p, chain, psaId);

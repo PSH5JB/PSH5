@@ -291,7 +291,7 @@ async function main(userlandRW) {
           log("payload load failed, retrying in 5s...", "info");
           await new Promise(function(r) { setTimeout(r, 5000); });
         }
-        const { loadOptionalPayloads } = await import("./kexp.js?v=202610180900");
+        const { loadOptionalPayloads } = await import("./kexp.js?v=202610190900");
         await loadOptionalPayloads(p, chain, (message, type, replace) =>
           log(message, type || "info", replace));
         _payloadsOk = true;
