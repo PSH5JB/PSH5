@@ -1,0 +1,22 @@
+gametitle=Socom II NTSC
+[General Cheats\DNAS Bypass]
+author=Harry62
+patch=1,EE,2009F000,extended,3C08002C
+patch=1,EE,2009F004,extended,3508F330
+patch=1,EE,2009F008,extended,8D090000
+patch=1,EE,2009F00C,extended,3C0A27BD
+patch=1,EE,2009F010,extended,354AFFC0
+patch=1,EE,2009F014,extended,3C0B03E0
+patch=1,EE,2009F018,extended,356B0008
+patch=1,EE,2009F01C,extended,152A0004
+patch=1,EE,2009F020,extended,00000000
+patch=1,EE,2009F024,extended,AD0B0000
+patch=1,EE,2009F028,extended,10000005
+patch=1,EE,2009F02C,extended,AD000004
+patch=1,EE,2009F030,extended,3C08002C
+patch=1,EE,2009F034,extended,3508C670
+patch=1,EE,2009F038,extended,AD0B0000
+patch=1,EE,2009F03C,extended,AD000004
+patch=1,EE,2009F040,extended,03E00008
+patch=1,EE,2009F044,extended,00000000
+patch=1,EE,201E70CC,extended,0C027C00

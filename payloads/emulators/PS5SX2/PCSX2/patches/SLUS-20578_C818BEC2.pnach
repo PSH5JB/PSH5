@@ -1,0 +1,14 @@
+gametitle=Lord of Rings: The Two Towers SLUS_205.78
+
+[Widescreen 16:9]
+gsaspectratio=16:9
+description=Widescreen Hack
+patch=1,EE,00107160,extended,3c023fe3
+patch=1,EE,00107164,extended,34428e38
+
+// [60 FPS] from Gabominated/PCSX2 on GitHub (1c0950f); turned on by this game's settings file.
+[60 FPS]
+author=Gabominated
+description=Might need EE overclock (130%).
+patch=0,EE,00106674,word,83848454
+//0010634C 001664AC Alt

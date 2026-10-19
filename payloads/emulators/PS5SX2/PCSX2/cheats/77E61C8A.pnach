@@ -1,0 +1,5 @@
+patch=1,EE,20A44B70,extended,4405C000 // 535mm width
+patch=1,EE,20A44B74,extended,43960000 // 300mm height
+patch=1,EE,20A44B6C,extended,44098000 // 550mm eye distance
+patch=1,EE,20A44B68,extended,3F800000 // Zoom 1.0
+patch=1,EE,20A44B78,extended,3F800000 // 16:9

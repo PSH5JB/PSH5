@@ -36,7 +36,7 @@ const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
-const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-177.zip";
+const EMU_PS5SX2_PCSX2     = "emulators/PS5SX2/PCSX2";
 const EMU_PS5SX2_FILES     = "emulators/PS5SX2/PPSA99203";
 const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
 const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
@@ -63,7 +63,7 @@ const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
-const EMU_PS5SX2_VER       = "vk-285-177";
+const EMU_PS5SX2_VER       = "2.15";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
@@ -1084,6 +1084,14 @@ async function ensureEmuDataDirs(p, chain, log) {
     "/data/PCSX2",
     PCSX2_BIOS_DIR,
     PCSX2_GAMES_DIR,
+    "/data/PCSX2/cheats",
+    "/data/PCSX2/flags",
+    "/data/PCSX2/patches",
+    "/data/PCSX2/resources",
+    "/data/PCSX2/resources/shaders",
+    "/data/PCSX2/resources/shaders/common",
+    "/data/PCSX2/resources/shaders/vulkan",
+    "/data/PCSX2/settings",
     "/data/snes9x",
     "/data/snes9x/roms",
     "/data/snes9x/bios",
@@ -1298,6 +1306,71 @@ async function installPs2Bios(p, chain, log) {
   await chmodPath(p, chain, PCSX2_GAMES_DIR);
   await installNamedFile(EMU_PS5SX2_BIOS, PCSX2_BIOS_DIR, "SCPH-70012.BIN", p, chain, log);
   await installNamedFile(EMU_PS5SX2_BIOS_NVM, PCSX2_BIOS_DIR, "SCPH-70012.NVM", p, chain, log);
+  const _pcsx2Sentinel = "/data/PCSX2/resources/GameIndex.yaml";
+  if (!(await pathExists(p, chain, _pcsx2Sentinel))) {
+    log("installing PCSX2 data (" + EMU_PS5SX2_VER + ")...");
+    const _pcsx2Files = [
+      "gs.ini",
+      "live.ini",
+      "cheats/0F6FC6CF.pnach",
+      "cheats/77E61C8A.pnach",
+      "flags/fastmem",
+      "flags/jitdirect",
+      "flags/sw_renderer",
+      "flags/vk_16k",
+      "flags/vk_async",
+      "flags/vk_deferflush",
+      "flags/vk_depthwait",
+      "flags/vk_fastpoll",
+      "flags/vk_gpuwait",
+      "flags/vk_latewait",
+      "flags/vk_nocrumbs",
+      "flags/vk_noevict",
+      "flags/vk_renderer",
+      "flags/vk_triple",
+      "flags/vk_widemem",
+      "patches/SCUS-97275_0F6FC6CF.pnach",
+      "patches/SCUS-97328_77E61C8A.pnach",
+      "patches/SCUS-97353_45FE0CC4.pnach",
+      "patches/SCUS-97399_D6385328.pnach",
+      "patches/SLPS-25198_3E68955A.pnach",
+      "patches/SLPS-25198_BD3FB870.pnach",
+      "patches/SLUS-20064_FD9CD8FC.pnach",
+      "patches/SLUS-20520_CF56CD9C.pnach",
+      "patches/SLUS-20578_C818BEC2.pnach",
+      "patches/SLUS-20733_28270F7D.pnach",
+      "patches/SLUS-20770_4CE187F6.pnach",
+      "patches/SLUS-21351_0518D274.pnach",
+      "resources/GameIndex.yaml",
+      "resources/shaders/common/ffx_a.h",
+      "resources/shaders/common/ffx_cas.h",
+      "resources/shaders/common/fxaa.fx",
+      "resources/shaders/vulkan/cas.glsl",
+      "resources/shaders/vulkan/convert.glsl",
+      "resources/shaders/vulkan/imgui.glsl",
+      "resources/shaders/vulkan/interlace.glsl",
+      "resources/shaders/vulkan/merge.glsl",
+      "resources/shaders/vulkan/present.glsl",
+      "resources/shaders/vulkan/shadeboost.glsl",
+      "resources/shaders/vulkan/tfx.glsl",
+      "settings/Castlevania - Lament of Innocence (USA) (En,Ja).ini",
+      "settings/God of War (USA).ini",
+      "settings/Gran Turismo 4 (USA).ini",
+      "settings/Kingdom Hearts Final Mix (English v2026-06-26).ini",
+      "settings/Lord of the Rings, The - The Fellowship of the Ring (USA).ini",
+      "settings/Lord of the Rings, The - The Return of the King (USA).ini",
+      "settings/Lord of the Rings, The - The Two Towers (USA).ini",
+      "settings/Need for Speed - Most Wanted - Black Edition (USA).ini",
+      "settings/Oni (USA).ini",
+      "settings/Ratchet & Clank (USA) (En,Fr,De,Es,It).ini",
+      "settings/Ratchet & Clank 3.ini",
+      "settings/Ratchet & Clank.ini",
+      "settings/SOCOM II - U.S. Navy SEALs (USA).ini",
+    ];
+    for (let _pi = 0; _pi < _pcsx2Files.length; _pi++) {
+      await fetchWriteFile(EMU_PS5SX2_PCSX2 + "/" + _pcsx2Files[_pi], "/data/PCSX2/" + _pcsx2Files[_pi], p, chain, log);
+    }
+  }
 }
 
 async function installSx2Title(p, chain, log) {
