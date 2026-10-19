@@ -1,0 +1,9 @@
+# PS5SX3: the entries of the cheat files in this folder that are on by default (rpcs3/ps5/platform/ps5_cheats.h). The person's own
+# choice, in <root>/cheats/state.txt, always wins: an entry they turn off in the home menu's Cheats stays off at every start.
+# <file name><TAB><entry name>, a line each.
+Grand Theft Auto IV BLES00229 01.08 PS5SX3.ncl	Half pedestrians and traffic (PS5SX3)
+Grand Theft Auto IV BLES00229 01.08 PS5SX3.ncl	Longer draw distance (PS5SX3)
+Grand Theft Auto IV BLES00229 01.08 PS5SX3.ncl	No motion and depth-of-field blur (PS5SX3)
+Grand Theft Auto IV NPEB00882 01.09 PS5SX3.ncl	Half pedestrians and traffic (PS5SX3)
+Grand Theft Auto IV NPEB00882 01.09 PS5SX3.ncl	Longer draw distance (PS5SX3)
+Grand Theft Auto IV NPEB00882 01.09 PS5SX3.ncl	No motion and depth-of-field blur (PS5SX3)
