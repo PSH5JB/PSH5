@@ -27,7 +27,7 @@ const BYEPERVISOR_VER = "v1";
 const HYPERHEN_VER = "v0.9.2w";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
-const BLACKBOX_VER = "v1.11.0";
+const BLACKBOX_VER = "1.12.0";
 const CHEATRUNNER_VER = "v0.18";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
