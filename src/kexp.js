@@ -24,6 +24,7 @@ const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
 const HYPERHEN_ELF = "HyperHEN.elf";
 const BYEPERVISOR_VER = "v1";
+const BV_PHASE_MARKER = "/data/byepervisor.phase1";
 const HYPERHEN_VER = "v0.9.2w";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
@@ -1910,6 +1911,31 @@ async function onionVersion() {
   }
 }
 export async function loadOptionalPayloads(p, chain, log) {
+  const _bvMode = typeof location !== "undefined" &&
+    new URLSearchParams(location.search).get("bv") === "1";
+  if (_bvMode) {
+    const _bvDone = await pathExists(p, chain, BV_PHASE_MARKER);
+    if (!_bvDone) {
+      log("Byepervisor phase 1 — sending HV exploit");
+      try { await writeTextFile(p, chain, BV_PHASE_MARKER, "1"); } catch (_e) {
+        log("marker write failed: " + (_e && _e.message ? _e.message : String(_e)), "error");
+        return;
+      }
+      try {
+        await sendOneRetry(BYEPERVISOR_ELF, p, chain, log, 3);
+      } catch (_e) {
+        log("Byepervisor failed: " + (_e && _e.message ? _e.message : String(_e)), "error");
+        try { await chain.syscall(SYS_UNLINK, cstring(p, BV_PHASE_MARKER)); } catch (_) {}
+        return;
+      }
+      log("Byepervisor sent — check screen for 8-digit code", "info");
+      log("Enter rest mode. Open this page again when PS5 wakes for phase 2.", "info");
+      await notify(p, chain, "Byepervisor active — enter rest mode now");
+      return;
+    }
+    log("Byepervisor phase 2 — HV patched, loading full chain");
+    try { await chain.syscall(SYS_UNLINK, cstring(p, BV_PHASE_MARKER)); } catch (_) {}
+  }
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
   // Save all payloads to disk FIRST while the chain is alive.
@@ -1929,7 +1955,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
-  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), BYEPERVISOR_VER);
+  if (_bvMode) await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), BYEPERVISOR_VER);
   await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF),     HYPERHEN_VER);
 
   await ensureOnionTitleIds(p, chain, log);
