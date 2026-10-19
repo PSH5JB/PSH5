@@ -1724,6 +1724,8 @@ async function installPS5SX3(p, chain, log) {
     "sce_sys/icon0.png",
   ];
   const _seenDirs = {};
+  const _ymlTotal = _files.filter(f => f.endsWith(".yml")).length;
+  let _ymlIdx = 0;
   for (let _fi = 0; _fi < _files.length; _fi++) {
     const _f = _files[_fi];
     const _sl = _f.lastIndexOf("/");
@@ -1732,7 +1734,10 @@ async function installPS5SX3(p, chain, log) {
       await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + _d);
       _seenDirs[_d] = true;
     }
-    await fetchWriteFile(_base + _f, HOMEBREW_DIR + "/" + psaId + "/" + _f, p, chain, log);
+    const _isYml = _f.endsWith(".yml");
+    if (_isYml) _ymlIdx++;
+    const _logFn = _isYml ? (msg, t, r) => log((msg.includes(" OK ") || msg.includes("FAIL")) ? msg + " (" + _ymlIdx + "/" + _ymlTotal + ")" : msg, t, r) : log;
+    await fetchWriteFile(_base + _f, HOMEBREW_DIR + "/" + psaId + "/" + _f, p, chain, _logFn);
   }
   const _wikiDir = HOMEBREW_DIR + "/" + psaId + "/game_configs_wiki";
   const _wikiSentinel = _wikiDir + "/config_BCAS25016.yml";
@@ -1742,7 +1747,8 @@ async function installPS5SX3(p, chain, log) {
     const _wikiNames = JSON.parse(_wikiListText);
     await ensureDir(p, chain, _wikiDir);
     for (let _wi = 0; _wi < _wikiNames.length; _wi++) {
-      await fetchWriteFile("emulators/RPS5S3/files/game_configs_wiki/" + _wikiNames[_wi], _wikiDir + "/" + _wikiNames[_wi], p, chain, log);
+      const _wLog = (msg, t, r) => log((msg.includes(" OK ") || msg.includes("FAIL")) ? msg + " (" + (_wi + 1) + "/" + _wikiNames.length + ")" : msg, t, r);
+      await fetchWriteFile("emulators/RPS5S3/files/game_configs_wiki/" + _wikiNames[_wi], _wikiDir + "/" + _wikiNames[_wi], p, chain, _wLog);
     }
   }
   try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
