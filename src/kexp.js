@@ -11,6 +11,7 @@ const NOTIFY_SIZE = 0xc30;
 const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
+const ONIONHEN_VER = "v0.0.14-r8";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.6.1.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
@@ -1682,7 +1683,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
+  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"), ONIONHEN_VER);
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
