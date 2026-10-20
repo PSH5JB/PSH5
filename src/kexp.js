@@ -105,7 +105,6 @@ const AUTOLOAD_NAMES = [
   "OnionHEN.elf",
   PLDMGR_ELF,
   FAKE_SIGNIN_ELF,
-  SHADOWMOUNT_ELF,
   "PS5SXHelper.elf",
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
@@ -599,9 +598,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.signin) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
   }
-  if (mapped.shadow) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
-  }
   if (mapped.pld) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
     for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
@@ -624,7 +620,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs["OnionHEN.elf"] = 10000;
   afterMs[PLDMGR_ELF] = 2000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
-  afterMs[SHADOWMOUNT_ELF] = 5000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
@@ -1691,7 +1686,6 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
-  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
   await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
