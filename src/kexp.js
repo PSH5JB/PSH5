@@ -21,11 +21,7 @@ const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.9.5-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
-const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
-const HYPERHEN_ELF = "HyperHEN.elf";
-const FTPS_ELF = "FTPS00001.elf";
-const HYPERHEN_PLUGINS_DIR = "/data/HyperHEN/plugins";
-const HYPERHEN_PAYLOADS_DIR = "/data/HyperHEN/payloads";
+const BYEPERVISOR_ELF = "byepervisor.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "1.12.0";
@@ -43,6 +39,9 @@ const EMU_PS5SX2_FILES     = "emulators/PS5SX2/PPSA99203";
 const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
 const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
 const PCSX2_BIOS_DIR       = "/data/PCSX2/bios";
+const EMU_PS5SX3_INSTALLER = "emulators/PS5SX3/PS5SX3-Installer.elf";
+const EMU_PS5SX3_HELPER    = "emulators/PS5SX3/PS5SX3Helper.elf";
+const EMU_PS5SX3_FILES     = "emulators/PS5SX3/PPSA99303";
 const PCSX2_GAMES_DIR      = "/data/PCSX2/games";
 const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.3.elf";
 const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
@@ -66,6 +65,7 @@ const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-162";
+const EMU_PS5SX3_VER       = "tb11";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
@@ -82,23 +82,22 @@ const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
 const EMU_PS5RA_VER        = "v1.0.0-beta.1";
 const HB_SX2 = "PPSA99203";
+const HB_SX3 = "PPSA99303";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
 const HB_X360 = "PPSA50011";
 const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
-const HB_RPCS3 = "PPSA42674";
 const HB_RA = "PPSA99169";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
-ZIP_DONE_REL[HB_RPCS3] = "webui/version.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RPCS3, HB_RA,
+  HB_SX2, HB_SX3, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -108,10 +107,14 @@ const ONION_EMU_TITLE_IDS = [
 // its own elevator and sends it itself. Large ELFs last so they
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
-  BYEPERVISOR_ELF,
-  HYPERHEN_ELF,
-  // Remaining payloads auto-start via HyperHEN's own pipeline after the
-  // hypervisor is fully ready; they are saved to HYPERHEN_PAYLOADS_DIR.
+  "OnionHEN.elf",
+  PLDMGR_ELF,
+  FAKE_SIGNIN_ELF,
+  SHADOWMOUNT_ELF,
+  "PS5SXHelper.elf",
+  ANYPAD_ELF,
+  CHEATRUNNER_ELF,
+  BLACKBOX_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 10;
@@ -595,14 +598,20 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     say("could not create /data/ps5_autoloader");
     return false;
   }
-  if (mapped.byepervisor) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
-  }
-  if (mapped.hyperhen) {
-    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + HYPERHEN_ELF, mapped.hyperhen.base, mapped.hyperhen.size);
+  if (mapped.onion) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/OnionHEN.elf", mapped.onion.base, mapped.onion.size);
   }
   if (mapped.signin) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + FAKE_SIGNIN_ELF, mapped.signin.base, mapped.signin.size);
+  }
+  if (mapped.shadow) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + SHADOWMOUNT_ELF, mapped.shadow.base, mapped.shadow.size);
+  }
+  if (mapped.pld) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ELF, mapped.pld.base, mapped.pld.size);
+    for (let a = 0; a < PLDMGR_ALIASES.length; a++) {
+      await writeBuf(p, chain, AUTOLOADER_DIR + "/" + PLDMGR_ALIASES[a], mapped.pld.base, mapped.pld.size);
+    }
   }
   if (mapped.blackbox) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BLACKBOX_ELF, mapped.blackbox.base, mapped.blackbox.size);
@@ -613,10 +622,14 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
+  if (mapped.byepervisor) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
+  }
   const afterMs = {};
-  afterMs[BYEPERVISOR_ELF] = 5000;
-  afterMs[HYPERHEN_ELF] = 10000;
+  afterMs["OnionHEN.elf"] = 10000;
+  afterMs[PLDMGR_ELF] = 2000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
+  afterMs[SHADOWMOUNT_ELF] = 5000;
   afterMs["PS5SXHelper.elf"] = 4000;
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
@@ -703,13 +716,6 @@ async function saveOnly(name, key, p, chain, log, isPresent, ver) {
     if (filePresent) {
       log(name + " outdated, replacing with " + ver);
       try { await chain.syscall(SYS_UNLINK, cstring(p, AUTOLOADER_DIR + "/" + name)); } catch (_) {}
-      try {
-        const _stale = await listDir(p, chain, AUTOLOADER_DIR);
-        for (const { name: _f } of _stale) {
-          if (_f !== name && _f.startsWith(name + "."))
-            try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + _f); } catch (_) {}
-        }
-      } catch (_) {}
     }
   } else {
     if (isPresent === true || (isPresent !== false && await pathExists(p, chain, AUTOLOADER_DIR + "/" + name))) {
@@ -833,39 +839,6 @@ async function saveAutoloadElf(fetchPath, destName, ver, p, chain, log) {
   } catch (error) {
     log(destName + " autoloader save skipped: " +
       (error && error.message ? error.message : String(error)));
-  }
-}
-
-async function saveHenPayload(fetchPath, destName, ver, priority, p, chain, log, delay = 0) {
-  const dest = HYPERHEN_PAYLOADS_DIR + "/" + destName;
-  const marker = ver ? dest + "." + ver : "";
-  if (await pathExists(p, chain, dest) && (!ver || await pathExists(p, chain, marker))) {
-    log(destName + " already in HyperHEN payloads" + (ver ? " (" + ver + ")" : ""));
-  } else {
-    try {
-      const mapped = await mapElf(fetchPath, p, chain);
-      try {
-        await writeBuf(p, chain, dest, mapped.base, mapped.size);
-        if (marker) {
-          try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
-        }
-        log(destName + " saved to HyperHEN payloads");
-      } finally {
-        try { await chain.syscall(SYS_MUNMAP, mapped.base, mapped.mmapSize); } catch (_) {}
-      }
-    } catch (error) {
-      log(destName + " HyperHEN payload save skipped: " +
-        (error && error.message ? error.message : String(error)));
-    }
-  }
-  const autoStart = dest + ".auto_start";
-  if (!(await pathExists(p, chain, autoStart))) {
-    try { await writeTextFile(p, chain, autoStart, ""); } catch (_) {}
-  }
-  if (priority > 0) {
-    const configPath = dest + ".json";
-    try { await writeTextFile(p, chain, configPath,
-      '{"version":1,"priority":' + priority + ',"delay_seconds":' + delay + '}'); } catch (_) {}
   }
 }
 
@@ -1088,8 +1061,6 @@ async function ensureEmuDataDirs(p, chain, log) {
     HOMEBREW_DIR + "/" + HB_X360,
     HOMEBREW_DIR + "/" + HB_X360 + "/assets",
     HOMEBREW_DIR + "/" + HB_X360 + "/assets/roms",
-    HOMEBREW_DIR + "/" + HB_RPCS3,
-    HOMEBREW_DIR + "/" + HB_RPCS3 + "/games",
     HOMEBREW_DIR + "/" + HB_RA,
     HOMEBREW_DIR + "/" + HB_RA + "/content",
     HOMEBREW_DIR + "/" + HB_RA + "/content/Saturn",
@@ -1114,27 +1085,6 @@ async function ensureEmuDataDirs(p, chain, log) {
     }
   }
   log("emu folders ready (" + ok + "/" + dirs.length + ")");
-}
-
-async function installRpcs3Title(p, chain, log) {
-  const title = HOMEBREW_DIR + "/" + HB_RPCS3;
-  await ensureDir(p, chain, HOMEBREW_DIR);
-  await ensureDir(p, chain, title);
-  await ensureDir(p, chain, title + "/games");
-  await chmodPath(p, chain, title + "/games");
-  const ok = await installZipEmu(EMU_PS5RPCS3_ZIP, HB_RPCS3, EMU_PS5RPCS3_VER, p, chain, log);
-  await ensureDir(p, chain, title + "/games");
-  await chmodPath(p, chain, title + "/games");
-  return ok;
-}
-
-async function installRpcs3Firmware(p, chain, log) {
-  const dir = HOMEBREW_DIR + "/" + HB_RPCS3 + "/system/RPCS3";
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + HB_RPCS3 + "/system");
-  await ensureDir(p, chain, dir);
-  await chmodPath(p, chain, dir);
-  await installNamedFile(EMU_PS5RPCS3_PUP, dir, "PS3UPDAT.PUP", p, chain, log);
 }
 
 async function ensureRaDataDirs(p, chain, log) {
@@ -1367,6 +1317,70 @@ async function installSx2Title(p, chain, log) {
   }
   try { await writeTextFile(p, chain, marker, EMU_PS5SX2_VER); } catch (_) {}
   log(HB_SX2 + " installed");
+  return true;
+}
+
+async function installSx3Title(p, chain, log) {
+  const base = HOMEBREW_DIR + "/" + HB_SX3;
+  const eboot = base + "/eboot.bin";
+  const param = base + "/sce_sys/param.json";
+  const marker = HOMEBREW_DIR + "/" + HB_SX3 + ".installed." + EMU_PS5SX3_VER;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(HB_SX3 + " already installed (" + EMU_PS5SX3_VER + "), skipping");
+    await chmodHomebrewTitle(p, chain, HB_SX3);
+    return true;
+  }
+  log("installing " + HB_SX3 + " (" + EMU_PS5SX3_VER + ") file by file...");
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, base);
+  await ensureDir(p, chain, base + "/sce_sys");
+  await ensureDir(p, chain, base + "/sce_module");
+  await chmodPath(p, chain, base);
+  await chmodPath(p, chain, base + "/sce_sys");
+  await chmodPath(p, chain, base + "/sce_module");
+  const files = [
+    [EMU_PS5SX3_FILES + "/eboot.bin", base, "eboot.bin"],
+    [EMU_PS5SX3_FILES + "/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
+    [EMU_PS5SX3_FILES + "/sce_sys/param.json", base + "/sce_sys", "param.json"],
+    [EMU_PS5SX3_FILES + "/sce_sys/icon0.png", base + "/sce_sys", "icon0.png"],
+  ];
+  for (let i = 0; i < files.length; i++) {
+    const spec = files[i];
+    const dest = spec[1] + "/" + spec[2];
+    try { await unlinkPath(p, chain, dest); } catch (_) {}
+    let ok = false;
+    try {
+      if (spec[2] === "param.json") {
+        ok = await installNamedFile(spec[0], spec[1], spec[2], p, chain, log, true);
+      } else {
+        log("copying " + spec[2] + " to " + spec[1]);
+        await fetchWriteFile(spec[0], dest, p, chain, log);
+        await chmodPath(p, chain, dest);
+        ok = true;
+      }
+    } catch (e) {
+      log(spec[2] + " copy skipped: " + (e && e.message ? e.message : String(e)));
+    }
+    if (!ok && (spec[2] === "eboot.bin" || spec[2] === "param.json")) {
+      log(HB_SX3 + " copy failed on " + spec[2] + ", sending installer");
+      try {
+        await sendOneRetry(EMU_PS5SX3_INSTALLER, p, chain, log, 3);
+        await waitSeconds(log, "waiting for PS5SX3 installer", 30, null);
+      } catch (e) {
+        log("PS5SX3 installer skipped: " + (e && e.message ? e.message : String(e)));
+      }
+      break;
+    }
+  }
+  await chmodHomebrewTitle(p, chain, HB_SX3);
+  if (!(await pathExists(p, chain, eboot)) || !(await pathExists(p, chain, param))) {
+    log(HB_SX3 + " install failed: eboot or param missing");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EMU_PS5SX3_VER); } catch (_) {}
+  log(HB_SX3 + " installed");
   return true;
 }
 
@@ -1661,49 +1675,8 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
 }
 
-
-async function cleanAutoloadDir(p, chain, log) {
-  // ELFs superseded by HyperHEN — no longer in AUTOLOAD_NAMES
-  const superseded = [
-    "OnionHEN.elf",
-    SHADOWMOUNT_ELF,
-    PLDMGR_ELF,
-    "byepervisor.elf",
-    // Moved to HYPERHEN_PAYLOADS_DIR — injected via HyperHEN autostart after hypervisor ready
-    FAKE_SIGNIN_ELF,
-    ANYPAD_ELF,
-    CHEATRUNNER_ELF,
-    BLACKBOX_ELF,
-    "PS5SXHelper.elf",
-  ];
-  for (const name of superseded) {
-    try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed " + name); } catch (_) {}
-  }
-
-  // Old AnyPad filename — changes with each release since the version is in the filename
-  let entries;
-  try { entries = await listDir(p, chain, AUTOLOADER_DIR); } catch (_) { return; }
-  for (const { name } of entries) {
-    if (name.startsWith("AnyPad-PS5-") && name !== ANYPAD_ELF) {
-      try { await unlinkPath(p, chain, AUTOLOADER_DIR + "/" + name); log("removed old " + name); } catch (_) {}
-    }
-  }
-}
-
-const HV_READY_FLAG = "/system_tmp/hyperhen/ready/hypervisor";
-const HYPERHEN_AFTER_WAKE_MS = 20000;
-
-function autoloadScript(armed) {
-  if (armed) return HYPERHEN_ELF + "\n";
-  return BYEPERVISOR_ELF + "\n"
-    + "@wait " + HV_READY_FLAG + "\n"
-    + "!" + HYPERHEN_AFTER_WAKE_MS + "\n"
-    + HYPERHEN_ELF + "\n";
-}
-
 export async function loadOptionalPayloads(p, chain, log) {
   await ensureDir(p, chain, AUTOLOADER_DIR);
-  await cleanAutoloadDir(p, chain, log);
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
@@ -1716,32 +1689,16 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  // Flag is set by Byepervisor when the hypervisor is hacked on wake, and cleared on reboot.
-  let isByepervisorArmed = await pathExists(p, chain, HV_READY_FLAG);
+  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"));
+  await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
+  await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
+  await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
+  await saveOnly(SHADOWMOUNT_ELF,  "shadow",   p, chain, log, _present.has(SHADOWMOUNT_ELF), SHADOWMOUNT_VER);
+  await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
+  await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
 
-  await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), "1");
-  await saveOnly(HYPERHEN_ELF, "hyperhen", p, chain, log, _present.has(HYPERHEN_ELF), "v0.9.2w");
-
-  await ensureDir(p, chain, "/data/HyperHEN");
-  try { await unlinkPath(p, chain, "/data/HyperHEN/disable_hypervisor"); } catch (_) {}
-  await ensureDir(p, chain, HYPERHEN_PLUGINS_DIR);
-  await ensureDir(p, chain, HYPERHEN_PAYLOADS_DIR);
-
-  // np-fake-signin disabled: hooks PSN at kernel offsets that crash on 13.60
-  // await saveHenPayload(FAKE_SIGNIN_ELF, FAKE_SIGNIN_ELF, null, 50, p, chain, log);
-  await saveHenPayload(ANYPAD_ELF, ANYPAD_ELF, null, 30, p, chain, log, 10);
-  await saveHenPayload(CHEATRUNNER_ELF, CHEATRUNNER_ELF, CHEATRUNNER_VER, 20, p, chain, log, 15);
-  await saveHenPayload(BLACKBOX_ELF, BLACKBOX_ELF, BLACKBOX_VER, 10, p, chain, log, 20);
-  await saveFile(HYPERHEN_PLUGINS_DIR, FTPS_ELF, "hyp1", p, chain, log);
-
-  try {
-    await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed));
-  } catch (_) {}
-  if (isByepervisorArmed) {
-    log("Hypervisor is ready. The WebKit Autoloader will send HyperHEN only.");
-  } else {
-    log("Open the WebKit Autoloader and leave it open. It sends Byepervisor, waits for the wake, waits 20 seconds, then sends HyperHEN.");
-  }
+  await ensureOnionTitleIds(p, chain, log);
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
@@ -1754,9 +1711,13 @@ export async function loadOptionalPayloads(p, chain, log) {
 
   // PS5SX2 (PS2) — copy the title from the release zip; aio helper autoloads.
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
-  await saveHenPayload(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, 40, p, chain, log);
+  await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await installSx2Title(p, chain, log);
   await installPs2Bios(p, chain, log);
+
+  // PS5SX3 (PS3) — copy the title from the server; installer ELF handles PS3 specifics.
+  await downloadToHB(EMU_PS5SX3_HELPER, "PS5SX3Helper.elf", EMU_PS5SX3_VER, p, chain, log);
+  await installSx3Title(p, chain, log);
 
   // snes9x — the ELF is the installer and helper. Do not autoload the 25MB
   // file; the app respawns its helper through 9021 after install.
@@ -1800,17 +1761,15 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenKeys(p, chain, log);
   await installEdenFirmware(p, chain, log);
 
-  await installRpcs3Title(p, chain, log);
-  await installRpcs3Firmware(p, chain, log);
 
   await installRaTitle(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
-      ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
+      ["PS5SX2", HB_SX2], ["PS5SX3", HB_SX3], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RPCS3", HB_RPCS3], ["RetroArch", HB_RA],
+      ["RetroArch", HB_RA],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
@@ -1822,9 +1781,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       await chmodHomebrewTitle(p, chain, _cl[_ci][1]);
   } catch (_) {}
 
-  // Re-apply phase-specific autoload.txt after the final homebrew install pass,
-  // which may have called saveAutoloadFiles and rebuilt it with all on-disk ELFs.
-  try { await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", autoloadScript(isByepervisorArmed)); } catch (_) {}
+  try { await saveAutoloadFiles(p, chain, log, {}); log("autoload.txt rebuilt"); } catch (_err) { log("autoload.txt rebuild failed: " + (_err && _err.message ? _err.message : String(_err))); }
 
   // Send the installer last — it opens the system PKG UI which closes
   // the browser session, but payloads are already saved so that is fine.
