@@ -62,6 +62,10 @@ const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
 const EMU_PS5SX2_VER       = "vk-285-162";
+const EMU_PS5SX3_INSTALLER = "emulators/PS5SX3/PS5SX3-Installer.elf";
+const EMU_PS5SX3_HELPER    = "emulators/PS5SX3/PS5SX3Helper.elf";
+const EMU_PS5SX3_FILES     = "emulators/PS5SX3/PPSA99303";
+const EMU_PS5SX3_VER       = "tb11.1";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
@@ -73,6 +77,7 @@ const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
 const EMU_PS5RA_VER        = "v1.0.0-beta.1";
 const HB_SX2 = "PPSA99203";
+const HB_SX3 = "PPSA99303";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
 const HB_X360 = "PPSA50011";
@@ -87,7 +92,7 @@ ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA,
+  HB_SX2, HB_SX3, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -1312,6 +1317,71 @@ async function installSx2Title(p, chain, log) {
   return true;
 }
 
+
+async function installSx3Title(p, chain, log) {
+  const base = HOMEBREW_DIR + "/" + HB_SX3;
+  const eboot = base + "/eboot.bin";
+  const param = base + "/sce_sys/param.json";
+  const marker = HOMEBREW_DIR + "/" + HB_SX3 + ".installed." + EMU_PS5SX3_VER;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(HB_SX3 + " already installed (" + EMU_PS5SX3_VER + "), skipping");
+    await chmodHomebrewTitle(p, chain, HB_SX3);
+    return true;
+  }
+  log("installing " + HB_SX3 + " (" + EMU_PS5SX3_VER + ") file by file...");
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, base);
+  await ensureDir(p, chain, base + "/sce_sys");
+  await ensureDir(p, chain, base + "/sce_module");
+  await chmodPath(p, chain, base);
+  await chmodPath(p, chain, base + "/sce_sys");
+  await chmodPath(p, chain, base + "/sce_module");
+  const files = [
+    [EMU_PS5SX3_FILES + "/eboot.bin", base, "eboot.bin"],
+    [EMU_PS5SX3_FILES + "/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
+    [EMU_PS5SX3_FILES + "/sce_sys/param.json", base + "/sce_sys", "param.json"],
+    [EMU_PS5SX3_FILES + "/sce_sys/icon0.png", base + "/sce_sys", "icon0.png"],
+  ];
+  for (let i = 0; i < files.length; i++) {
+    const spec = files[i];
+    const dest = spec[1] + "/" + spec[2];
+    try { await unlinkPath(p, chain, dest); } catch (_) {}
+    let ok = false;
+    try {
+      if (spec[2] === "param.json") {
+        ok = await installNamedFile(spec[0], spec[1], spec[2], p, chain, log, true);
+      } else {
+        log("copying " + spec[2] + " to " + spec[1]);
+        await fetchWriteFile(spec[0], dest, p, chain, log);
+        await chmodPath(p, chain, dest);
+        ok = true;
+      }
+    } catch (e) {
+      log(spec[2] + " copy skipped: " + (e && e.message ? e.message : String(e)));
+    }
+    if (!ok && (spec[2] === "eboot.bin" || spec[2] === "param.json")) {
+      log(HB_SX3 + " copy failed on " + spec[2] + ", sending installer");
+      try {
+        await sendOneRetry(EMU_PS5SX3_INSTALLER, p, chain, log, 3);
+        await waitSeconds(log, "waiting for PS5SX3 installer", 30, null);
+      } catch (e) {
+        log("PS5SX3 installer skipped: " + (e && e.message ? e.message : String(e)));
+      }
+      break;
+    }
+  }
+  await chmodHomebrewTitle(p, chain, HB_SX3);
+  if (!(await pathExists(p, chain, eboot)) || !(await pathExists(p, chain, param))) {
+    log(HB_SX3 + " install failed: eboot or param missing");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EMU_PS5SX3_VER); } catch (_) {}
+  log(HB_SX3 + " installed");
+  return true;
+}
+
 async function installCemuKeys(p, chain, log) {
   await ensureDir(p, chain, CEMU_DATA_DIR);
   await ensureDir(p, chain, CEMU_DATA_DIR + "/games");
@@ -1641,6 +1711,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await installSx2Title(p, chain, log);
+  // PS5SX3 (PS3) — copy the title from the server; installer ELF handles PS3 specifics.
+  await downloadToHB(EMU_PS5SX3_HELPER, "PS5SX3Helper.elf", EMU_PS5SX3_VER, p, chain, log);
+  await installSx3Title(p, chain, log);
   await installPs2Bios(p, chain, log);
 
   // snes9x — the ELF is the installer and helper. Do not autoload the 25MB
@@ -1691,7 +1764,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
-      ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
+      ["PS5SX2", HB_SX2], ["PS5SX3", HB_SX3], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
       ["RetroArch", HB_RA],
     ];
