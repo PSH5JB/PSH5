@@ -11,25 +11,23 @@ const NOTIFY_SIZE = 0xc30;
 const NOTIFY_MESSAGE = 0x2d;
 const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
-const HYPERHEN_DIR = "/data/HyperHEN";
+const ONIONHEN_VER = "v0.0.14-r8";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
 const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.6.1.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
+const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
 const PLDMGR_ALIASES = [];
 const CHEATRUNNER_ELF = "CheatRunner.elf";
 const BLACKBOX_ELF = "blackbox.elf";
-const ANYPAD_ELF = "AnyPad-PS5-0.9.5-beta.elf";
+const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
-const BYEPERVISOR_ELF = "byepervisor_reborn.elf";
-const HYPERHEN_ELF = "HyperHEN.elf";
-const BYEPERVISOR_VER = "v1";
-const BV_PHASE_MARKER = "/data/byepervisor.phase1";
-const HYPERHEN_VER = "v0.9.2w";
+const BYEPERVISOR_ELF = "byepervisor.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "1.12.0";
 const CHEATRUNNER_VER = "v0.18";
+const SHADOWMOUNT_VER = "1.7-beta5fix1";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
 const ONIONHEN_CONFIG = "/data/OnionHEN/config.ini";
@@ -37,7 +35,7 @@ const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
-const EMU_PS5SX2_PCSX2     = "emulators/PS5SX2/PCSX2";
+const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-162.zip";
 const EMU_PS5SX2_FILES     = "emulators/PS5SX2/PPSA99203";
 const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
 const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
@@ -56,7 +54,7 @@ const EMU_PS5CEMU_KEYS     = "emulators/PS5CEMU-HAR/keys.txt";
 const EMU_PS5CEMU_AESKEYS  = "emulators/PS5CEMU-HAR/aes_keys.txt";
 const CEMU_DATA_DIR        = "/data/ps5cemu";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
-const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.005.000.zip";
+const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.110.zip";
 const EMU_EDEN_PRODKEYS    = "emulators/ProsperoEden/keys/prod.keys";
 const EMU_EDEN_TITLEKEYS   = "emulators/ProsperoEden/keys/title.keys";
 const EDEN_KEYS_DIR        = "/data/prosperoeden/keys";
@@ -64,22 +62,23 @@ const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
-const EMU_PS5SX2_VER       = "2.15";
+const EMU_PS5SX2_VER       = "vk-285-162";
+const EMU_PS5SX3_INSTALLER = "emulators/PS5SX3/PS5SX3-Installer.elf";
+const EMU_PS5SX3_HELPER    = "emulators/PS5SX3/PS5SX3Helper.elf";
+const EMU_PS5SX3_FILES     = "emulators/PS5SX3/PPSA99303";
+const EMU_PS5SX3_VER       = "tb11.1";
 const EMU_SNES9X_VER       = "v2.3";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
 const EMU_PORPOISE_VER     = "v3.0";
 const EMU_PS5CEMU_VER      = "v3.5.0";
-const EMU_PROSPEROEDEN_VER = "v1.005.000";
+const EMU_PROSPEROEDEN_VER = "v1.000.110";
 const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip";
 const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
 const EMU_PS5RA_VER        = "v1.0.0-beta.1";
-const EMU_RPCS3_5_ZIP      = "emulators/RPCS3-5/RPCS3-5-v1.2.0-beta.zip";
-const EMU_RPCS3_5_KEYS     = "emulators/RPCS3-5/RPCS3-5-v1.2.0-beta-redump-keys.zip";
-const EMU_RPCS3_5_VER      = "v1.2.0-beta";
 const HB_SX2 = "PPSA99203";
-const HB_SX2_DISCTILE = "PPSA99230";
+const HB_SX3 = "PPSA99303";
 const HB_SNES = "PPSA99009";
 const HB_XPS = "PPSA97358";
 const HB_X360 = "PPSA50011";
@@ -87,46 +86,31 @@ const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
 const HB_RA = "PPSA99169";
-const HB_RPCS3_5 = "PPSA99303";
-const EMU_RPS5S3_ZIP = "emulators/RPS5S3/PS5SX3-TB6.zip";
-const EMU_RPS5S3_VER = "TB8";
-const EMU_RPS5S3_WIKI_LIST = "emulators/RPS5S3/game_configs_wiki_list.json";
-const EMU_RPS5S3_EBOOT    = "emulators/RPS5S3/eboot.bin";
-const EMU_RPS5S3_META_ZIP = "emulators/RPS5S3/PS5SX3-TB4-meta.zip";
-const EMU_RPS5S3_PARAM    = "emulators/RPS5S3/param.json";
-const EMU_RPS5S3_HELPER   = "emulators/RPS5S3/PS5SX3Helper.elf";
-const HB_PSBOX   = "PPSA99810";
-const EMU_PSBOX_ZIP = "emulators/PSBox/PSBox-v0.9.8.zip";
-const EMU_PSBOX_VER = "v0.9.8";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
 ZIP_DONE_REL[HB_CEMU] = "sce_sys/pic1.dds";
 ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
-ZIP_DONE_REL[HB_RPCS3_5] = "rpcs3ps5-text.bin";
-ZIP_DONE_REL[HB_PSBOX]   = "README.txt";
 const ONION_EMU_TITLE_IDS = [
-  HB_SX2, HB_SX2_DISCTILE, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA, HB_RPCS3_5, HB_PSBOX,
+  HB_SX2, HB_SX3, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
-// (PS5SXHelper aio) after HEN/pldmgr. Do not autoload
+// (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
 // xpsemu-helper or sandbox-elevator: both also grab elfldr 9021, so
 // the next emu cannot elevate after you close the first. Those ELFs
 // still save to /data/ps5_autoloader for Payload Manager. CEMU ships
 // its own elevator and sends it itself. Large ELFs last so they
 // cannot stall 8084.
 const AUTOLOAD_NAMES = [
+  BYEPERVISOR_ELF,
   "OnionHEN.elf",
   PLDMGR_ELF,
   FAKE_SIGNIN_ELF,
   "PS5SXHelper.elf",
-  "PS5SX3Helper.elf",
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
   BLACKBOX_ELF,
-  BYEPERVISOR_ELF,
-  HYPERHEN_ELF,
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 10;
@@ -538,8 +522,6 @@ async function fetchWriteFile(fetchPath, dest, p, chain, log) {
   const probe = await fetch(url, { headers: { Range: "bytes=0-0" } });
   if (!probe.ok && probe.status !== 206)
     throw new Error("kexp: " + fetchPath + " returned HTTP " + probe.status);
-  if (/html/i.test(probe.headers.get("content-type") || ""))
-    throw new Error("kexp: " + fetchPath + " not found (server returned HTML)");
   const cr = probe.headers.get("Content-Range") || probe.headers.get("content-range") || "";
   let total = 0;
   const slash = cr.lastIndexOf("/");
@@ -633,7 +615,11 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.anypad) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + ANYPAD_ELF, mapped.anypad.base, mapped.anypad.size);
   }
+  if (mapped.byepervisor) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
+  }
   const afterMs = {};
+  afterMs[BYEPERVISOR_ELF] = 5000;
   afterMs["OnionHEN.elf"] = 10000;
   afterMs[PLDMGR_ELF] = 2000;
   afterMs[FAKE_SIGNIN_ELF] = 2000;
@@ -641,7 +627,6 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
   afterMs[BLACKBOX_ELF] = 8000;
-  afterMs[BYEPERVISOR_ELF] = 20000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -940,36 +925,6 @@ function onionDefaultConfig(ids) {
   ].join("\n");
 }
 
-async function ensureShadowmountConfig(p, chain, log) {
-  try {
-    const cfg = "/data/shadowmount/config.ini";
-    let text = await readTextFile(p, chain, cfg, 0x10000);
-    if (text != null && /^scanpath=\/data\/homebrew$/m.test(text)) {
-      log("shadowmount config already has correct scanpath");
-      return;
-    }
-    const next = [
-      "api_bind_address=0.0.0.0",
-      "scan_depth=1",
-      "scanpath=/data/homebrew",
-      "",
-    ].join("\n");
-    await ensureDir(p, chain, "/data/shadowmount");
-    await writeTextFile(p, chain, cfg, next);
-    log("shadowmount config.ini written (scanpath=/data/homebrew)");
-  } catch (error) {
-    log("shadowmount config skipped: " + (error && error.message ? error.message : String(error)));
-  }
-}
-async function ensureHyperHENDir(p, chain, log) {
-  try {
-    await ensureDir(p, chain, HYPERHEN_DIR);
-    log("HyperHEN dir ready");
-  } catch (error) {
-    log("HyperHEN dir skipped: " + (error && error.message ? error.message : String(error)));
-  }
-}
-
 async function ensureOnionTitleIds(p, chain, log) {
   try {
     await ensureDir(p, chain, ONIONHEN_DIR);
@@ -977,16 +932,7 @@ async function ensureOnionTitleIds(p, chain, log) {
     if (text == null) text = "";
     const lineRe = /^exact_title_ids=(.*)$/m;
     const match = text.match(lineRe);
-    // Auto-detect any PPSA* title dirs the user has installed under /data/homebrew
-    const hbEntries = await listDir(p, chain, HOMEBREW_DIR);
-    const hbIds = hbEntries
-      .filter((e) => e.type === DT_DIR && onionTitleIdOk(e.name))
-      .map((e) => e.name);
-    const existingRaw = match ? match[1] : "";
-    const combinedRaw = hbIds.length
-      ? existingRaw + (existingRaw ? "," : "") + hbIds.join(",")
-      : existingRaw;
-    const ids = mergeOnionTitleIds(combinedRaw);
+    const ids = mergeOnionTitleIds(match ? match[1] : "");
     const idLine = "exact_title_ids=" + ids.join(",");
     const validSchema = /\[meta\]/.test(text) && /^schema_version=1$/m.test(text);
     let next = text;
@@ -1085,14 +1031,6 @@ async function ensureEmuDataDirs(p, chain, log) {
     "/data/PCSX2",
     PCSX2_BIOS_DIR,
     PCSX2_GAMES_DIR,
-    "/data/PCSX2/cheats",
-    "/data/PCSX2/flags",
-    "/data/PCSX2/patches",
-    "/data/PCSX2/resources",
-    "/data/PCSX2/resources/shaders",
-    "/data/PCSX2/resources/shaders/common",
-    "/data/PCSX2/resources/shaders/vulkan",
-    "/data/PCSX2/settings",
     "/data/snes9x",
     "/data/snes9x/roms",
     "/data/snes9x/bios",
@@ -1141,6 +1079,8 @@ async function ensureEmuDataDirs(p, chain, log) {
   }
   log("emu folders ready (" + ok + "/" + dirs.length + ")");
 }
+
+
 
 async function ensureRaDataDirs(p, chain, log) {
   const title = HOMEBREW_DIR + "/" + HB_RA;
@@ -1307,71 +1247,6 @@ async function installPs2Bios(p, chain, log) {
   await chmodPath(p, chain, PCSX2_GAMES_DIR);
   await installNamedFile(EMU_PS5SX2_BIOS, PCSX2_BIOS_DIR, "SCPH-70012.BIN", p, chain, log);
   await installNamedFile(EMU_PS5SX2_BIOS_NVM, PCSX2_BIOS_DIR, "SCPH-70012.NVM", p, chain, log);
-  const _pcsx2Sentinel = "/data/PCSX2/resources/GameIndex.yaml";
-  if (!(await pathExists(p, chain, _pcsx2Sentinel))) {
-    log("installing PCSX2 data (" + EMU_PS5SX2_VER + ")...");
-    const _pcsx2Files = [
-      "gs.ini",
-      "live.ini",
-      "cheats/0F6FC6CF.pnach",
-      "cheats/77E61C8A.pnach",
-      "flags/fastmem",
-      "flags/jitdirect",
-      "flags/sw_renderer",
-      "flags/vk_16k",
-      "flags/vk_async",
-      "flags/vk_deferflush",
-      "flags/vk_depthwait",
-      "flags/vk_fastpoll",
-      "flags/vk_gpuwait",
-      "flags/vk_latewait",
-      "flags/vk_nocrumbs",
-      "flags/vk_noevict",
-      "flags/vk_renderer",
-      "flags/vk_triple",
-      "flags/vk_widemem",
-      "patches/SCUS-97275_0F6FC6CF.pnach",
-      "patches/SCUS-97328_77E61C8A.pnach",
-      "patches/SCUS-97353_45FE0CC4.pnach",
-      "patches/SCUS-97399_D6385328.pnach",
-      "patches/SLPS-25198_3E68955A.pnach",
-      "patches/SLPS-25198_BD3FB870.pnach",
-      "patches/SLUS-20064_FD9CD8FC.pnach",
-      "patches/SLUS-20520_CF56CD9C.pnach",
-      "patches/SLUS-20578_C818BEC2.pnach",
-      "patches/SLUS-20733_28270F7D.pnach",
-      "patches/SLUS-20770_4CE187F6.pnach",
-      "patches/SLUS-21351_0518D274.pnach",
-      "resources/GameIndex.yaml",
-      "resources/shaders/common/ffx_a.h",
-      "resources/shaders/common/ffx_cas.h",
-      "resources/shaders/common/fxaa.fx",
-      "resources/shaders/vulkan/cas.glsl",
-      "resources/shaders/vulkan/convert.glsl",
-      "resources/shaders/vulkan/imgui.glsl",
-      "resources/shaders/vulkan/interlace.glsl",
-      "resources/shaders/vulkan/merge.glsl",
-      "resources/shaders/vulkan/present.glsl",
-      "resources/shaders/vulkan/shadeboost.glsl",
-      "resources/shaders/vulkan/tfx.glsl",
-      "settings/Castlevania - Lament of Innocence (USA) (En,Ja).ini",
-      "settings/God of War (USA).ini",
-      "settings/Gran Turismo 4 (USA).ini",
-      "settings/Kingdom Hearts Final Mix (English v2026-06-26).ini",
-      "settings/Lord of the Rings, The - The Fellowship of the Ring (USA).ini",
-      "settings/Lord of the Rings, The - The Return of the King (USA).ini",
-      "settings/Lord of the Rings, The - The Two Towers (USA).ini",
-      "settings/Need for Speed - Most Wanted - Black Edition (USA).ini",
-      "settings/Oni (USA).ini",
-      "settings/Ratchet & Clank (USA) (En,Fr,De,Es,It).ini",
-      "settings/Ratchet & Clank 3.ini",
-      "settings/Ratchet & Clank.ini",
-      "settings/SOCOM II - U.S. Navy SEALs (USA).ini",
-    ];
-    for (let _pi = 0; _pi < _pcsx2Files.length; _pi++) {
-      await fetchWriteFile(EMU_PS5SX2_PCSX2 + "/" + _pcsx2Files[_pi], "/data/PCSX2/" + _pcsx2Files[_pi], p, chain, log);
-    }
-  }
 }
 
 async function installSx2Title(p, chain, log) {
@@ -1437,6 +1312,71 @@ async function installSx2Title(p, chain, log) {
   }
   try { await writeTextFile(p, chain, marker, EMU_PS5SX2_VER); } catch (_) {}
   log(HB_SX2 + " installed");
+  return true;
+}
+
+
+async function installSx3Title(p, chain, log) {
+  const base = HOMEBREW_DIR + "/" + HB_SX3;
+  const eboot = base + "/eboot.bin";
+  const param = base + "/sce_sys/param.json";
+  const marker = HOMEBREW_DIR + "/" + HB_SX3 + ".installed." + EMU_PS5SX3_VER;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(HB_SX3 + " already installed (" + EMU_PS5SX3_VER + "), skipping");
+    await chmodHomebrewTitle(p, chain, HB_SX3);
+    return true;
+  }
+  log("installing " + HB_SX3 + " (" + EMU_PS5SX3_VER + ") file by file...");
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, base);
+  await ensureDir(p, chain, base + "/sce_sys");
+  await ensureDir(p, chain, base + "/sce_module");
+  await chmodPath(p, chain, base);
+  await chmodPath(p, chain, base + "/sce_sys");
+  await chmodPath(p, chain, base + "/sce_module");
+  const files = [
+    [EMU_PS5SX3_FILES + "/eboot.bin", base, "eboot.bin"],
+    [EMU_PS5SX3_FILES + "/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
+    [EMU_PS5SX3_FILES + "/sce_sys/param.json", base + "/sce_sys", "param.json"],
+    [EMU_PS5SX3_FILES + "/sce_sys/icon0.png", base + "/sce_sys", "icon0.png"],
+  ];
+  for (let i = 0; i < files.length; i++) {
+    const spec = files[i];
+    const dest = spec[1] + "/" + spec[2];
+    try { await unlinkPath(p, chain, dest); } catch (_) {}
+    let ok = false;
+    try {
+      if (spec[2] === "param.json") {
+        ok = await installNamedFile(spec[0], spec[1], spec[2], p, chain, log, true);
+      } else {
+        log("copying " + spec[2] + " to " + spec[1]);
+        await fetchWriteFile(spec[0], dest, p, chain, log);
+        await chmodPath(p, chain, dest);
+        ok = true;
+      }
+    } catch (e) {
+      log(spec[2] + " copy skipped: " + (e && e.message ? e.message : String(e)));
+    }
+    if (!ok && (spec[2] === "eboot.bin" || spec[2] === "param.json")) {
+      log(HB_SX3 + " copy failed on " + spec[2] + ", sending installer");
+      try {
+        await sendOneRetry(EMU_PS5SX3_INSTALLER, p, chain, log, 3);
+        await waitSeconds(log, "waiting for PS5SX3 installer", 30, null);
+      } catch (e) {
+        log("PS5SX3 installer skipped: " + (e && e.message ? e.message : String(e)));
+      }
+      break;
+    }
+  }
+  await chmodHomebrewTitle(p, chain, HB_SX3);
+  if (!(await pathExists(p, chain, eboot)) || !(await pathExists(p, chain, param))) {
+    log(HB_SX3 + " install failed: eboot or param missing");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EMU_PS5SX3_VER); } catch (_) {}
+  log(HB_SX3 + " installed");
   return true;
 }
 
@@ -1665,172 +1605,6 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
   return false;
 }
 
-async function installPS5SX3(p, chain, log) {
-  const psaId = HB_RPCS3_5;
-  const ver = EMU_RPS5S3_VER;
-  const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
-  const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
-  const marker = HOMEBREW_DIR + "/" + psaId + ".installed." + ver;
-  if (await pathExists(p, chain, marker) &&
-      await pathExists(p, chain, eboot) &&
-      await pathExists(p, chain, param)) {
-    log(psaId + " already installed (" + ver + "), skipping");
-    await chmodHomebrewTitle(p, chain, psaId);
-    return true;
-  }
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId);
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_sys");
-  await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/sce_module");
-  if (!(await pathExists(p, chain, eboot))) {
-    log("downloading " + psaId + " eboot.bin...");
-    await fetchWriteFile(EMU_RPS5S3_EBOOT, eboot, p, chain, log);
-    await chmodPath(p, chain, eboot);
-  }
-  if (!(await pathExists(p, chain, param))) {
-    log("downloading " + psaId + " param.json...");
-    await fetchWriteFile(EMU_RPS5S3_PARAM, param, p, chain, log);
-    await chmodPath(p, chain, param);
-  }
-  const _base = "emulators/RPS5S3/files/";
-  const _files = [
-    "game_configs/config_BCAS25016.yml",
-    "game_configs/config_BCES00052.yml",
-    "game_configs/config_BCES00081.yml",
-    "game_configs/config_BCES00511.yml",
-    "game_configs/config_BCES00748.yml",
-    "game_configs/config_BCES01007.yml",
-    "game_configs/config_BCES01741.yml",
-    "game_configs/config_BCES01742.yml",
-    "game_configs/config_BCJS30014.yml",
-    "game_configs/config_BCJS37008.yml",
-    "game_configs/config_BCUS98116.yml",
-    "game_configs/config_BCUS98124.yml",
-    "game_configs/config_BCUS98127.yml",
-    "game_configs/config_BCUS98232.yml",
-    "game_configs/config_BCUS98234.yml",
-    "game_configs/config_BLES00038.yml",
-    "game_configs/config_BLES00188.yml",
-    "game_configs/config_BLES00229.yml",
-    "game_configs/config_BLES00875.yml",
-    "game_configs/config_BLES01128.yml",
-    "game_configs/config_BLES01807.yml",
-    "game_configs/config_BLUS30099.yml",
-    "game_configs/config_BLUS30127.yml",
-    "game_configs/config_BLUS30490.yml",
-    "game_configs/config_BLUS30682.yml",
-    "game_configs/config_NPEA00445.yml",
-    "game_configs/config_NPEA00452.yml",
-    "game_configs/config_NPEA00453.yml",
-    "game_configs/config_NPEB00882.yml",
-    "game_configs/config_NPUA80918.yml",
-    "game_configs/config_NPUA80965.yml",
-    "game_configs/config_NPUA80966.yml",
-    "game_configs/config_NPUB30702.yml",
-    "game_patches/patch.yml",
-    "game_patches/patch_defaults.tsv",
-    "game_patches/ps5sx3_patches.yml",
-    "game_patches/ps5sx3_patch_defaults.tsv",
-    "game_patches/SOURCE.txt",
-    "Icons/ui/circle.png",
-    "Icons/ui/cross.png",
-    "Icons/ui/dpad.png",
-    "Icons/ui/dpad_down.png",
-    "Icons/ui/dpad_left.png",
-    "Icons/ui/dpad_right.png",
-    "Icons/ui/dpad_up.png",
-    "Icons/ui/fade_bottom.png",
-    "Icons/ui/fade_top.png",
-    "Icons/ui/home/256/bug-solid.png",
-    "Icons/ui/home/256/circle-left-solid.png",
-    "Icons/ui/home/256/display-solid.png",
-    "Icons/ui/home/256/floppy-disk-solid.png",
-    "Icons/ui/home/256/gamepad-solid.png",
-    "Icons/ui/home/256/gauge-solid.png",
-    "Icons/ui/home/256/headphones-solid.png",
-    "Icons/ui/home/256/home.png",
-    "Icons/ui/home/256/maximize-solid.png",
-    "Icons/ui/home/256/play-button-arrowhead.png",
-    "Icons/ui/home/256/power-off-solid.png",
-    "Icons/ui/home/256/rotate-left-solid.png",
-    "Icons/ui/home/256/screenshot.png",
-    "Icons/ui/home/256/settings.png",
-    "Icons/ui/home/256/sliders-solid.png",
-    "Icons/ui/home/256/trophy-solid.png",
-    "Icons/ui/home/256/user-group-solid.png",
-    "Icons/ui/home/256/video-camera.png",
-    "Icons/ui/home/32/bug-solid.png",
-    "Icons/ui/home/32/circle-left-solid.png",
-    "Icons/ui/home/32/display-solid.png",
-    "Icons/ui/home/32/floppy-disk-solid.png",
-    "Icons/ui/home/32/gamepad-solid.png",
-    "Icons/ui/home/32/gauge-solid.png",
-    "Icons/ui/home/32/headphones-solid.png",
-    "Icons/ui/home/32/home.png",
-    "Icons/ui/home/32/maximize-solid.png",
-    "Icons/ui/home/32/play-button-arrowhead.png",
-    "Icons/ui/home/32/power-off-solid.png",
-    "Icons/ui/home/32/rotate-left-solid.png",
-    "Icons/ui/home/32/screenshot.png",
-    "Icons/ui/home/32/settings.png",
-    "Icons/ui/home/32/sliders-solid.png",
-    "Icons/ui/home/32/trophy-solid.png",
-    "Icons/ui/home/32/user-group-solid.png",
-    "Icons/ui/home/32/video-camera.png",
-    "Icons/ui/L1.png",
-    "Icons/ui/L2.png",
-    "Icons/ui/left_stick.png",
-    "Icons/ui/loading.png",
-    "Icons/ui/new.png",
-    "Icons/ui/R1.png",
-    "Icons/ui/R2.png",
-    "Icons/ui/right_stick.png",
-    "Icons/ui/save.png",
-    "Icons/ui/select.png",
-    "Icons/ui/spinner-24.png",
-    "Icons/ui/square.png",
-    "Icons/ui/start.png",
-    "Icons/ui/triangle.png",
-    "sce_module/libc.prx",
-    "cheats/Grand Theft Auto IV BLES00229 01.08 PS5SX3.ncl",
-    "cheats/Grand Theft Auto IV NPEB00882 01.09 PS5SX3.ncl",
-    "cheats/on_by_default.tsv",
-    "ps5-defaults.yml",
-    "sce_sys/icon0.png",
-  ];
-  const _seenDirs = {};
-  const _ymlTotal = _files.filter(f => f.endsWith(".yml")).length;
-  let _ymlIdx = 0;
-  for (let _fi = 0; _fi < _files.length; _fi++) {
-    const _f = _files[_fi];
-    const _sl = _f.lastIndexOf("/");
-    const _d = _sl > 0 ? _f.slice(0, _sl) : "";
-    if (_d && !_seenDirs[_d]) {
-      await ensureDir(p, chain, HOMEBREW_DIR + "/" + psaId + "/" + _d);
-      _seenDirs[_d] = true;
-    }
-    const _isYml = _f.endsWith(".yml");
-    if (_isYml) _ymlIdx++;
-    const _logFn = _isYml ? (msg, t, r) => log((msg.includes(" OK ") || msg.includes("FAIL")) ? msg + " (" + _ymlIdx + "/" + _ymlTotal + ")" : msg, t, r) : log;
-    await fetchWriteFile(_base + _f, HOMEBREW_DIR + "/" + psaId + "/" + _f, p, chain, _logFn);
-  }
-  const _wikiDir = HOMEBREW_DIR + "/" + psaId + "/game_configs_wiki";
-  const _wikiSentinel = _wikiDir + "/config_BCAS25016.yml";
-  if (!(await pathExists(p, chain, _wikiSentinel))) {
-    log("downloading game_configs_wiki...");
-    const _wikiListText = await (await fetch("payloads/" + EMU_RPS5S3_WIKI_LIST)).text();
-    const _wikiNames = JSON.parse(_wikiListText);
-    await ensureDir(p, chain, _wikiDir);
-    for (let _wi = 0; _wi < _wikiNames.length; _wi++) {
-      const _wLog = (msg, t, r) => log((msg.includes(" OK ") || msg.includes("FAIL")) ? msg + " (" + (_wi + 1) + "/" + _wikiNames.length + ")" : msg, t, r);
-      await fetchWriteFile("emulators/RPS5S3/files/game_configs_wiki/" + _wikiNames[_wi], _wikiDir + "/" + _wikiNames[_wi], p, chain, _wLog);
-    }
-  }
-  try { await writeTextFile(p, chain, marker, ver); } catch (_) {}
-  await chmodHomebrewTitle(p, chain, psaId);
-  log(psaId + " installed");
-  return true;
-}
-
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
   const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
@@ -1897,45 +1671,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   }
 }
 
-async function onionVersion() {
-  try {
-    const response = await fetch("payloads/OnionHEN.elf", { method: "HEAD", cache: "no-store" });
-    if (!response.ok) return undefined;
-    if (/html/i.test(response.headers.get("content-type") || "")) return undefined;
-    const length = response.headers.get("content-length");
-    if (!length) return undefined;
-    const modified = Date.parse(response.headers.get("last-modified") || "");
-    return length + (isNaN(modified) ? "" : "-" + Math.floor(modified / 1000));
-  } catch (_) {
-    return undefined;
-  }
-}
 export async function loadOptionalPayloads(p, chain, log) {
-  const _bvMode = typeof location !== "undefined" &&
-    new URLSearchParams(location.search).get("bv") === "1";
-  if (_bvMode) {
-    const _bvDone = await pathExists(p, chain, BV_PHASE_MARKER);
-    if (!_bvDone) {
-      log("Byepervisor phase 1 — sending HV exploit");
-      try { await writeTextFile(p, chain, BV_PHASE_MARKER, "1"); } catch (_e) {
-        log("marker write failed: " + (_e && _e.message ? _e.message : String(_e)), "error");
-        return;
-      }
-      try {
-        await sendOneRetry(BYEPERVISOR_ELF, p, chain, log, 3);
-      } catch (_e) {
-        log("Byepervisor failed: " + (_e && _e.message ? _e.message : String(_e)), "error");
-        try { await chain.syscall(SYS_UNLINK, cstring(p, BV_PHASE_MARKER)); } catch (_) {}
-        return;
-      }
-      log("Byepervisor sent — check screen for 8-digit code", "info");
-      log("Enter rest mode. Open this page again when PS5 wakes for phase 2.", "info");
-      await notify(p, chain, "Byepervisor active — enter rest mode now");
-      return;
-    }
-    log("Byepervisor phase 2 — HV patched, loading full chain");
-    try { await chain.syscall(SYS_UNLINK, cstring(p, BV_PHASE_MARKER)); } catch (_) {}
-  }
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
   // Save all payloads to disk FIRST while the chain is alive.
@@ -1949,18 +1685,15 @@ export async function loadOptionalPayloads(p, chain, log) {
   for (let _i = 0; _i < AUTOLOAD_NAMES.length; _i++) {
     if (await pathExists(p, chain, AUTOLOADER_DIR + "/" + AUTOLOAD_NAMES[_i])) _present.add(AUTOLOAD_NAMES[_i]);
   }
-  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"), await onionVersion());
+  await saveOnly("OnionHEN.elf",  "onion",    p, chain, log, _present.has("OnionHEN.elf"), ONIONHEN_VER);
   await saveOnly(FAKE_SIGNIN_ELF,  "signin",   p, chain, log, _present.has(FAKE_SIGNIN_ELF));
   await saveOnly(PLDMGR_ELF,       "pld",      p, chain, log, _present.has(PLDMGR_ELF));
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
-  if (_bvMode) await saveOnly(BYEPERVISOR_ELF, "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF), BYEPERVISOR_VER);
-  await saveOnly(HYPERHEN_ELF,     "hyperhen",    p, chain, log, _present.has(HYPERHEN_ELF),     HYPERHEN_VER);
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
 
   await ensureOnionTitleIds(p, chain, log);
-  await ensureShadowmountConfig(p, chain, log);
-  await ensureHyperHENDir(p, chain, log);
 
   await ensureDir(p, chain, HOMEBREW_DIR);
   const _pkgPresent = await pathExists(p, chain, HOMEBREW_DIR + "/" + BLACKBOX_PKG);
@@ -1975,6 +1708,9 @@ export async function loadOptionalPayloads(p, chain, log) {
   await downloadToHB(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await saveAutoloadElf(EMU_PS5SX2_HELPER, "PS5SXHelper.elf", EMU_PS5SX2_VER, p, chain, log);
   await installSx2Title(p, chain, log);
+  // PS5SX3 (PS3) — copy the title from the server; installer ELF handles PS3 specifics.
+  await downloadToHB(EMU_PS5SX3_HELPER, "PS5SX3Helper.elf", EMU_PS5SX3_VER, p, chain, log);
+  await installSx3Title(p, chain, log);
   await installPs2Bios(p, chain, log);
 
   // snes9x — the ELF is the installer and helper. Do not autoload the 25MB
@@ -2021,18 +1757,13 @@ export async function loadOptionalPayloads(p, chain, log) {
 
 
   await installRaTitle(p, chain, log);
-  await saveAutoloadElf(EMU_RPS5S3_HELPER, "PS5SX3Helper.elf", EMU_RPS5S3_VER, p, chain, log);
-  // PS5SX3 (PPSA99303) — PS3 emulator, direct file install
-  await installPS5SX3(p, chain, log);
-  // PSBox Cloud Gaming — xCloud client (PPSA99810), zip-based install via ps5-unzip
-  await installZipEmu(EMU_PSBOX_ZIP, HB_PSBOX, EMU_PSBOX_VER, p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
   try {
     const _cl = [
-      ["PS5SX2", HB_SX2], ["snes9x", HB_SNES], ["XPS", HB_XPS],
+      ["PS5SX2", HB_SX2], ["PS5SX3", HB_SX3], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
-      ["RetroArch", HB_RA], ["RPCS3-5", HB_RPCS3_5], ["PSBox", HB_PSBOX],
+      ["RetroArch", HB_RA],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
