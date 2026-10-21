@@ -25,7 +25,7 @@ const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor.elf";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
-const BLACKBOX_VER = "1.12.0";
+const BLACKBOX_VER = "1.12.3";
 const CHEATRUNNER_VER = "v0.18";
 const SHADOWMOUNT_VER = "1.7-beta5fix1";
 const HOMEBREW_DIR = "/data/homebrew";
