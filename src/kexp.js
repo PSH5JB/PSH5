@@ -1756,35 +1756,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
-  const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
-
-  // Rest-mode re-inject: if OnionHEN is already installed, this is not a first
-  // boot — the KROP/VMCBs just re-ran after rest-mode exit. Auto-send the ELFs
-  // that are on disk so HEN is active immediately without touching byepervisor.
-  if (await pathExists(p, chain, ONIONHEN_DIR)) {
-    say("rest mode detected — auto-sending ELFs");
-    const _rmAfterMs = {};
-    _rmAfterMs["OnionHEN.elf"] = 0;
-    _rmAfterMs[PLDMGR_ELF] = 2000;
-    _rmAfterMs[FAKE_SIGNIN_ELF] = 2000;
-    _rmAfterMs["PS5SXHelper.elf"] = 4000;
-    _rmAfterMs[ANYPAD_ELF] = 2000;
-    _rmAfterMs[CHEATRUNNER_ELF] = 5000;
-    _rmAfterMs[BLACKBOX_ELF] = 8000;
-    _rmAfterMs["shadowmountplus.elf"] = 5000;
-    const _rmNames = AUTOLOAD_NAMES.filter(function(n) { return n !== BYEPERVISOR_ELF; });
-    let _rmFirst = true;
-    for (let _ri = 0; _ri < _rmNames.length; _ri++) {
-      const _rn = _rmNames[_ri];
-      if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + _rn))) continue;
-      if (!_rmFirst) {
-        const _rw = _rmAfterMs[_rmNames[_ri - 1]] || 2000;
-        if (_rw > 0) await new Promise(function(r) { setTimeout(r, _rw); });
-      }
-      try { await sendOneRetry(_rn, p, chain, say, 2); _rmFirst = false; } catch (_e) { say(_rn + " send skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-    }
-  }
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
