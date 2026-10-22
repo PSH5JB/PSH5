@@ -1756,7 +1756,17 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
+  const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
+
+  // After rest-mode exit the phase1 marker exists — byepervisor already ran its
+  // first phase on the initial session. Re-send it now (after KROP/VMCBs are
+  // re-established by runKexp) so phase2 of the hypervisor escape completes.
+  if (await pathExists(p, chain, BV_PHASE_MARKER)) {
+    say("byepervisor phase1 marker found — sending phase2");
+    try { await sendOneRetry(BYEPERVISOR_ELF, p, chain, say, 2); } catch (_e) { say("byepervisor phase2 skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+    await waitSeconds(say, "byepervisor phase2 settling", 5, null);
+  }
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
