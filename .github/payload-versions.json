@@ -2,6 +2,7 @@
   "np-fake-signin": "1.1",
   "CheatRunner": "v0.18",
   "blackbox": "1.12.3",
+  "ShadowMountPlus": "1.7-beta5fix1",
   "AnyPad": "v0.9.5-beta",
   "webkit-autoloader": "v0.6.1",
   "blackbox_ffpkg": "1.12.3",
@@ -14,5 +15,6 @@
   "Porpoise": "v3.0",
   "PS5CEMU-HAR": "v4.0.1",
   "ProsperoEden": "v1.005.000",
+  "PS5_RPCS3": "release",
   "PS5_RetroArch": "v4.0.0-beta-4"
 }
