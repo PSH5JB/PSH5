@@ -1756,7 +1756,15 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
+  const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
+
+  // Auto-send byepervisor + HEN immediately so they are active this session
+  // without waiting for the autoloader cycle (reboot → next webkit session).
+  try { await sendOneRetry(BYEPERVISOR_ELF, p, chain, say, 2); } catch (_e) { say("byepervisor auto-send skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  await waitSeconds(say, "byepervisor settling", 5, null);
+  try { await sendOneRetry("OnionHEN.elf", p, chain, say, 2); } catch (_e) { say("onionhen auto-send skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+  await waitSeconds(say, "HEN settling", 8, null);
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
