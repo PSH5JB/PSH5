@@ -1756,31 +1756,7 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
-  const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
-
-  // After rest-mode wake, byepervisor phase1 marker exists — read autoload.txt
-  // and send each ELF via elfldr so HEN etc. are active without user action.
-  try {
-    if (await pathExists(p, chain, BV_PHASE_MARKER)) {
-      const _rmTxt = await readTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", 0x10000);
-      if (_rmTxt) {
-        say("rest mode: auto-sending ELFs");
-        const _rmLines = _rmTxt.trim().split("
-").filter(Boolean);
-        let _rmFirst = true; let _rmWait = 0;
-        for (let _ri = 0; _ri < _rmLines.length; _ri++) {
-          const _rl = _rmLines[_ri].trim();
-          if (_rl.startsWith("!")) { _rmWait = parseInt(_rl.slice(1), 10) || 0; continue; }
-          if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + _rl))) { _rmWait = 0; continue; }
-          if (!_rmFirst && _rmWait > 0) await new Promise(function(r) { setTimeout(r, _rmWait); });
-          _rmWait = 0;
-          try { await sendOneRetry(_rl, p, chain, say, 2); _rmFirst = false; }
-          catch (_e) { say(_rl + " skipped: " + (_e && _e.message ? _e.message : String(_e))); }
-        }
-      }
-    }
-  } catch (_rmErr) { say("auto ELF sender skipped: " + (_rmErr && _rmErr.message ? _rmErr.message : String(_rmErr))); }
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
