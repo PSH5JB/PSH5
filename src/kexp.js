@@ -1756,7 +1756,35 @@ async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
 }
 
 export async function loadOptionalPayloads(p, chain, log) {
+  const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
+
+  // Auto ELF sender: if autoload.txt already exists (not first boot), read it
+  // and send every ELF listed via elfldr now. Covers rest-mode wake and
+  // re-runs after first boot. Byepervisor is not in autoload.txt so it is
+  // unaffected. First boot: file absent, block skipped entirely.
+  const _autoloadPath = AUTOLOADER_DIR + "/autoload.txt";
+  if (await pathExists(p, chain, _autoloadPath)) {
+    say("auto ELF sender: reading autoload.txt");
+    const _autoloadText = await readTextFile(p, chain, _autoloadPath, 0x10000);
+    if (_autoloadText) {
+      const _autoLines = _autoloadText.trim().split("
+").filter(Boolean);
+      let _autoFirst = true;
+      let _pendingWait = 0;
+      for (let _ali = 0; _ali < _autoLines.length; _ali++) {
+        const _line = _autoLines[_ali].trim();
+        if (_line.startsWith("!")) {
+          _pendingWait = parseInt(_line.slice(1), 10) || 0;
+          continue;
+        }
+        if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + _line))) { _pendingWait = 0; continue; }
+        if (!_autoFirst && _pendingWait > 0) await new Promise(function(r) { setTimeout(r, _pendingWait); });
+        _pendingWait = 0;
+        try { await sendOneRetry(_line, p, chain, say, 2); _autoFirst = false; } catch (_e) { say(_line + " skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+      }
+    }
+  }
 
   // Save all payloads to disk FIRST while the chain is alive.
   // The installer runs last and may close the WebKit session when it
