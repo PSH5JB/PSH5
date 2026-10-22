@@ -1,4 +1,4 @@
-import { int64 } from "./utils/int64.js";
+﻿import { int64 } from "./utils/int64.js";
 
 const O_NONBLOCK = 0x4;
 const O_WRONLY_CREAT_TRUNC = 0x601;
@@ -13,7 +13,7 @@ const ETAHEN_DIR = "/data/etaHEN";
 const ONIONHEN_DIR = "/data/OnionHEN";
 const ONIONHEN_VER = "v0.0.14-r8";
 const AUTOLOADER_DIR = "/data/ps5_autoloader";
-const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.6.1.elf";
+const AUTOLOADER_ELF = "webkit-autoloader-installer_v0.6.0-fix1.elf";
 const FAKE_SIGNIN_ELF = "np-fake-signin-ps5.elf";
 const SHADOWMOUNT_ELF = "shadowmountplus.elf";
 const PLDMGR_ELF = "pldmgr_v0.5.2-r2.elf";
@@ -23,11 +23,13 @@ const BLACKBOX_ELF = "blackbox.elf";
 const ANYPAD_ELF = "AnyPad-PS5-0.9.1-beta.elf";
 const KSTUFF_ELF = "kstuff.elf";
 const BYEPERVISOR_ELF = "byepervisor.elf";
+const BYEPERVISOR_VER = "v1";
+const BV_PHASE_MARKER = "/data/byepervisor.phase1";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
 const BLACKBOX_VER = "1.12.3";
 const CHEATRUNNER_VER = "v0.18";
-const SHADOWMOUNT_VER = "1.7-beta5fix1";
+const SHADOWMOUNT_VER = "1.7-sm";
 const HOMEBREW_DIR = "/data/homebrew";
 const BLACKBOX_PKG = "PPSA01453.ffpkg";
 const ONIONHEN_CONFIG = "/data/OnionHEN/config.ini";
@@ -35,26 +37,26 @@ const XPSEMU_WHITELIST = "/data/whitelist.txt";
 // Emulator payloads
 const EMU_PS5SX2_INSTALLER = "emulators/PS5SX2/PS5SX2Installer.elf";
 const EMU_PS5SX2_HELPER    = "emulators/PS5SX2/PS5SXHelper.elf";
-const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-162.zip";
+const EMU_PS5SX2_ZIP       = "emulators/PS5SX2/PS5SX2-vk-285-177.zip";
 const EMU_PS5SX2_FILES     = "emulators/PS5SX2/PPSA99203";
 const EMU_PS5SX2_BIOS      = "emulators/PS5SX2/bios/SCPH-70012.BIN";
 const EMU_PS5SX2_BIOS_NVM  = "emulators/PS5SX2/bios/SCPH-70012.NVM";
 const PCSX2_BIOS_DIR       = "/data/PCSX2/bios";
 const PCSX2_GAMES_DIR      = "/data/PCSX2/games";
-const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.3.elf";
+const EMU_SNES9X_ELF       = "emulators/snes9x/Snes9xPS5-v2.8.elf";
 const EMU_XPSEMU_HELPER    = "emulators/XPSemu/helper.elf";
 const EMU_XPSEMU_ZIP       = "emulators/XPSemu/PPSA97358.zip";
 const EMU_XPSEMU_MCPX      = "emulators/XPSemu/mcpx_1.0.bin";
 const EMU_XPSEMU_BIOS      = "emulators/XPSemu/Complex_4627.bin";
 const XPS_DATA_DIR         = "/data/xemu";
-const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-3.0.zip";
-const EMU_PS5CEMU_ZIP      = "emulators/PS5CEMU-HAR/PS5CEMU-HAR-v3.5.0.zip";
+const EMU_PORPOISE_ZIP     = "emulators/Porpoise/Porpoise-4.0.zip";
+const EMU_PS5CEMU_ZIP      = "emulators/PS5-ECAM/PS5-ECAM-v5.0.0.zip";
 const EMU_PS5CEMU_ELEVATOR = "emulators/PS5CEMU-HAR/sandbox-elevator.elf";
 const EMU_PS5CEMU_KEYS     = "emulators/PS5CEMU-HAR/keys.txt";
 const EMU_PS5CEMU_AESKEYS  = "emulators/PS5CEMU-HAR/aes_keys.txt";
 const CEMU_DATA_DIR        = "/data/ps5cemu";
 const EMU_PS5X360_ZIP      = "emulators/PS5X360/PPSA50011.zip";
-const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.000.110.zip";
+const EMU_PROSPEROEDEN_ZIP = "emulators/ProsperoEden/ProsperoEden-v1.005.000.zip";
 const EMU_EDEN_PRODKEYS    = "emulators/ProsperoEden/keys/prod.keys";
 const EMU_EDEN_TITLEKEYS   = "emulators/ProsperoEden/keys/title.keys";
 const EDEN_KEYS_DIR        = "/data/prosperoeden/keys";
@@ -62,30 +64,34 @@ const EDEN_FW_DIR          = "/data/prosperoeden/firmware";
 const EDEN_FW_LIST         = "emulators/ProsperoEden/firmware/list.txt";
 const EDEN_FW_VER          = "23.0.1";
 const EMU_UNZIP_ELF        = "emulators/ps5-unzip.elf";
-const EMU_PS5SX2_VER       = "vk-285-162";
+const EMU_PS5SX2_VER       = "vk-285-177";
 const EMU_PS5SX3_INSTALLER = "emulators/PS5SX3/PS5SX3-Installer.elf";
 const EMU_PS5SX3_HELPER    = "emulators/PS5SX3/PS5SX3Helper.elf";
 const EMU_PS5SX3_FILES     = "emulators/PS5SX3/PPSA99303";
-const EMU_PS5SX3_VER       = "tb11.1";
-const EMU_SNES9X_VER       = "v2.3";
+const EMU_PS5SX3_VER       = "tb13.1";
+const EMU_SNES9X_VER       = "v2.8";
 const EMU_XPSEMU_VER       = "Alpha-2.1";
 const EMU_PS5X360_VER      = "v0.6.0";
-const EMU_PORPOISE_VER     = "v3.0";
-const EMU_PS5CEMU_VER      = "v3.5.0";
-const EMU_PROSPEROEDEN_VER = "v1.000.110";
-const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v1.0.0-beta1.zip";
+const EMU_PORPOISE_VER     = "v4.0";
+const EMU_PS5CEMU_VER      = "v5.0.0";
+const EMU_PROSPEROEDEN_VER = "v1.005.000";
+const EMU_PS5RA_ZIP        = "emulators/PS5_RetroArch/PS5_RetroArch-v4.0.0-beta-4.zip";
 const EMU_PS5RA_FILES      = "emulators/PS5_RetroArch/PPSA99169";
 const EMU_PS5RA_LIST       = "emulators/PS5_RetroArch/list.txt";
-const EMU_PS5RA_VER        = "v1.0.0-beta.1";
+const EMU_PS5RA_VER        = "v4.0.0-beta-4";
 const HB_SX2 = "PPSA99203";
 const HB_SX3 = "PPSA99303";
-const HB_SNES = "PPSA99009";
+const HB_SNES = "PPSA99922";
 const HB_XPS = "PPSA97358";
 const HB_X360 = "PPSA50011";
 const HB_PORPOISE = "PPSA99764";
 const HB_CEMU = "PPSA99360";
 const HB_EDEN = "PPSA99008";
 const HB_RA = "PPSA99169";
+const HB_SWAN                = "PPSA98510";
+const EMU_SWANSTATION_FILES  = "emulators/SwanStation/PPSA98510";
+const EMU_SWANSTATION_DAEMON = "SwanStationPS5-DiscDaemon.elf";
+const EMU_SWANSTATION_VER    = "v1.4.3";
 const ZIP_DONE_REL = {};
 ZIP_DONE_REL[HB_EDEN] = "ui/fonts/montserrat-medium.pefont";
 ZIP_DONE_REL[HB_PORPOISE] = "cores/dolphin_libretro.so";
@@ -94,6 +100,7 @@ ZIP_DONE_REL[HB_X360] = "MANIFEST.json";
 ZIP_DONE_REL[HB_RA] = "webui/version.json";
 const ONION_EMU_TITLE_IDS = [
   HB_SX2, HB_SX3, HB_SNES, HB_XPS, HB_X360, HB_PORPOISE, HB_CEMU, HB_EDEN, HB_RA,
+  HB_SWAN,
 ];
 // OnionHEN jailbreaks every emu title ID. Keep one resident Lapy
 // (PS5SXHelper aio) after HEN/pldmgr/shadow. Do not autoload
@@ -111,6 +118,7 @@ const AUTOLOAD_NAMES = [
   ANYPAD_ELF,
   CHEATRUNNER_ELF,
   BLACKBOX_ELF,
+  "shadowmountplus.elf",
 ];
 const INSTALL_TOAST = "Leave the Autoloader page open until it finishes - do not reboot yet";
 const ONION_WAIT_S = 10;
@@ -618,6 +626,9 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   if (mapped.byepervisor) {
     await writeBuf(p, chain, AUTOLOADER_DIR + "/" + BYEPERVISOR_ELF, mapped.byepervisor.base, mapped.byepervisor.size);
   }
+  if (mapped.shadowmount) {
+    await writeBuf(p, chain, AUTOLOADER_DIR + "/shadowmountplus.elf", mapped.shadowmount.base, mapped.shadowmount.size);
+  }
   const afterMs = {};
   afterMs[BYEPERVISOR_ELF] = 5000;
   afterMs["OnionHEN.elf"] = 10000;
@@ -627,6 +638,7 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
   afterMs[ANYPAD_ELF] = 2000;
   afterMs[CHEATRUNNER_ELF] = 5000;
   afterMs[BLACKBOX_ELF] = 8000;
+  afterMs["shadowmountplus.elf"] = 5000;
   const present = [];
   for (let i = 0; i < AUTOLOAD_NAMES.length; i++) {
     const name = AUTOLOAD_NAMES[i];
@@ -640,8 +652,14 @@ async function saveAutoloadFiles(p, chain, log, mapped) {
     }
     lines.push(present[i]);
   }
+  const fullPresent = present.filter(function(n) { return n !== BYEPERVISOR_ELF; });
+  const fullLines = [];
+  for (let i = 0; i < fullPresent.length; i++) {
+    if (i) { const w = afterMs[fullPresent[i - 1]] || 0; if (w > 0) fullLines.push("!" + w); }
+    fullLines.push(fullPresent[i]);
+  }
   await writeTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt",
-    lines.length ? lines.join("\n") + "\n" : "");
+    fullLines.length ? fullLines.join("\n") + "\n" : "");
   return true;
 }
 
@@ -797,6 +815,9 @@ async function chmodHomebrewTitle(p, chain, psaId) {
     for (let t = 0; t < trees.length; t++) {
       try { await chmodTree(p, chain, base + trees[t], 0); } catch (_) {}
     }
+  }
+  if (psaId === HB_EDEN) {
+    try { await chmodTree(p, chain, base + '/ui', 0); } catch (_) {}
   }
 }
 
@@ -1341,6 +1362,8 @@ async function installSx3Title(p, chain, log) {
     [EMU_PS5SX3_FILES + "/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
     [EMU_PS5SX3_FILES + "/sce_sys/param.json", base + "/sce_sys", "param.json"],
     [EMU_PS5SX3_FILES + "/sce_sys/icon0.png", base + "/sce_sys", "icon0.png"],
+    [EMU_PS5SX3_INSTALLER, base, "PS5SX3-Installer.elf"],
+    [EMU_PS5SX3_HELPER, base, "PS5SX3Helper.elf"],
   ];
   for (let i = 0; i < files.length; i++) {
     const spec = files[i];
@@ -1605,6 +1628,67 @@ async function waitForZipExtract(p, chain, log, psaId, eboot, param, extra, extr
   return false;
 }
 
+async function installSwanStationTitle(p, chain, log) {
+  const base = HOMEBREW_DIR + "/" + HB_SWAN;
+  const eboot = base + "/eboot.bin";
+  const param = base + "/sce_sys/param.json";
+  const marker = HOMEBREW_DIR + "/" + HB_SWAN + ".installed." + EMU_SWANSTATION_VER;
+  if (await pathExists(p, chain, marker) &&
+      await pathExists(p, chain, eboot) &&
+      await pathExists(p, chain, param)) {
+    log(HB_SWAN + " already installed (" + EMU_SWANSTATION_VER + "), skipping");
+    await chmodHomebrewTitle(p, chain, HB_SWAN);
+    return true;
+  }
+  log("installing " + HB_SWAN + " (" + EMU_SWANSTATION_VER + ") file by file...");
+  await ensureDir(p, chain, HOMEBREW_DIR);
+  await ensureDir(p, chain, base);
+  await ensureDir(p, chain, base + "/sce_sys");
+  await ensureDir(p, chain, base + "/sce_module");
+  await chmodPath(p, chain, base);
+  await chmodPath(p, chain, base + "/sce_sys");
+  await chmodPath(p, chain, base + "/sce_module");
+  const files = [
+    [EMU_SWANSTATION_FILES + "/eboot.bin",           base,                 "eboot.bin"],
+    [EMU_SWANSTATION_FILES + "/lapy.elf",            base,                 "lapy.elf"],
+    [EMU_SWANSTATION_FILES + "/lapy-manifest.json",  base,                 "lapy-manifest.json"],
+    [EMU_SWANSTATION_FILES + "/sce_module/libc.prx", base + "/sce_module", "libc.prx"],
+    [EMU_SWANSTATION_FILES + "/sce_sys/param.json",  base + "/sce_sys",    "param.json"],
+    [EMU_SWANSTATION_FILES + "/sce_sys/icon0.png",   base + "/sce_sys",    "icon0.png"],
+    [EMU_SWANSTATION_FILES + "/sce_sys/pic0.dds",    base + "/sce_sys",    "pic0.dds"],
+    [EMU_SWANSTATION_FILES + "/sce_sys/pic1.dds",    base + "/sce_sys",    "pic1.dds"],
+    [EMU_SWANSTATION_FILES + "/sce_sys/snd0.at9",    base + "/sce_sys",    "snd0.at9"],
+  ];
+  for (let i = 0; i < files.length; i++) {
+    const spec = files[i];
+    const dest = spec[1] + "/" + spec[2];
+    try { await unlinkPath(p, chain, dest); } catch (_) {}
+    try {
+      if (spec[2] === "param.json") {
+        await installNamedFile(spec[0], spec[1], spec[2], p, chain, log, true);
+      } else {
+        log("copying " + spec[2] + " to " + spec[1]);
+        await fetchWriteFile(spec[0], dest, p, chain, log);
+        await chmodPath(p, chain, dest);
+      }
+    } catch (e) {
+      log(spec[2] + " copy skipped: " + (e && e.message ? e.message : String(e)));
+      if (spec[2] === "eboot.bin" || spec[2] === "param.json") {
+        log(HB_SWAN + " install failed on " + spec[2]);
+        return false;
+      }
+    }
+  }
+  await chmodHomebrewTitle(p, chain, HB_SWAN);
+  if (!(await pathExists(p, chain, eboot)) || !(await pathExists(p, chain, param))) {
+    log(HB_SWAN + " install failed: eboot or param missing");
+    return false;
+  }
+  try { await writeTextFile(p, chain, marker, EMU_SWANSTATION_VER); } catch (_) {}
+  log(HB_SWAN + " installed");
+  return true;
+}
+
 async function installZipEmu(fetchPath, psaId, ver, p, chain, log) {
   const eboot = HOMEBREW_DIR + "/" + psaId + "/eboot.bin";
   const param = HOMEBREW_DIR + "/" + psaId + "/sce_sys/param.json";
@@ -1691,7 +1775,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   await saveOnly(BLACKBOX_ELF,     "blackbox", p, chain, log, _present.has(BLACKBOX_ELF), BLACKBOX_VER);
   await saveOnly(CHEATRUNNER_ELF,  "cheat",    p, chain, log, _present.has(CHEATRUNNER_ELF), CHEATRUNNER_VER);
   await saveOnly(ANYPAD_ELF,       "anypad",   p, chain, log, _present.has(ANYPAD_ELF));
-  await saveOnly(BYEPERVISOR_ELF,  "byepervisor", p, chain, log, _present.has(BYEPERVISOR_ELF));
+  await saveOnly(BYEPERVISOR_ELF,  "byepervisor",  p, chain, log, _present.has(BYEPERVISOR_ELF));
+  await saveOnly("shadowmountplus.elf", "shadowmount", p, chain, log, _present.has("shadowmountplus.elf"), SHADOWMOUNT_VER);
 
   await ensureOnionTitleIds(p, chain, log);
 
@@ -1756,6 +1841,8 @@ export async function loadOptionalPayloads(p, chain, log) {
   await installEdenFirmware(p, chain, log);
 
 
+  await installSwanStationTitle(p, chain, log);
+
   await installRaTitle(p, chain, log);
 
   // Emulator checklist — shows which titles have eboot.bin on disk
@@ -1764,6 +1851,7 @@ export async function loadOptionalPayloads(p, chain, log) {
       ["PS5SX2", HB_SX2], ["PS5SX3", HB_SX3], ["snes9x", HB_SNES], ["XPS", HB_XPS],
       ["Porpoise", HB_PORPOISE], ["CEMU", HB_CEMU], ["X360", HB_X360], ["Eden", HB_EDEN],
       ["RetroArch", HB_RA],
+      ["SwanStation", HB_SWAN],
     ];
     const _marks = [];
     for (let _ci = 0; _ci < _cl.length; _ci++) {
@@ -1819,7 +1907,7 @@ export async function loadOptionalPayloads(p, chain, log) {
   }
   } // end retry loop
 
-  await notify(p, chain, "PSH5JB v2");
+  await notify(p, chain, "PSH5JB v3");
   if (installerSent) {
     log(INSTALL_TOAST);
     await notify(p, chain, INSTALL_TOAST);

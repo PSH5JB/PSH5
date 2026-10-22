@@ -1,0 +1,49 @@
+SwanStationPS5 - PlayStation X Super 5
+Copyright (C) 2026 the SwanStationPS5 authors. GNU General Public License v3 or later (LICENSE-SwanStationPS5.txt).
+Source code: https://github.com/SynoPiia/SwanStationPS5 (the release's tag holds the exact source,
+with every component below as a submodule or in third_party/).
+
+SwanStationPS5 contains, built into eboot.bin:
+
+
+SwanStation (DuckStation's libretro core)
+  GNU GPL v3
+  LICENSE-swanstation.txt
+  https://github.com/libretro/swanstation
+
+RADV, Mesa's Vulkan driver for AMD GPUs (PS5 port by Mihawk-99)
+  MIT License
+  https://gitlab.freedesktop.org/mesa/mesa
+
+libnfs (NFS client, games on NFS servers)
+  LGPL-2.1-or-later (protocol files BSD-2-Clause), used under GPL-3.0: the sources are in third_party/libnfs
+  https://github.com/sahlberg/libnfs - console configuration and fixes from
+  https://github.com/tutifrutas/SwanStationPS5 (from PS5SX2, https://github.com/Swordpdf/PS5SX2)
+
+rcheevos (RetroAchievements)
+  MIT License - LICENSE-rcheevos.txt
+  https://github.com/RetroAchievements/rcheevos
+
+SDL 2 - zlib License - https://www.libsdl.org
+Fonts in assets/fonts - SIL Open Font License 1.1 (notices beside them): Inter, Noto Sans JP,
+  Chakra Petch, IBM Plex Sans, IBM Plex Mono, Fraunces, Work Sans; Tabler Icons - MIT License
+Cheat codes are downloaded on the console from libretro-database
+  (https://github.com/libretro/libretro-database) and DuckStation's chtdb
+  (https://github.com/duckstation/chtdb; copyright of the codes is held by their authors).
+DuckStation's game database (https://github.com/stenzek/duckstation, CC BY-NC-ND 4.0) is
+  downloaded on the console for game information and known fixes; SwanStationPS5 doesn't include it.
+Game artwork borders (The Bezel Project, https://github.com/thebezelproject), title
+  screens and gameplay pictures (libretro-thumbnails, https://github.com/libretro-thumbnails)
+  are downloaded on the console, as covers are; SwanStationPS5 doesn't include them.
+dlmalloc (Doug Lea) - public domain (CC0)
+miniz - MIT License - https://github.com/richgel999/miniz
+QR Code generator (Nayuki) - MIT License - https://github.com/nayuki/QR-Code-generator
+stb_image, stb_truetype (Sean Barrett) - public domain / MIT
+Lapy helper - MIT License - Lapy-MIT.txt
+libcurl, OpenSSL, libpsl, zstd, libsamplerate (PacBrew packages) - each under its own permissive licence
+
+Downloaded at run time, not included:
+  covers - xlenore/psx-covers (https://github.com/xlenore/psx-covers)
+  cheats - libretro-database (https://github.com/libretro/libretro-database)
+
+No BIOS, game, key or copyrighted data is included.

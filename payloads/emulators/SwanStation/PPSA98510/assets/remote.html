@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SwanStationPS5 settings</title>
+<style>
+  :root { --bg:#0f1330; --card:#151a3d; --row:#1c2250; --sel:#2a3370; --focus:#8fb0ff;
+          --text:#e8ebff; --dim:#8f97c8; --on:#5b7cff; --off:#3a4280; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { position:sticky; top:0; background:var(--bg); padding:16px 16px 8px; z-index:2; }
+  h1 { margin:0; font-size:22px; font-weight:600; }
+  #game { color:var(--dim); font-size:14px; margin-top:2px; }
+  nav { display:flex; gap:6px; overflow-x:auto; padding:12px 0 4px; scrollbar-width:none; }
+  nav button { flex:none; border:0; border-radius:999px; padding:8px 14px; background:transparent;
+               color:var(--dim); font:inherit; }
+  nav button.on { background:var(--text); color:var(--bg); }
+  main { padding:0 16px 32px; max-width:720px; margin:0 auto; }
+  .group { color:var(--dim); font-size:13px; font-weight:600; margin:18px 4px 6px; }
+  .card { background:var(--card); border-radius:16px; padding:6px; }
+  .row { padding:12px; border-radius:12px; }
+  .row + .row { border-top:1px solid #222a5c; border-radius:0 0 12px 12px; }
+  .name { font-weight:500; }
+  .help { color:var(--dim); font-size:13px; margin-top:2px; }
+  .choices { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .choices button { border:0; border-radius:999px; padding:7px 12px; background:var(--row);
+                    color:var(--text); font:inherit; font-size:14px; }
+  .choices button.on { background:var(--on); }
+  .toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .switch { flex:none; width:52px; height:30px; border-radius:15px; background:var(--off);
+            position:relative; border:0; transition:background .15s; }
+  .switch::after { content:""; position:absolute; top:4px; left:4px; width:22px; height:22px;
+                   border-radius:50%; background:#fff; transition:left .15s; }
+  .switch.on { background:var(--on); }
+  .switch.on::after { left:26px; }
+  .info { display:flex; justify-content:space-between; gap:12px; }
+  .value { color:var(--dim); text-align:right; }
+  #status { color:var(--dim); font-size:13px; text-align:center; margin-top:24px; }
+  form { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  input, textarea { font:inherit; padding:10px 12px; border-radius:10px; border:1px solid var(--off);
+          background:var(--row); color:var(--text); }
+  button.action { border:0; border-radius:999px; padding:9px 16px; background:var(--on); color:#fff;
+                  font:inherit; margin-top:10px; align-self:flex-start; }
+  input[type=search], input.note { width:100%; border:0; border-radius:10px; padding:10px 12px;
+           background:var(--row); color:var(--text); font:inherit; }
+  details { background:var(--card); border-radius:16px; margin-top:10px; }
+  summary { padding:14px; cursor:pointer; font-weight:500; list-style:none; }
+  summary .count { color:var(--dim); font-weight:400; font-size:13px; margin-left:6px; }
+  .save { display:flex; gap:12px; padding:10px 14px; border-top:1px solid #222a5c; align-items:flex-start; }
+  .save img { width:96px; height:72px; border-radius:8px; object-fit:cover; background:var(--row); flex:none; }
+  .save .body { flex:1; min-width:0; }
+  .actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .actions button, .actions label { border:0; border-radius:999px; padding:7px 12px; background:var(--row);
+           color:var(--text); font:inherit; font-size:14px; }
+  .actions input[type=file] { display:none; }
+  .busy { opacity:.5; pointer-events:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SwanStationPS5</h1>
+  <div id="game"></div>
+  <nav id="tabs"></nav>
+</header>
+<main id="rows"></main>
+<div id="status">Connecting to your PS5…</div>
+<script>
+let data = null, tab = 0, busy = false, saves = null, filter = '', openGame = null;
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+async function load() {
+  if (busy) return;
+  if (data && tab === data.tabs.length) return; /* the Saves tab refreshes itself */
+  try {
+    const r = await fetch('/api/settings', {cache: 'no-store'});
+    data = await r.json();
+    render();
+    document.getElementById('status').textContent = '';
+  } catch (e) {
+    document.getElementById('status').textContent = 'SwanStationPS5 isn’t answering. Is it still open?';
+  }
+}
+
+async function set(key, value) {
+  busy = true;
+  try { await fetch('/api/set?key=' + encodeURIComponent(key) + '&value=' + value, {method: 'POST'}); }
+  finally { busy = false; setTimeout(load, 250); }
+}
+
+function render() {
+  if (!data || !data.tabs) return;
+  document.getElementById('game').textContent = data.game || '';
+  const tabs = document.getElementById('tabs');
+  tabs.replaceChildren();
+  data.tabs.forEach((t, i) => {
+    const b = el('button', i === tab ? 'on' : '', t.name);
+    b.onclick = () => { tab = i; render(); };
+    tabs.appendChild(b);
+  });
+  const sb = el('button', tab === data.tabs.length ? 'on' : '', 'Saves');
+  sb.onclick = () => { tab = data.tabs.length; render(); loadSaves(); };
+  tabs.appendChild(sb);
+  const rows = document.getElementById('rows');
+  rows.replaceChildren();
+  if (tab === data.tabs.length) { renderSaves(rows); return; }
+  if (data.nfs && tab === data.nfs.tab) renderNfs(rows);
+  if (data.ra && tab === data.ra.tab) renderAccount(rows);
+  let card = null;
+  for (const r of data.tabs[tab].rows) {
+    if (r.group || !card) {
+      if (r.group) rows.appendChild(el('div', 'group', r.group));
+      card = el('div', 'card');
+      rows.appendChild(card);
+    }
+    const row = el('div', 'row');
+    if (r.kind === 'toggle') {
+      const line = el('div', 'toggle');
+      const text = el('div');
+      text.appendChild(el('div', 'name', r.name));
+      if (r.help) text.appendChild(el('div', 'help', r.help));
+      const sw = el('button', 'switch' + (r.value ? ' on' : ''));
+      sw.setAttribute('aria-label', r.name);
+      sw.onclick = () => { r.value = r.value ? 0 : 1; render(); set(r.key, r.value); };
+      line.append(text, sw);
+      row.appendChild(line);
+    } else if (r.kind === 'choice') {
+      row.appendChild(el('div', 'name', r.name));
+      if (r.help) row.appendChild(el('div', 'help', r.help));
+      const box = el('div', 'choices');
+      r.labels.forEach((label, v) => {
+        const b = el('button', v === r.value ? 'on' : '', label);
+        b.onclick = () => { r.value = v; render(); set(r.key, v); };
+        box.appendChild(b);
+      });
+      row.appendChild(box);
+    } else {
+      const line = el('div', 'info');
+      line.append(el('div', 'name', r.name), el('div', 'value', r.text || ''));
+      row.appendChild(line);
+    }
+    card.appendChild(row);
+  }
+}
+
+/* ---- RetroAchievements: sign in from the phone (the password goes to
+   retroachievements.org through SwanStationPS5 and isn't kept; SwanStationPS5 keeps a token) ---- */
+
+let accountMessage = '', nfsMessage = '', nfsDraft = null;
+
+function renderNfs(rows) {
+  rows.appendChild(el('div', 'group', 'NFS shares'));
+  const card = el('div', 'card');
+  const row = el('div', 'row');
+  row.appendChild(el('div', 'name', 'Servers with games'));
+  row.appendChild(el('div', 'help', 'One nfs:// address per line, for example nfs://192.168.1.85/psx or nfs://192.168.1.85/psx?version=4. Applying it saves the list and looks for the games again; it can’t be done while a game is running.'));
+  const form = el('form');
+  const box = el('textarea');
+  box.rows = 4;
+  box.spellcheck = false;
+  box.autocapitalize = 'none';
+  box.placeholder = 'nfs://192.168.1.85/psx';
+  box.value = nfsDraft !== null ? nfsDraft : data.nfs.shares.split(';').join('\n');
+  box.oninput = () => { nfsDraft = box.value; };
+  const go = el('button', 'action', 'Apply');
+  go.type = 'submit';
+  form.append(box, go);
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    go.disabled = true;
+    nfsMessage = 'Applying…';
+    msg.textContent = nfsMessage;
+    try {
+      const r = await fetch('/api/nfs', {method: 'POST', body: box.value.split('\n').map(s => s.trim()).filter(Boolean).join(';')});
+      const j = await r.json();
+      nfsMessage = j.ok ? 'Done. The console is connecting to the servers.' : (j.error || 'Could not apply.');
+      if (j.ok) nfsDraft = null;
+    } catch (err) {
+      nfsMessage = 'SwanStationPS5 isn’t answering.';
+    }
+    go.disabled = false;
+    msg.textContent = nfsMessage;
+    setTimeout(load, 600);
+  };
+  row.appendChild(form);
+  const msg = el('div', 'help', nfsMessage);
+  row.appendChild(msg);
+  card.appendChild(row);
+  rows.appendChild(card);
+}
+
+function renderAccount(rows) {
+  rows.appendChild(el('div', 'group', 'RetroAchievements account'));
+  const card = el('div', 'card');
+  const row = el('div', 'row');
+  if (data.ra.user) {
+    const line = el('div', 'info');
+    line.append(el('div', 'name', 'Signed in as ' + data.ra.user + (data.ra.signed_in ? '' : ' (connecting…)')),
+                el('div', 'value', 'Profile: ' + data.ra.profile));
+    row.appendChild(line);
+    const out = el('button', '', 'Sign out');
+    out.className = 'action';
+    out.onclick = async () => {
+      if (!confirm('Sign out of RetroAchievements on this profile?')) return;
+      await fetch('/api/ra-logout', {method: 'POST'});
+      setTimeout(load, 400);
+    };
+    row.appendChild(out);
+  } else {
+    row.appendChild(el('div', 'name', 'Sign in'));
+    row.appendChild(el('div', 'help', 'For the profile “' + data.ra.profile + '”. Your password goes from SwanStationPS5 straight to retroachievements.org and isn’t kept: SwanStationPS5 only keeps the sign-in token.'));
+    const form = el('form');
+    const user = el('input');
+    user.placeholder = 'User name';
+    user.autocomplete = 'username';
+    user.autocapitalize = 'none';
+    const pass = el('input');
+    pass.type = 'password';
+    pass.placeholder = 'Password';
+    pass.autocomplete = 'current-password';
+    const go = el('button', 'action', 'Sign in');
+    go.type = 'submit';
+    form.append(user, pass, go);
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      go.disabled = true;
+      accountMessage = 'Signing in…';
+      msg.textContent = accountMessage;
+      try {
+        const r = await fetch('/api/ra-login', {method: 'POST',
+          body: new URLSearchParams({user: user.value, password: pass.value})});
+        const j = await r.json();
+        accountMessage = j.ok ? 'Signed in as ' + j.user + '.' : (j.error || 'Sign-in failed');
+      } catch (err) {
+        accountMessage = 'SwanStationPS5 isn’t answering.';
+      }
+      pass.value = '';
+      go.disabled = false;
+      setTimeout(load, 600);
+      msg.textContent = accountMessage;
+    };
+    row.appendChild(form);
+  }
+  const msg = el('div', 'help', accountMessage);
+  row.appendChild(msg);
+  card.appendChild(row);
+  rows.appendChild(card);
+}
+
+/* ---- Saves: memory cards and save states, to and from the phone ---- */
+
+async function loadSaves() {
+  try {
+    const r = await fetch('/api/saves', {cache: 'no-store'});
+    saves = await r.json();
+    render();
+  } catch (e) { document.getElementById('status').textContent = 'Could not read the saves.'; }
+}
+
+function ago(t) {
+  const s = Date.now() / 1000 - t;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + ' min ago';
+  if (s < 86400) return Math.round(s / 3600) + ' h ago';
+  const d = Math.round(s / 86400);
+  return d === 1 ? 'yesterday' : d + ' days ago';
+}
+
+function q(g, extra) { return '?game=' + encodeURIComponent(g.id) + extra; }
+
+async function upload(g, extra, file, row) {
+  row.classList.add('busy');
+  try {
+    const r = await fetch('/api/save' + q(g, extra), {method: 'POST', body: file});
+    const j = await r.json().catch(() => ({}));
+    document.getElementById('status').textContent = j.ok ? 'Uploaded.' : 'Not uploaded: ' + (j.error || r.status);
+  } finally { row.classList.remove('busy'); loadSaves(); }
+}
+
+function fileButton(label, onFile) {
+  const l = el('label', '', label);
+  const i = document.createElement('input');
+  i.type = 'file';
+  i.onchange = () => { if (i.files[0]) onFile(i.files[0]); };
+  l.appendChild(i);
+  return l;
+}
+
+function download(url) {
+  const a = document.createElement('a');
+  a.href = url; a.download = '';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function renderSaves(rows) {
+  const search = document.createElement('input');
+  search.type = 'search'; search.placeholder = 'Find a game'; search.value = filter;
+  search.oninput = () => { filter = search.value; render(); setTimeout(() => {
+    const s = document.querySelector('input[type=search]'); if (s) { s.focus(); s.selectionStart = s.value.length; } }); };
+  rows.appendChild(search);
+  if (!saves) { rows.appendChild(el('div', 'help', 'Loading…')); return; }
+  const f = filter.toLowerCase();
+  for (const g of saves.games) {
+    if (f && !g.title.toLowerCase().includes(f)) continue;
+    const d = document.createElement('details');
+    d.open = openGame === g.id;
+    d.ontoggle = () => { if (d.open) openGame = g.id; };
+    const sum = el('summary', '', g.title);
+    sum.appendChild(el('span', 'count', (g.states.length ? g.states.length + ' states' : 'no states') +
+                       (g.card ? ' · card' : '') + (saves.running === g.id ? ' · playing now' : '')));
+    d.appendChild(sum);
+    /* the memory card */
+    if (g.serial) {
+      const row = el('div', 'save');
+      const body = el('div', 'body');
+      body.appendChild(el('div', 'name', 'Memory card'));
+      body.appendChild(el('div', 'help', g.card ? 'Saved ' + ago(g.card) : 'Empty'));
+      const act = el('div', 'actions');
+      if (g.card) { const b = el('button', '', 'Download'); b.onclick = () => download('/api/save' + q(g, '&type=card')); act.appendChild(b); }
+      act.appendChild(fileButton('Upload a card', file => upload(g, '&type=card', file, row)));
+      body.appendChild(act);
+      row.appendChild(body);
+      d.appendChild(row);
+    }
+    /* the ten slots */
+    for (let slot = 0; slot < 10; ++slot) {
+      const st = g.states.find(x => x.slot === slot);
+      const row = el('div', 'save');
+      if (st) {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = '/api/thumb' + q(g, '&slot=' + slot + '&t=' + st.time);
+        img.onerror = () => img.remove();
+        row.appendChild(img);
+      }
+      const body = el('div', 'body');
+      body.appendChild(el('div', 'name', 'Slot ' + slot + (st ? ' · ' + ago(st.time) : ' · empty')));
+      if (st) {
+        const note = document.createElement('input');
+        note.className = 'note'; note.maxLength = 120; note.placeholder = 'A note: “before the boss”';
+        note.value = st.note || '';
+        note.onchange = async () => {
+          await fetch('/api/note' + q(g, '&slot=' + slot), {method: 'POST', body: note.value});
+          document.getElementById('status').textContent = 'Note saved.';
+        };
+        body.appendChild(note);
+      }
+      const act = el('div', 'actions');
+      if (st) { const b = el('button', '', 'Download'); b.onclick = () => download('/api/save' + q(g, '&type=state&slot=' + slot)); act.appendChild(b); }
+      act.appendChild(fileButton(st ? 'Replace' : 'Upload', file => upload(g, '&type=state&slot=' + slot, file, row)));
+      body.appendChild(act);
+      row.appendChild(body);
+      if (st || slot === 0 || g.states.some(x => x.slot === slot - 1)) d.appendChild(row);
+    }
+    rows.appendChild(d);
+  }
+}
+
+load();
+setInterval(load, 2000);
+</script>
+</body>
+</html>
