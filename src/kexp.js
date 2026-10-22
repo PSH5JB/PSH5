@@ -1759,29 +1759,23 @@ export async function loadOptionalPayloads(p, chain, log) {
   const say = typeof log === "function" ? log : () => {};
   await ensureDir(p, chain, AUTOLOADER_DIR);
 
-  // Auto ELF sender: if autoload.txt already exists (not first boot), read it
-  // and send every ELF listed via elfldr now. Covers rest-mode wake and
-  // re-runs after first boot. Byepervisor is not in autoload.txt so it is
-  // unaffected. First boot: file absent, block skipped entirely.
-  const _autoloadPath = AUTOLOADER_DIR + "/autoload.txt";
-  if (await pathExists(p, chain, _autoloadPath)) {
-    say("auto ELF sender: reading autoload.txt");
-    const _autoloadText = await readTextFile(p, chain, _autoloadPath, 0x10000);
-    if (_autoloadText) {
-      const _autoLines = _autoloadText.trim().split("
+  // After rest-mode wake, byepervisor phase1 marker exists — read autoload.txt
+  // and send each ELF via elfldr so HEN etc. are active without user action.
+  if (await pathExists(p, chain, BV_PHASE_MARKER)) {
+    const _rmTxt = await readTextFile(p, chain, AUTOLOADER_DIR + "/autoload.txt", 0x10000);
+    if (_rmTxt) {
+      say("rest mode: auto-sending ELFs");
+      const _rmLines = _rmTxt.trim().split("
 ").filter(Boolean);
-      let _autoFirst = true;
-      let _pendingWait = 0;
-      for (let _ali = 0; _ali < _autoLines.length; _ali++) {
-        const _line = _autoLines[_ali].trim();
-        if (_line.startsWith("!")) {
-          _pendingWait = parseInt(_line.slice(1), 10) || 0;
-          continue;
-        }
-        if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + _line))) { _pendingWait = 0; continue; }
-        if (!_autoFirst && _pendingWait > 0) await new Promise(function(r) { setTimeout(r, _pendingWait); });
-        _pendingWait = 0;
-        try { await sendOneRetry(_line, p, chain, say, 2); _autoFirst = false; } catch (_e) { say(_line + " skipped: " + (_e && _e.message ? _e.message : String(_e))); }
+      let _rmFirst = true; let _rmWait = 0;
+      for (let _ri = 0; _ri < _rmLines.length; _ri++) {
+        const _rl = _rmLines[_ri].trim();
+        if (_rl.startsWith("!")) { _rmWait = parseInt(_rl.slice(1), 10) || 0; continue; }
+        if (!(await pathExists(p, chain, AUTOLOADER_DIR + "/" + _rl))) { _rmWait = 0; continue; }
+        if (!_rmFirst && _rmWait > 0) await new Promise(function(r) { setTimeout(r, _rmWait); });
+        _rmWait = 0;
+        try { await sendOneRetry(_rl, p, chain, say, 2); _rmFirst = false; }
+        catch (_e) { say(_rl + " skipped: " + (_e && _e.message ? _e.message : String(_e))); }
       }
     }
   }
