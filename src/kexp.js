@@ -27,7 +27,7 @@ const BYEPERVISOR_VER = "v1";
 const BV_PHASE_MARKER = "/data/byepervisor.phase1";
 const XPSEMU_HELPER_DEST = "xpsemu-helper.elf";
 // Payload versions — updated by GitHub Actions when a new release is downloaded.
-const BLACKBOX_VER = "1.12.4";
+const BLACKBOX_VER = "1.12.5";
 const CHEATRUNNER_VER = "v0.18";
 const SHADOWMOUNT_VER = "1.7-sm";
 const HOMEBREW_DIR = "/data/homebrew";
