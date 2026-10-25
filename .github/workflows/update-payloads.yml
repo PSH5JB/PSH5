@@ -28,19 +28,26 @@ jobs:
           python3 .github/scripts/extract_emu_zips.py
 
       - name: Commit and push
+        id: commit
         if: steps.update.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add payloads/ src/kexp.js .github/payload-versions.json
+          if git diff --cached --quiet; then
+            echo "Nothing staged after update; skipping commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           UPDATED=$(git diff --cached --name-only -- payloads/ | sed 's|payloads/||' | sort | paste -sd ', ')
           git commit -m "chore: update payloads — ${UPDATED}
 
           Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to VPS
-        if: steps.update.outputs.changed == 'true'
+        if: steps.commit.outputs.pushed == 'true'
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |

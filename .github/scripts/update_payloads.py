@@ -255,7 +255,7 @@ def update_emu_asset(key, repo, asset_pat, dest_rel, path_const=None, extract_ti
             if re.search(r"v?\d", os.path.basename(dest_rel)):
                 rel_out = os.path.dirname(dest_rel) + "/" + name
                 dest = f"{PAYLOADS}/{rel_out}"
-    if versions.get(key) == tag and os.path.isfile(dest):
+    if versions.get(key) == tag and (skip_download or os.path.isfile(dest)):
         print(f"  up to date ({tag})")
         return tag
     if skip_download:
